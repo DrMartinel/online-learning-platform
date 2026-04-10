@@ -1,19 +1,22 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { AuthController } from '../../../../../backend/src/presentation';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const supabase = await createClient();
-    const authController = new AuthController(supabase);
+    const backendUrl = process.env.BACKEND_URL;
+    if (!backendUrl) {
+      return NextResponse.json({ error: 'Missing BACKEND_URL' }, { status: 500 });
+    }
 
-    const result = await authController.signIn({
-      email: body.email,
-      password: body.password,
+    const res = await fetch(`${backendUrl}/auth/login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
     });
 
-    return NextResponse.json(result);
+    const data = await res.json().catch(() => ({}));
+
+    return NextResponse.json(data, { status: res.status });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) },

@@ -1,0 +1,1 @@
+{"version":3,"file":"UserErrors.d.ts","sourceRoot":"","sources":["../../../src/domain/errors/UserErrors.ts"],"names":[],"mappings":"AAAA,qBAAa,iBAAkB,SAAQ,KAAK;aACd,EAAE,EAAE,MAAM;gBAAV,EAAE,EAAE,MAAM;CAIvC;AAED,qBAAa,iBAAkB,SAAQ,KAAK;gBAC9B,OAAO,GAAE,MAAyD;CAI/E"}
