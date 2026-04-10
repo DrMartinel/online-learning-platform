@@ -521,6 +521,9 @@ services:
       - ./volumes/db/logs.sql:/docker-entrypoint-initdb.d/migrations/99-logs.sql:Z
       # Changes required for Pooler support
       - ./volumes/db/pooler.sql:/docker-entrypoint-initdb.d/migrations/99-pooler.sql:Z
+      # Run custom initial schema migrations using runner script
+      - ./backend/migrations:/app/backend/migrations:ro
+      - ./volumes/db/run-user-migrations.sh:/docker-entrypoint-initdb.d/zz-run-user-migrations.sh:Z
       # Use named volume to persist pgsodium decryption key between restarts
       - db-config:/etc/postgresql-custom
     healthcheck:
@@ -638,17 +641,19 @@ services:
         "/app/bin/migrate && /app/bin/supavisor eval \"$$(cat /etc/pooler/pooler.exs)\" && /app/bin/server"
       ]
 
-  web:
+  app:
     image: node:20-alpine
-    container_name: nextjs-web
-    working_dir: /app
+    container_name: nextjs-app
+    working_dir: /app/frontend
     command: sh -c "npm install && npm run dev"
     ports:
-      - "3000:3000"
+      - "3002:3000"
     volumes:
-      - ./web:/app
-      - /app/node_modules
-      - /app/.next
+      - ./frontend:/app/frontend
+      - ./backend:/app/backend
+      - /app/frontend/node_modules
+      - /app/backend/node_modules
+      - /app/frontend/.next
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_SUPABASE_URL=http://localhost:8000

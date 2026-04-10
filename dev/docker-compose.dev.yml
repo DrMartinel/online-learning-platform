@@ -37,8 +37,26 @@ services:
     volumes:
       # Always use a fresh database when developing
       - /var/lib/postgresql/data
-      # Seed data should be inserted last (alphabetical order)
-      - ./dev/data.sql:/docker-entrypoint-initdb.d/seed.sql
   storage:
     volumes:
       - /var/lib/storage
+  app:
+    command: sh -c "cd /app/backend && npm install && npx tsc --watch & cd /app/frontend && npm install && npm run dev"
+    develop:
+      watch:
+        - action: sync
+          path: ../frontend
+          target: /app/frontend
+          ignore:
+            - node_modules/
+            - .next/
+        - action: rebuild
+          path: ../frontend/package.json
+        - action: sync
+          path: ../backend
+          target: /app/backend
+          ignore:
+            - node_modules/
+            - dist/
+        - action: rebuild
+          path: ../backend/package.json

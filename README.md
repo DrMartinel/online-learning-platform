@@ -29,14 +29,13 @@ This command starts the database, all Supabase microservices (Auth, API, Studio)
 docker compose up -d
 ```
 
-### 3. Initialize the Database Schema (CRITICAL)
-Supabase is running, but the tables and security policies are not yet created.
-1.  Open your browser to **Supabase Studio**: [http://localhost:8000](http://localhost:8000)
-2.  In the left sidebar, click on **SQL Editor**.
-3.  Click **New Query**.
-4.  Open the file `supabase_schema.sql` (found in the project root) in your code editor.
-5.  **Copy all contents** of `supabase_schema.sql` and paste them into the Supabase SQL Editor.
-6.  Click **Run**.
+### 3. Database Schema & Migrations
+The database schema (`backend/migrations/*.sql`) is **automatically executed** the very first time you start up the stack (on a fresh database volume). 
+
+If you are starting from a completely clean slate, you don't need to do anything manually! 
+If you modify the database schema or add new migrations later, you will need to either:
+- **Clean start:** Run `docker compose down -v` to delete the volume, then `docker compose up -d` to seed it again.
+- **Manual sync:** Open **Supabase Studio** at [http://localhost:8000](http://localhost:8000), paste your new migration SQL into the "SQL Editor", and execute it safely.
 
 ---
 
@@ -53,19 +52,21 @@ Supabase is running, but the tables and security policies are not yet created.
 ## 💻 Development Workflow
 
 ### Hot-Reloading
-The `web` service in `docker-compose.yml` mounts your local `./web` directory as a volume. Any changes you make to the code on your host machine will trigger an instant hot-reload inside the container.
+The `app` service in `docker-compose.yml` mounts your local `./frontend` directory as a volume. Any changes you make to the code on your host machine will trigger an instant hot-reload inside the container.
 
 ### Directory Structure
 ```text
 online-learning-platform/
-├── web/                  # Next.js Frontend
+├── backend/              # Clean Architecture Core Library
+│   ├── migrations/       # Supabase SQL database schemas & migrations
+│   └── src/              # Domain, Application, Infrastructure, and Presentation logic
+├── frontend/             # Next.js Frontend
 │   ├── app/              # App Router (Pages & Layouts)
 │   ├── components/       # UI & Logic Components
 │   ├── lib/supabase/     # Supabase client & middleware config
 │   └── actions/          # Server Actions (DB mutations/fetches)
 ├── volumes/              # Persistent Docker data (DB, Storage)
-├── docker-compose.yml    # Orchestration config
-└── supabase_schema.sql   # Database source of truth
+└── docker-compose.yml    # Orchestration config
 ```
 
 ### Networking Logic
@@ -93,7 +94,7 @@ The platform implements **Row Level Security (RLS)**. By default, three roles ar
 | `docker compose up -d` | Start the platform in the background. |
 | `docker compose stop` | Stop all services without removing containers. |
 | `docker compose down -v` | Stop services and **delete all database data**. |
-| `docker compose logs -f web` | View real-time Next.js server logs. |
+| `docker compose logs -f app` | View real-time Next.js server logs. |
 | `docker compose logs -f db` | View real-time PostgreSQL logs. |
 
 ---
@@ -101,4 +102,4 @@ The platform implements **Row Level Security (RLS)**. By default, three roles ar
 ## ⚠️ Troubleshooting
 *   **Next.js can't connect to Supabase:** Ensure `docker compose up` is fully finished. The database and Kong gateway can take ~20 seconds to become "Healthy".
 *   **Auth redirects failing:** Check the `SITE_URL` in your `.env` file; it should match your Next.js address (`http://localhost:3000`).
-*   **Permission Denied:** If you receive errors when fetching courses, ensure you have executed the `supabase_schema.sql` in the Studio SQL Editor.
+*   **Permission Denied:** If you receive errors when fetching courses, verify your Row Level Security (RLS) policies or ensure your migrations were properly executed during boot.

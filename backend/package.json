@@ -1,0 +1,16 @@
+{
+  "name": "@online-learning-platform/backend",
+  "version": "1.0.0",
+  "description": "Core business and application logic for the online learning platform",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.103.0"
+  }
+}
