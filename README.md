@@ -1,105 +1,122 @@
-# 🚀 Online Learning Platform: Getting Started Guide
+# Online Learning Platform
 
-This project is a unified full-stack application featuring a **Next.js (App Router)** frontend and a **Self-Hosted Supabase** backend, all orchestrated via **Docker Compose**.
+Full-stack learning platform with a **Next.js (App Router)** frontend, a **Node HTTP API** (business logic), and **self-hosted Supabase** (Postgres, Auth, Kong, Studio, and related services), orchestrated with **Docker Compose**.
 
-## 📋 Prerequisites
+## Architecture
 
-Before you begin, ensure you have the following installed on your machine:
-*   **Docker & Docker Compose** (Required for the database, auth, and API layers).
-*   **Node.js (v18+) & npm** (Optional for local linting/types, but all execution happens in Docker).
-*   **Git**
+- **Frontend** (`frontend/`): Next.js 16. Route handlers under `app/api/`* act as a thin BFF: they **proxy HTTP requests** to the backend service using `BACKEND_URL`. The frontend does **not** import the backend package as a library.
+- **Backend API** (`backend/`): Clean Architecture (domain, application, infrastructure). A **Fastify** server exposes HTTP routes (for example `/auth/signup`, `/auth/login`, `/auth/logout`, `/health`) and uses the Supabase JS client with `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
+- **Supabase stack**: Postgres, GoTrue (auth), Kong (API gateway), PostgREST, Realtime, Storage, Studio, Analytics, Edge Functions, pooler, etc., defined in the Compose files below.
 
----
-
-## 🛠️ Installation & Setup
-
-### 1. Initialize the Environment
-Navigate to the project root and ensure your environment variables are set. A default `.env` file has been generated for you with secure-ish defaults for local development.
-
-```zsh
-cd online-learning-platform
-# Verify .env exists and contains ANON_KEY, JWT_SECRET, etc.
-cat .env
+```
+Browser → Next.js (e.g. /api/auth/signup) → Backend HTTP API → Supabase (Kong)
 ```
 
-### 2. Launch the Unified Stack
-This command starts the database, all Supabase microservices (Auth, API, Studio), and the Next.js frontend in a single network.
+## Prerequisites
 
-```zsh
-docker compose up -d
-```
+- Docker and Docker Compose
+- Node.js 18+ and npm (optional; useful for local lint/typecheck without Docker)
+- Git
 
-### 3. Database Schema & Migrations
-The database schema (`backend/migrations/*.sql`) is **automatically executed** the very first time you start up the stack (on a fresh database volume). 
+## Environment
 
-If you are starting from a completely clean slate, you don't need to do anything manually! 
-If you modify the database schema or add new migrations later, you will need to either:
-- **Clean start:** Run `docker compose down -v` to delete the volume, then `docker compose up -d` to seed it again.
-- **Manual sync:** Open **Supabase Studio** at [http://localhost:8000](http://localhost:8000), paste your new migration SQL into the "SQL Editor", and execute it safely.
+Copy or create a `.env` at the repository root. It must define Supabase-related variables (for example `ANON_KEY`, `JWT_SECRET`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, ports, and URLs). The stack reads this file when you run Compose.
 
----
+**Important:** `POSTGRES_PASSWORD` is applied when the Postgres data directory is **first** initialized. If you change `POSTGRES_PASSWORD` in `.env` after `./volumes/db/data` already exists, services such as analytics and auth will fail with `password authentication failed` until you either restore the old password or **reset the DB volume** (see Troubleshooting).
 
-## 🌐 Accessing the Platform
+## Docker Compose layout
 
-| Service | URL | Description |
-| :--- | :--- | :--- |
-| **Next.js App** | [http://localhost:3000](http://localhost:3000) | The main student/instructor portal. |
-| **Supabase Studio** | [http://localhost:8000](http://localhost:8000) | Database dashboard (Postgres, Auth, Logs). |
-| **API Gateway** | [http://localhost:8000/rest/v1](http://localhost:8000/rest/v1) | Direct access to the PostgREST API. |
 
----
+| File                     | Purpose                                                                                                                                                                                                                        |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `docker-compose.yml`     | **Production-style** builds: `frontend/Dockerfile` and `backend/Dockerfile` bake source and dependencies into images. No bind mounts for app source.                                                                           |
+| `docker-compose.dev.yml` | **Development**: same Supabase services as production compose, plus `app` and `backend` built from `frontend/Dockerfile.dev` and `backend/Dockerfile.dev`, with **bind-mounted** `./frontend` and `./backend` for live reload. |
 
-## 💻 Development Workflow
 
-### Hot-Reloading
-The `app` service in `docker-compose.yml` mounts your local `./frontend` directory as a volume. Any changes you make to the code on your host machine will trigger an instant hot-reload inside the container.
+Optional overrides (S3 storage, nginx, etc.) remain as separate `docker-compose.*.yml` files in the repo; combine them with `-f` when needed.
 
-### Directory Structure
+## NPM scripts (repository root)
+
+Run these from the project root:
+
+
+| Script                     | Command                                                  | Description                                                                                                                                |
+| -------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `npm run dev`              | `docker compose -f docker-compose.dev.yml up --build -d` | Start the **dev** stack (Supabase + hot-reload frontend/backend).                                                                          |
+| `npm run dev:down`         | `docker compose -f docker-compose.dev.yml down`          | Stop the dev stack.                                                                                                                        |
+| `npm run dev:reset`        | Compose down with volumes + up                           | Nuclear reset of dev stack volumes/orphans; use when things are inconsistent.                                                              |
+| `npm run dev:volume-reset` | Removes `./volumes/db/data` and `./volumes/storage`      | **Deletes local DB and file storage** on disk; stop Compose first. Then bring the stack up again so Postgres re-inits with current `.env`. |
+| `npm run build`            | `docker compose -f docker-compose.yml build`             | Build **production** images.                                                                                                               |
+| `npm run start`            | `docker compose -f docker-compose.yml up -d`             | Run **production** stack in the background.                                                                                                |
+| `npm run stop`             | `docker compose -f docker-compose.yml down`              | Stop production stack.                                                                                                                     |
+
+
+Equivalent manual invocations work if you prefer not to use npm.
+
+## Typical URLs and ports
+
+Defaults depend on `.env` (for example `KONG_HTTP_PORT`). Commonly:
+
+
+| Service                          | URL / port                                             |
+| -------------------------------- | ------------------------------------------------------ |
+| Next.js app (Compose)            | `http://localhost:3002` (maps container port 3000)     |
+| Backend HTTP API (Compose)       | `http://localhost:3003` (maps container port 3001)     |
+| Supabase API / Studio (via Kong) | Often `http://localhost:8000` if `KONG_HTTP_PORT=8000` |
+
+
+Adjust if your `.env` changes host ports.
+
+## Database migrations
+
+SQL migrations live under `backend/migrations/`. On a **fresh** Postgres volume, init scripts can apply them (see `volumes/db/run-user-migrations.sh` and related mounts in Compose).
+
+If you add migrations later:
+
+- **Clean slate:** stop Compose, remove `./volumes/db/data` (or use `npm run dev:volume-reset` after stopping), then start again so init runs with your current `.env`.
+- **Manual:** run SQL in Supabase Studio’s SQL editor against your project.
+
+## Local development without Docker (optional)
+
+- **Frontend:** `cd frontend && npm install && npm run dev`
+- **Backend:** `cd backend && npm install && npm run build && npm run start` (set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `PORT` as needed)
+- Point `BACKEND_URL` at the backend URL your Next dev server should proxy to.
+
+## Repository layout
+
 ```text
 online-learning-platform/
-├── backend/              # Clean Architecture Core Library
-│   ├── migrations/       # Supabase SQL database schemas & migrations
-│   └── src/              # Domain, Application, Infrastructure, and Presentation logic
-├── frontend/             # Next.js Frontend
-│   ├── app/              # App Router (Pages & Layouts)
-│   ├── components/       # UI & Logic Components
-│   ├── lib/supabase/     # Supabase client & middleware config
-│   └── actions/          # Server Actions (DB mutations/fetches)
-├── volumes/              # Persistent Docker data (DB, Storage)
-└── docker-compose.yml    # Orchestration config
+├── backend/
+│   ├── Dockerfile              # production image (build + node dist server)
+│   ├── Dockerfile.dev          # dev image (deps only; source bind-mounted)
+│   ├── migrations/             # SQL migrations
+│   └── src/
+│       ├── domain/
+│       ├── application/
+│       ├── infrastructure/
+│       └── presentation/       # handlers + http/ (Fastify routes, server)
+├── frontend/
+│   ├── Dockerfile
+│   ├── Dockerfile.dev
+│   ├── app/                    # App Router, including api/ route handlers (proxy to backend)
+│   └── lib/supabase/           # Supabase clients (browser/server/middleware)
+├── volumes/                    # Docker persistence (db data, storage, kong config, …)
+├── docker-compose.yml          # production stack
+├── docker-compose.dev.yml      # dev stack (Supabase + app + backend)
+├── package.json                # root scripts wrapping docker compose
+└── .env                        # secrets and ports (not committed if gitignored)
 ```
 
-### Networking Logic
-The platform uses a "Hybrid Networking" approach:
-*   **Client-side (Browser):** Requests are sent to `http://localhost:8000`.
-*   **Server-side (Next.js SSR/Actions):** Requests are sent to `http://kong:8000` via the internal Docker network for high performance and reliability.
+## Security and roles
 
----
+Row Level Security (RLS) is used where configured. New users are typically assigned a default role (for example student) via database triggers; privileged roles may be adjusted in Supabase Studio or SQL.
 
-## 🔐 Security & Roles
+## Troubleshooting
 
-The platform implements **Row Level Security (RLS)**. By default, three roles are supported:
-1.  **Student:** Can view published courses and track their own progress.
-2.  **Instructor:** Can create, edit, and delete their own courses.
-3.  **Admin:** Full system access.
+- **Next.js cannot reach Supabase:** Wait until Kong and `db` are healthy; cold start can take a minute.
+- **Auth redirects:** `SITE_URL` and related URLs in `.env` should match how users open the app (for example `http://localhost:3002` if that is your published app port).
+- **Kong / Studio not on 8000:** Check `KONG_HTTP_PORT` in `.env`.
 
-**Note:** When a user signs up via the app, they are assigned the `student` role by default via a database trigger. To test instructor features, manually update a user's role in the `profiles` table using Supabase Studio.
+## Legacy compose note
 
----
-
-## 📜 Common Commands
-
-| Command | Action |
-| :--- | :--- |
-| `docker compose up -d` | Start the platform in the background. |
-| `docker compose stop` | Stop all services without removing containers. |
-| `docker compose down -v` | Stop services and **delete all database data**. |
-| `docker compose logs -f app` | View real-time Next.js server logs. |
-| `docker compose logs -f db` | View real-time PostgreSQL logs. |
-
----
-
-## ⚠️ Troubleshooting
-*   **Next.js can't connect to Supabase:** Ensure `docker compose up` is fully finished. The database and Kong gateway can take ~20 seconds to become "Healthy".
-*   **Auth redirects failing:** Check the `SITE_URL` in your `.env` file; it should match your Next.js address (`http://localhost:3000`).
-*   **Permission Denied:** If you receive errors when fetching courses, verify your Row Level Security (RLS) policies or ensure your migrations were properly executed during boot.
+Older docs referred to `docker compose -f docker-compose.yml -f ./dev/docker-compose.dev.yml`. Dev overrides now live in `**docker-compose.dev.yml` at the repo root**; use `npm run dev` or `docker compose -f docker-compose.dev.yml up` instead.
