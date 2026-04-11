@@ -4,7 +4,7 @@ import { AuthSession } from '../../../domain/entities/AuthSession';
 import { AuthenticationError, UserAlreadyExistsError } from '../../../domain/errors/AuthErrors';
 
 export class SupabaseAuthRepository implements IAuthRepository {
-  constructor(private readonly supabase: SupabaseClient) {}
+  constructor(private readonly supabase: SupabaseClient) { }
 
   public async signUp(options: ISignUpOptions): Promise<AuthSession> {
     const { data: { session, user }, error } = await this.supabase.auth.signUp({
