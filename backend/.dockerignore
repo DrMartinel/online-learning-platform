@@ -1,0 +1,11 @@
+# Keep build context small; avoid copying host artifacts into the image
+dist
+node_modules
+.git
+.gitignore
+*.md
+.env
+.env.*
+coverage
+.vscode
+*.log

@@ -641,6 +641,16 @@ services:
         "/app/bin/migrate && /app/bin/supavisor eval \"$$(cat /etc/pooler/pooler.exs)\" && /app/bin/server"
       ]
 
+  # Local SMTP sink: GoTrue sends mail here; read messages at http://localhost:9000
+  mail:
+    container_name: supabase-mail
+    image: inbucket/inbucket:3.0.3
+    restart: unless-stopped
+    ports:
+      - "2500:2500"
+      - "9000:9000"
+      - "1100:1100"
+
   app:
     container_name: nextjs-app
     build:

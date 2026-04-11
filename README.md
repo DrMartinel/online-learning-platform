@@ -35,6 +35,10 @@ Copy or create a `.env` at the repository root. It must define Supabase-related 
 
 Optional overrides (S3 storage, nginx, etc.) remain as separate `docker-compose.*.yml` files in the repo; combine them with `-f` when needed.
 
+**Docker build context:** `frontend/.dockerignore` and `backend/.dockerignore` exclude `node_modules`, build output (`.next` / `dist`), and other junk so `docker build` sends less to the daemon and does not layer host artifacts into the image. The backend production Dockerfile also runs `rm -rf dist` before `tsc` so each image build compiles from a clean output directory (helps reproducibility; memory savings are modest compared to TypeScript’s own work).
+
+**Backend `npm ci` in Docker:** The backend `package.json` defines a `prepare` script that runs `tsc`. During the image **deps** layer only `package.json` / lockfile are present, so `prepare` must not run there. The backend `Dockerfile` uses `npm ci --ignore-scripts` in that stage; the real build runs later after `COPY` of the full source.
+
 ## NPM scripts (repository root)
 
 Run these from the project root:
@@ -46,7 +50,8 @@ Run these from the project root:
 | `npm run dev:down`         | `docker compose -f docker-compose.dev.yml down`          | Stop the dev stack.                                                                                                                        |
 | `npm run dev:reset`        | Compose down with volumes + up                           | Nuclear reset of dev stack volumes/orphans; use when things are inconsistent.                                                              |
 | `npm run dev:volume-reset` | Removes `./volumes/db/data` and `./volumes/storage`      | **Deletes local DB and file storage** on disk; stop Compose first. Then bring the stack up again so Postgres re-inits with current `.env`. |
-| `npm run build`            | `docker compose -f docker-compose.yml build`             | Build **production** images.                                                                                                               |
+| `npm run build`            | Builds `frontend` then `backend` with local `npm run build` | Compile Next.js and TypeScript **without Docker** (run from repo root after `npm install` in each app, or use once).                      |
+| `npm run build:docker`     | `docker compose -f docker-compose.yml build`               | Build **production Docker images** (requires Docker).                                                                                        |
 | `npm run start`            | `docker compose -f docker-compose.yml up -d`             | Run **production** stack in the background.                                                                                                |
 | `npm run stop`             | `docker compose -f docker-compose.yml down`              | Stop production stack.                                                                                                                     |
 
@@ -118,6 +123,7 @@ Row Level Security (RLS) is used where configured. New users are typically assig
 
 ## Troubleshooting
 
+- **Node.js `JavaScript heap out of memory` during `next build` or `tsc`:** The default V8 heap (~2GB on 64-bit) is often too small. This repo sets `NODE_OPTIONS=--max-old-space-size=4096` for **Next.js** builds and **8192** for **backend `tsc`** (declaration emit and dependency types can use several GB). Production Dockerfiles set the same; `backend/Dockerfile.dev` sets **8192** for the dev container. If it still fails, raise further or add RAM/swap. On Windows, use `cross-env` or set `NODE_OPTIONS` in the environment.
 - **Postgres `invalid_password` / `supabase_admin` (or similar) auth failures:** The data directory was initialized with a different `POSTGRES_PASSWORD` than your current `.env`. Stop Compose, remove `./volumes/db/data`, confirm `.env`, then start again—or restore the old password to match the existing volume.
 - **Next.js cannot reach Supabase:** Wait until Kong and `db` are healthy; cold start can take a minute.
 - **Auth redirects:** `SITE_URL` and related URLs in `.env` should match how users open the app (for example `http://localhost:3002` if that is your published app port).

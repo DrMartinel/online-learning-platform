@@ -6,7 +6,8 @@
     "dev:down": "docker compose -f docker-compose.dev.yml down",
     "dev:reset": "docker compose -f docker-compose.dev.yml down -v --remove-orphans && docker compose -f docker-compose.dev.yml up --build -d",
     "dev:volume-reset": "rm -rf ./volumes/db/data ./volumes/storage",
-    "build": "docker compose -f docker-compose.yml build",
+    "build": "npm run build --prefix frontend && npm run build --prefix backend",
+    "build:docker": "docker compose -f docker-compose.yml build",
     "start": "docker compose -f docker-compose.yml up -d",
     "stop": "docker compose -f docker-compose.yml down"
   }

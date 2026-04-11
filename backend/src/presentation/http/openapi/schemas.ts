@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z, type ZodTypeAny } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import {
   authResultSchema,
@@ -11,16 +11,21 @@ const jsonSchemaOpts = {
   $refStrategy: 'none' as const,
 };
 
+/** Cast `schema` to break deep generic recursion between Zod 3 and zod-to-json-schema during typecheck. */
+function toOpenApiSchema(schema: ZodTypeAny): Record<string, unknown> {
+  return zodToJsonSchema(schema as never, jsonSchemaOpts) as Record<string, unknown>;
+}
+
 /** Fastify / OpenAPI body & response JSON Schemas derived from Zod (single source of truth). */
-export const signUpBodySchema = zodToJsonSchema(signUpRequestSchema, jsonSchemaOpts);
-export const signInBodySchema = zodToJsonSchema(signInRequestSchema, jsonSchemaOpts);
-export const authResultJsonSchema = zodToJsonSchema(authResultSchema, jsonSchemaOpts);
+export const signUpBodySchema = toOpenApiSchema(signUpRequestSchema as ZodTypeAny);
+export const signInBodySchema = toOpenApiSchema(signInRequestSchema as ZodTypeAny);
+export const authResultJsonSchema = toOpenApiSchema(authResultSchema as ZodTypeAny);
 
 const errorBodyZ = z.object({ error: z.string() }).strict();
-export const errorBodySchema = zodToJsonSchema(errorBodyZ, jsonSchemaOpts);
+export const errorBodySchema = toOpenApiSchema(errorBodyZ as ZodTypeAny);
 
 const logoutSuccessZ = z.object({ success: z.boolean() }).strict();
-export const logoutSuccessSchema = zodToJsonSchema(logoutSuccessZ, jsonSchemaOpts);
+export const logoutSuccessSchema = toOpenApiSchema(logoutSuccessZ as ZodTypeAny);
 
 const healthOkZ = z.object({ ok: z.boolean() }).strict();
-export const healthOkSchema = zodToJsonSchema(healthOkZ, jsonSchemaOpts);
+export const healthOkSchema = toOpenApiSchema(healthOkZ as ZodTypeAny);

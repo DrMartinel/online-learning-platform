@@ -7,6 +7,8 @@ RUN npm ci --ignore-scripts
 
 ENV NODE_ENV=development
 ENV PORT=3001
+# tsc can approach 4GB+ with declaration emit + large dependency types; align with package.json build
+ENV NODE_OPTIONS=--max-old-space-size=8192
 
 EXPOSE 3001
 CMD ["sh", "-lc", "npm run build && npm run dev"]

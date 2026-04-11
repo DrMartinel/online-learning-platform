@@ -8,13 +8,17 @@ const jsonSchemaOpts = {
     target: 'openApi3',
     $refStrategy: 'none',
 };
+/** Cast `schema` to break deep generic recursion between Zod 3 and zod-to-json-schema during typecheck. */
+function toOpenApiSchema(schema) {
+    return (0, zod_to_json_schema_1.zodToJsonSchema)(schema, jsonSchemaOpts);
+}
 /** Fastify / OpenAPI body & response JSON Schemas derived from Zod (single source of truth). */
-exports.signUpBodySchema = (0, zod_to_json_schema_1.zodToJsonSchema)(AuthDTOs_1.signUpRequestSchema, jsonSchemaOpts);
-exports.signInBodySchema = (0, zod_to_json_schema_1.zodToJsonSchema)(AuthDTOs_1.signInRequestSchema, jsonSchemaOpts);
-exports.authResultJsonSchema = (0, zod_to_json_schema_1.zodToJsonSchema)(AuthDTOs_1.authResultSchema, jsonSchemaOpts);
+exports.signUpBodySchema = toOpenApiSchema(AuthDTOs_1.signUpRequestSchema);
+exports.signInBodySchema = toOpenApiSchema(AuthDTOs_1.signInRequestSchema);
+exports.authResultJsonSchema = toOpenApiSchema(AuthDTOs_1.authResultSchema);
 const errorBodyZ = zod_1.z.object({ error: zod_1.z.string() }).strict();
-exports.errorBodySchema = (0, zod_to_json_schema_1.zodToJsonSchema)(errorBodyZ, jsonSchemaOpts);
+exports.errorBodySchema = toOpenApiSchema(errorBodyZ);
 const logoutSuccessZ = zod_1.z.object({ success: zod_1.z.boolean() }).strict();
-exports.logoutSuccessSchema = (0, zod_to_json_schema_1.zodToJsonSchema)(logoutSuccessZ, jsonSchemaOpts);
+exports.logoutSuccessSchema = toOpenApiSchema(logoutSuccessZ);
 const healthOkZ = zod_1.z.object({ ok: zod_1.z.boolean() }).strict();
-exports.healthOkSchema = (0, zod_to_json_schema_1.zodToJsonSchema)(healthOkZ, jsonSchemaOpts);
+exports.healthOkSchema = toOpenApiSchema(healthOkZ);

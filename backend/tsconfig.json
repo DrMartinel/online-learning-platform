@@ -9,6 +9,8 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "declarationMap": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": ".",
