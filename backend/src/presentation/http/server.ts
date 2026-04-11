@@ -1,11 +1,13 @@
 import fastify from 'fastify';
 import cors from '@fastify/cors';
+import { registerOpenApi } from './openapi/register';
 import { registerAuthRoutes } from './routes/auth';
 import { registerHealthRoutes } from './routes/health';
 
 export async function buildServer() {
   const app = fastify({ logger: true });
 
+  await registerOpenApi(app);
   await app.register(cors, { origin: true });
   await app.register(registerHealthRoutes);
   await app.register(registerAuthRoutes);

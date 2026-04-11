@@ -4,8 +4,8 @@ Full-stack learning platform with a **Next.js (App Router)** frontend, a **Node 
 
 ## Architecture
 
-- **Frontend** (`frontend/`): Next.js 16. Route handlers under `app/api/`* act as a thin BFF: they **proxy HTTP requests** to the backend service using `BACKEND_URL`. The frontend does **not** import the backend package as a library.
-- **Backend API** (`backend/`): Clean Architecture (domain, application, infrastructure). A **Fastify** server exposes HTTP routes (for example `/auth/signup`, `/auth/login`, `/auth/logout`, `/health`) and uses the Supabase JS client with `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
+- **Frontend** (`frontend/`): Next.js 16. Route handlers under `app/api/` act as a thin BFF: they **proxy HTTP requests** to the backend service using `BACKEND_URL`. The frontend does **not** import the backend package as a library.
+- **Backend API** (`backend/`): Clean Architecture (domain, application, infrastructure). A **Fastify** server exposes HTTP routes (for example `/auth/signup`, `/auth/login`, `/auth/logout`, `/health`) and uses the Supabase JS client with `SUPABASE_URL` and `SUPABASE_ANON_KEY`. Request and response shapes for HTTP are defined with **Zod** in the application layer (`application/dtos/`); **OpenAPI 3** JSON Schema for Fastify and Swagger is generated with **`zod-to-json-schema`**, so types and API docs stay aligned. **Swagger UI** is at `/docs` and the spec at `/docs/json` on the backend port (e.g. **3003** on the host when using Compose).
 - **Supabase stack**: Postgres, GoTrue (auth), Kong (API gateway), PostgREST, Realtime, Storage, Studio, Analytics, Edge Functions, pooler, etc., defined in the Compose files below.
 
 ```
@@ -67,6 +67,11 @@ Defaults depend on `.env` (for example `KONG_HTTP_PORT`). Commonly:
 
 Adjust if your `.env` changes host ports.
 
+## API contracts (Zod and OpenAPI)
+
+- **Zod** (`backend` dependencies): DTOs such as sign-up and sign-in are `z.object(...)` schemas in `backend/src/application/dtos/`. Types are inferred with `z.infer<typeof schema>` for use cases and controllers.
+- **OpenAPI / Swagger**: `backend/src/presentation/http/openapi/` registers `@fastify/swagger` and `@fastify/swagger-ui`. Route `schema` bodies and responses use JSON Schema produced from the same Zod definitions, so you do not maintain parallel hand-written OpenAPI models for those routes.
+
 ## Database migrations
 
 SQL migrations live under `backend/migrations/`. On a **fresh** Postgres volume, init scripts can apply them (see `volumes/db/run-user-migrations.sh` and related mounts in Compose).
@@ -79,7 +84,7 @@ If you add migrations later:
 ## Local development without Docker (optional)
 
 - **Frontend:** `cd frontend && npm install && npm run dev`
-- **Backend:** `cd backend && npm install && npm run build && npm run start` (set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `PORT` as needed)
+- **Backend:** `cd backend && npm install && npm run build && npm run start` (set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `PORT` as needed). `npm install` does not run the TypeScript build (to avoid slow installs and memory-heavy `tsc` during install); compile explicitly with `npm run build`. If `tsc` exits with out-of-memory on a large machine, try `NODE_OPTIONS=--max-old-space-size=8192 npm run build`.
 - Point `BACKEND_URL` at the backend URL your Next dev server should proxy to.
 
 ## Repository layout
@@ -92,9 +97,9 @@ online-learning-platform/
 │   ├── migrations/             # SQL migrations
 │   └── src/
 │       ├── domain/
-│       ├── application/
+│       ├── application/        # use cases, DTOs (Zod schemas + inferred types)
 │       ├── infrastructure/
-│       └── presentation/       # handlers + http/ (Fastify routes, server)
+│       └── presentation/       # handlers + http/ (Fastify routes, OpenAPI, server)
 ├── frontend/
 │   ├── Dockerfile
 │   ├── Dockerfile.dev
@@ -113,10 +118,13 @@ Row Level Security (RLS) is used where configured. New users are typically assig
 
 ## Troubleshooting
 
+- **Postgres `invalid_password` / `supabase_admin` (or similar) auth failures:** The data directory was initialized with a different `POSTGRES_PASSWORD` than your current `.env`. Stop Compose, remove `./volumes/db/data`, confirm `.env`, then start again—or restore the old password to match the existing volume.
 - **Next.js cannot reach Supabase:** Wait until Kong and `db` are healthy; cold start can take a minute.
 - **Auth redirects:** `SITE_URL` and related URLs in `.env` should match how users open the app (for example `http://localhost:3002` if that is your published app port).
 - **Kong / Studio not on 8000:** Check `KONG_HTTP_PORT` in `.env`.
+- **Pooler bind error `address already in use` on `0.0.0.0:5432`:** Something on your host already listens on 5432 (often a system PostgreSQL). The `db` container does not need a host port; only **Supavisor** publishes Postgres. Set **`POSTGRES_EXPOSE_PORT=5433`** (or another free port) in `.env` and run `docker compose up` again. Connect from your machine with `psql`/`localhost:5433`, not 5432.
+- **Pooler logs repeat `hostname: Temporary failure in name resolution`:** The Supavisor image runs scripts that resolve the container hostname. The compose file sets a fixed **`hostname: supavisor`** on the pooler service so local resolution works. Recreate the container: `docker compose up -d --force-recreate supavisor`. If it persists, check Docker DNS (`/etc/resolv.conf` in the container) and that nothing on the host blocks the Docker bridge.
 
 ## Legacy compose note
 
-Older docs referred to `docker compose -f docker-compose.yml -f ./dev/docker-compose.dev.yml`. Dev overrides now live in `**docker-compose.dev.yml` at the repo root**; use `npm run dev` or `docker compose -f docker-compose.dev.yml up` instead.
+Older docs referred to `docker compose -f docker-compose.yml -f ./dev/docker-compose.dev.yml`. Dev overrides now live in **`docker-compose.dev.yml`** at the repo root; use `npm run dev` or `docker compose -f docker-compose.dev.yml up` instead.

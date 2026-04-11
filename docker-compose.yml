@@ -593,8 +593,12 @@ services:
     container_name: supabase-pooler
     image: supabase/supavisor:2.7.4
     restart: unless-stopped
+    # Stable hostname so `hostname`/Erlang can resolve this node (avoids "Temporary failure in name resolution" restart loops).
+    hostname: supavisor
+    # Host port for the pooler only (internal URLs still use POSTGRES_HOST + POSTGRES_PORT on the Docker network).
+    # If bind fails (e.g. local Postgres on 5432), set POSTGRES_EXPOSE_PORT=5433 in .env
     ports:
-      - ${POSTGRES_PORT}:5432
+      - ${POSTGRES_EXPOSE_PORT:-5432}:5432
       - ${POOLER_PROXY_PORT_TRANSACTION}:6543
     volumes:
       - ./volumes/pooler/pooler.exs:/etc/pooler/pooler.exs:ro,z
