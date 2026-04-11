@@ -84,7 +84,7 @@ If you add migrations later:
 ## Local development without Docker (optional)
 
 - **Frontend:** `cd frontend && npm install && npm run dev`
-- **Backend:** `cd backend && npm install && npm run build && npm run start` (set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `PORT` as needed). `npm install` does not run the TypeScript build (to avoid slow installs and memory-heavy `tsc` during install); compile explicitly with `npm run build`. If `tsc` exits with out-of-memory on a large machine, try `NODE_OPTIONS=--max-old-space-size=8192 npm run build`.
+- **Backend:** `cd backend && npm install && npm run build && npm run start` (set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `PORT` as needed)
 - Point `BACKEND_URL` at the backend URL your Next dev server should proxy to.
 
 ## Repository layout
@@ -122,8 +122,6 @@ Row Level Security (RLS) is used where configured. New users are typically assig
 - **Next.js cannot reach Supabase:** Wait until Kong and `db` are healthy; cold start can take a minute.
 - **Auth redirects:** `SITE_URL` and related URLs in `.env` should match how users open the app (for example `http://localhost:3002` if that is your published app port).
 - **Kong / Studio not on 8000:** Check `KONG_HTTP_PORT` in `.env`.
-- **Pooler bind error `address already in use` on `0.0.0.0:5432`:** Something on your host already listens on 5432 (often a system PostgreSQL). The `db` container does not need a host port; only **Supavisor** publishes Postgres. Set **`POSTGRES_EXPOSE_PORT=5433`** (or another free port) in `.env` and run `docker compose up` again. Connect from your machine with `psql`/`localhost:5433`, not 5432.
-- **Pooler logs repeat `hostname: Temporary failure in name resolution`:** The Supavisor image runs scripts that resolve the container hostname. The compose file sets a fixed **`hostname: supavisor`** on the pooler service so local resolution works. Recreate the container: `docker compose up -d --force-recreate supavisor`. If it persists, check Docker DNS (`/etc/resolv.conf` in the container) and that nothing on the host blocks the Docker bridge.
 
 ## Legacy compose note
 

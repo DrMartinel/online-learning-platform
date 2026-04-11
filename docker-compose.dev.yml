@@ -383,10 +383,8 @@ services:
     container_name: supabase-pooler
     image: supabase/supavisor:2.7.4
     restart: unless-stopped
-    hostname: supavisor
-    # Host port for the pooler only. If 5432 is taken, set POSTGRES_EXPOSE_PORT in .env (e.g. 5433).
     ports:
-      - ${POSTGRES_EXPOSE_PORT:-5432}:5432
+      - ${POSTGRES_PORT}:5432
       - ${POOLER_PROXY_PORT_TRANSACTION}:6543
     volumes:
       - ./volumes/pooler/pooler.exs:/etc/pooler/pooler.exs:ro,z

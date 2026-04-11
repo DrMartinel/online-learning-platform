@@ -5,10 +5,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "node --max-old-space-size=8192 ./node_modules/typescript/lib/tsc.js -p .",
+    "build": "tsc",
     "dev": "node --watch dist/presentation/http/server.js",
     "start": "node dist/presentation/http/server.js",
-    "prepublishOnly": "npm run build",
+    "prepare": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
