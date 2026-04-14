@@ -16,8 +16,14 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./dtos/UserDTOs"), exports);
 __exportStar(require("./dtos/AuthDTOs"), exports);
+__exportStar(require("./dtos/CourseDTOs"), exports);
 __exportStar(require("./use-cases/user/GetUserProfile"), exports);
 __exportStar(require("./use-cases/user/UpdateUserProfile"), exports);
 __exportStar(require("./use-cases/auth/SignIn"), exports);
 __exportStar(require("./use-cases/auth/SignUp"), exports);
 __exportStar(require("./use-cases/auth/SignOut"), exports);
+__exportStar(require("./use-cases/course/CreateCourse"), exports);
+__exportStar(require("./use-cases/course/FindCourseById"), exports);
+__exportStar(require("./use-cases/course/ListCourses"), exports);
+__exportStar(require("./use-cases/course/UpdateCourse"), exports);
+__exportStar(require("./use-cases/course/DeleteCourse"), exports);

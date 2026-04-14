@@ -5,4 +5,8 @@ export declare const authResultJsonSchema: Record<string, unknown>;
 export declare const errorBodySchema: Record<string, unknown>;
 export declare const logoutSuccessSchema: Record<string, unknown>;
 export declare const healthOkSchema: Record<string, unknown>;
+export declare const createCourseBodySchema: Record<string, unknown>;
+export declare const updateCourseBodySchema: Record<string, unknown>;
+export declare const courseResponseSchema: Record<string, unknown>;
+export declare const courseListSchema: Record<string, unknown>;
 //# sourceMappingURL=schemas.d.ts.map

@@ -8,6 +8,7 @@ const fastify_1 = __importDefault(require("fastify"));
 const cors_1 = __importDefault(require("@fastify/cors"));
 const register_1 = require("./openapi/register");
 const auth_1 = require("./routes/auth");
+const course_1 = require("./routes/course");
 const health_1 = require("./routes/health");
 async function buildServer() {
     const app = (0, fastify_1.default)({ logger: true });
@@ -15,6 +16,7 @@ async function buildServer() {
     await app.register(cors_1.default, { origin: true });
     await app.register(health_1.registerHealthRoutes);
     await app.register(auth_1.registerAuthRoutes);
+    await app.register(course_1.registerCourseRoutes);
     return app;
 }
 async function main() {

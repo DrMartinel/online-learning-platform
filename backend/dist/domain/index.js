@@ -16,7 +16,10 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./entities/User"), exports);
 __exportStar(require("./entities/AuthSession"), exports);
+__exportStar(require("./entities/Course"), exports);
 __exportStar(require("./errors/UserErrors"), exports);
 __exportStar(require("./errors/AuthErrors"), exports);
+__exportStar(require("./errors/CourseErrors"), exports);
 __exportStar(require("./repositories/UserRepository"), exports);
 __exportStar(require("./repositories/IAuthRepository"), exports);
+__exportStar(require("./repositories/ICourseRepository"), exports);

@@ -29,3 +29,32 @@ export const logoutSuccessSchema = toOpenApiSchema(logoutSuccessZ as ZodTypeAny)
 
 const healthOkZ = z.object({ ok: z.boolean() }).strict();
 export const healthOkSchema = toOpenApiSchema(healthOkZ as ZodTypeAny);
+
+// Course schemas
+const createCourseBodyZ = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters'),
+  description: z.string().optional(),
+  thumbnailUrl: z.string().url().optional(),
+}).strict();
+
+const updateCourseBodyZ = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters').optional(),
+  description: z.string().optional(),
+  thumbnailUrl: z.string().url().optional(),
+  isPublished: z.boolean().optional(),
+}).strict();
+
+const courseResponseZ = z.object({
+  id: z.string().uuid(),
+  instructorId: z.string().uuid(),
+  title: z.string(),
+  description: z.string().optional(),
+  thumbnailUrl: z.string().optional(),
+  isPublished: z.boolean(),
+  createdAt: z.string().datetime(),
+}).strict();
+
+export const createCourseBodySchema = toOpenApiSchema(createCourseBodyZ as ZodTypeAny);
+export const updateCourseBodySchema = toOpenApiSchema(updateCourseBodyZ as ZodTypeAny);
+export const courseResponseSchema = toOpenApiSchema(courseResponseZ as ZodTypeAny);
+export const courseListSchema = toOpenApiSchema(z.array(courseResponseZ) as ZodTypeAny);

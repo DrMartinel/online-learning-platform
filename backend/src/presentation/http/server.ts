@@ -2,6 +2,7 @@ import fastify from 'fastify';
 import cors from '@fastify/cors';
 import { registerOpenApi } from './openapi/register';
 import { registerAuthRoutes } from './routes/auth';
+import { registerCourseRoutes } from './routes/course';
 import { registerHealthRoutes } from './routes/health';
 
 export async function buildServer() {
@@ -11,6 +12,7 @@ export async function buildServer() {
   await app.register(cors, { origin: true });
   await app.register(registerHealthRoutes);
   await app.register(registerAuthRoutes);
+  await app.register(registerCourseRoutes);
 
   return app;
 }
