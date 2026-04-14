@@ -5,6 +5,11 @@ import {
   signInRequestSchema,
   signUpRequestSchema,
 } from '../../../application/dtos/AuthDTOs';
+import {
+  lessonSchema,
+  createLessonRequestSchema,
+  updateLessonRequestSchema,
+} from '../../../application/dtos/LessonDTOs';
 
 const jsonSchemaOpts = {
   target: 'openApi3' as const,
@@ -29,3 +34,7 @@ export const logoutSuccessSchema = toOpenApiSchema(logoutSuccessZ as ZodTypeAny)
 
 const healthOkZ = z.object({ ok: z.boolean() }).strict();
 export const healthOkSchema = toOpenApiSchema(healthOkZ as ZodTypeAny);
+
+export const lessonJsonSchema = toOpenApiSchema(lessonSchema as ZodTypeAny);
+export const createLessonBodySchema = toOpenApiSchema(createLessonRequestSchema as ZodTypeAny);
+export const updateLessonBodySchema = toOpenApiSchema(updateLessonRequestSchema as ZodTypeAny);
