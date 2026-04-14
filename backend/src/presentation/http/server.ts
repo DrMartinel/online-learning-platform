@@ -5,6 +5,7 @@ import { registerAuthRoutes } from './routes/auth';
 import { registerCourseRoutes } from './routes/course';
 import { registerHealthRoutes } from './routes/health';
 import { registerLessonRoutes } from './routes/lessons';
+import { registerUserProgressRoutes } from './routes/userProgress';
 
 export async function buildServer() {
   const app = fastify({ logger: true });
@@ -13,11 +14,8 @@ export async function buildServer() {
   await app.register(cors, { origin: true });
   await app.register(registerHealthRoutes);
   await app.register(registerAuthRoutes);
-<<<<<<< HEAD
   await app.register(registerCourseRoutes);
-=======
   await app.register(registerLessonRoutes);
->>>>>>> 4fec35b (feat: implement CRUD use cases and repository for lesson management)
 
   return app;
 }

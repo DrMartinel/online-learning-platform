@@ -11,17 +11,16 @@ const auth_1 = require("./routes/auth");
 const course_1 = require("./routes/course");
 const health_1 = require("./routes/health");
 const lessons_1 = require("./routes/lessons");
+const userProgress_1 = require("./routes/userProgress");
 async function buildServer() {
     const app = (0, fastify_1.default)({ logger: true });
     await (0, register_1.registerOpenApi)(app);
     await app.register(cors_1.default, { origin: true });
     await app.register(health_1.registerHealthRoutes);
     await app.register(auth_1.registerAuthRoutes);
-<<<<<<< HEAD
     await app.register(course_1.registerCourseRoutes);
-=======
     await app.register(lessons_1.registerLessonRoutes);
->>>>>>> 4fec35b (feat: implement CRUD use cases and repository for lesson management)
+    await app.register(userProgress_1.registerUserProgressRoutes);
     return app;
 }
 async function main() {
