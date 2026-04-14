@@ -10,6 +10,12 @@ import {
   createLessonRequestSchema,
   updateLessonRequestSchema,
 } from '../../../application/dtos/LessonDTOs';
+import {
+  createUserProgressSchema,
+  updateUserProgressSchema,
+  userProgressSchema,
+  courseProgressSchema,
+} from '../../../application/dtos/UserProgressDTOs';
 
 const jsonSchemaOpts = {
   target: 'openApi3' as const,
@@ -25,6 +31,12 @@ function toOpenApiSchema(schema: ZodTypeAny): Record<string, unknown> {
 export const signUpBodySchema = toOpenApiSchema(signUpRequestSchema as ZodTypeAny);
 export const signInBodySchema = toOpenApiSchema(signInRequestSchema as ZodTypeAny);
 export const authResultJsonSchema = toOpenApiSchema(authResultSchema as ZodTypeAny);
+
+/** User Progress Schemas */
+export const createUserProgressBodySchema = toOpenApiSchema(createUserProgressSchema as ZodTypeAny);
+export const updateUserProgressBodySchema = toOpenApiSchema(updateUserProgressSchema as ZodTypeAny);
+export const userProgressResponseSchema = toOpenApiSchema(userProgressSchema as ZodTypeAny);
+export const courseProgressResponseSchema = toOpenApiSchema(courseProgressSchema as ZodTypeAny);
 
 const errorBodyZ = z.object({ error: z.string() }).strict();
 export const errorBodySchema = toOpenApiSchema(errorBodyZ as ZodTypeAny);

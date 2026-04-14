@@ -5,3 +5,11 @@ test.http
 docker-compose.override.yml
 frontend/node_modules
 backend/node_modules
+
+# build output
+dist/
+.next/
+
+# typescript
+*.d.ts
+*.d.ts.map
