@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 {"version":3,"file":"schemas.d.ts","sourceRoot":"","sources":["../../../../src/presentation/http/openapi/schemas.ts"],"names":[],"mappings":"AAkBA,gGAAgG;AAChG,eAAO,MAAM,gBAAgB,yBAAqD,CAAC;AACnF,eAAO,MAAM,gBAAgB,yBAAqD,CAAC;AACnF,eAAO,MAAM,oBAAoB,yBAAkD,CAAC;AAGpF,eAAO,MAAM,eAAe,yBAA4C,CAAC;AAGzE,eAAO,MAAM,mBAAmB,yBAAgD,CAAC;AAGjF,eAAO,MAAM,cAAc,yBAA2C,CAAC;AA0BvE,eAAO,MAAM,sBAAsB,yBAAmD,CAAC;AACvF,eAAO,MAAM,sBAAsB,yBAAmD,CAAC;AACvF,eAAO,MAAM,oBAAoB,yBAAiD,CAAC;AACnF,eAAO,MAAM,gBAAgB,yBAA0D,CAAC"}
+=======
+{"version":3,"file":"schemas.d.ts","sourceRoot":"","sources":["../../../../src/presentation/http/openapi/schemas.ts"],"names":[],"mappings":"AAuBA,gGAAgG;AAChG,eAAO,MAAM,gBAAgB,yBAAqD,CAAC;AACnF,eAAO,MAAM,gBAAgB,yBAAqD,CAAC;AACnF,eAAO,MAAM,oBAAoB,yBAAkD,CAAC;AAGpF,eAAO,MAAM,eAAe,yBAA4C,CAAC;AAGzE,eAAO,MAAM,mBAAmB,yBAAgD,CAAC;AAGjF,eAAO,MAAM,cAAc,yBAA2C,CAAC;AAEvE,eAAO,MAAM,gBAAgB,yBAA8C,CAAC;AAC5E,eAAO,MAAM,sBAAsB,yBAA2D,CAAC;AAC/F,eAAO,MAAM,sBAAsB,yBAA2D,CAAC"}
+>>>>>>> 4fec35b (feat: implement CRUD use cases and repository for lesson management)
