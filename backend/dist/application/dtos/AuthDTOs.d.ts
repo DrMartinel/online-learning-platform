@@ -5,12 +5,12 @@ export declare const signUpRequestSchema: z.ZodObject<{
     password: z.ZodOptional<z.ZodString>;
     fullName: z.ZodString;
 }, "strict", z.ZodTypeAny, {
-    email: string;
     fullName: string;
+    email: string;
     password?: string | undefined;
 }, {
-    email: string;
     fullName: string;
+    email: string;
     password?: string | undefined;
 }>;
 export type SignUpDTO = z.infer<typeof signUpRequestSchema>;
@@ -34,16 +34,16 @@ export declare const authResultSchema: z.ZodObject<{
     role: z.ZodString;
     expiresAt: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
+    role: string;
     accessToken: string;
     refreshToken: string;
     userId: string;
-    role: string;
     expiresAt?: number | undefined;
 }, {
+    role: string;
     accessToken: string;
     refreshToken: string;
     userId: string;
-    role: string;
     expiresAt?: number | undefined;
 }>;
 export type AuthResultDTO = z.infer<typeof authResultSchema>;
