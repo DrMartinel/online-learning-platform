@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.healthOkSchema = exports.logoutSuccessSchema = exports.errorBodySchema = exports.authResultJsonSchema = exports.signInBodySchema = exports.signUpBodySchema = void 0;
+exports.updateLessonBodySchema = exports.createLessonBodySchema = exports.lessonJsonSchema = exports.healthOkSchema = exports.logoutSuccessSchema = exports.errorBodySchema = exports.authResultJsonSchema = exports.signInBodySchema = exports.signUpBodySchema = void 0;
 const zod_1 = require("zod");
 const zod_to_json_schema_1 = require("zod-to-json-schema");
 const AuthDTOs_1 = require("../../../application/dtos/AuthDTOs");
+const LessonDTOs_1 = require("../../../application/dtos/LessonDTOs");
 const jsonSchemaOpts = {
     target: 'openApi3',
     $refStrategy: 'none',
@@ -22,3 +23,6 @@ const logoutSuccessZ = zod_1.z.object({ success: zod_1.z.boolean() }).strict();
 exports.logoutSuccessSchema = toOpenApiSchema(logoutSuccessZ);
 const healthOkZ = zod_1.z.object({ ok: zod_1.z.boolean() }).strict();
 exports.healthOkSchema = toOpenApiSchema(healthOkZ);
+exports.lessonJsonSchema = toOpenApiSchema(LessonDTOs_1.lessonSchema);
+exports.createLessonBodySchema = toOpenApiSchema(LessonDTOs_1.createLessonRequestSchema);
+exports.updateLessonBodySchema = toOpenApiSchema(LessonDTOs_1.updateLessonRequestSchema);
