@@ -1,3 +1,0 @@
-export * from './supabase/repositories/SupabaseUserRepository';
-export * from './supabase/repositories/SupabaseAuthRepository';
-//# sourceMappingURL=index.d.ts.map
