@@ -5,6 +5,17 @@ import {
   signInRequestSchema,
   signUpRequestSchema,
 } from '../../../application/dtos/AuthDTOs';
+import {
+  lessonSchema,
+  createLessonRequestSchema,
+  updateLessonRequestSchema,
+} from '../../../application/dtos/LessonDTOs';
+import {
+  createUserProgressSchema,
+  updateUserProgressSchema,
+  userProgressSchema,
+  courseProgressSchema,
+} from '../../../application/dtos/UserProgressDTOs';
 
 const jsonSchemaOpts = {
   target: 'openApi3' as const,
@@ -21,6 +32,12 @@ export const signUpBodySchema = toOpenApiSchema(signUpRequestSchema as ZodTypeAn
 export const signInBodySchema = toOpenApiSchema(signInRequestSchema as ZodTypeAny);
 export const authResultJsonSchema = toOpenApiSchema(authResultSchema as ZodTypeAny);
 
+/** User Progress Schemas */
+export const createUserProgressBodySchema = toOpenApiSchema(createUserProgressSchema as ZodTypeAny);
+export const updateUserProgressBodySchema = toOpenApiSchema(updateUserProgressSchema as ZodTypeAny);
+export const userProgressResponseSchema = toOpenApiSchema(userProgressSchema as ZodTypeAny);
+export const courseProgressResponseSchema = toOpenApiSchema(courseProgressSchema as ZodTypeAny);
+
 const errorBodyZ = z.object({ error: z.string() }).strict();
 export const errorBodySchema = toOpenApiSchema(errorBodyZ as ZodTypeAny);
 
@@ -29,3 +46,7 @@ export const logoutSuccessSchema = toOpenApiSchema(logoutSuccessZ as ZodTypeAny)
 
 const healthOkZ = z.object({ ok: z.boolean() }).strict();
 export const healthOkSchema = toOpenApiSchema(healthOkZ as ZodTypeAny);
+
+export const lessonJsonSchema = toOpenApiSchema(lessonSchema as ZodTypeAny);
+export const createLessonBodySchema = toOpenApiSchema(createLessonRequestSchema as ZodTypeAny);
+export const updateLessonBodySchema = toOpenApiSchema(updateLessonRequestSchema as ZodTypeAny);
