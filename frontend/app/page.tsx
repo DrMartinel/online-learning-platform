@@ -2,34 +2,8 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex min-h-full flex-col bg-[#fafaf9] text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
-      <header className="sticky top-0 z-50 border-b border-zinc-200/80 bg-[#fafaf9]/90 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/90">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link
-            href="/"
-            className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-white"
-          >
-            OLP
-          </Link>
-          <nav className="flex items-center gap-3 sm:gap-4">
-            <Link
-              href="/login"
-              className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/signup"
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              Get started
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      <main className="flex-1">
-        <section className="relative overflow-hidden border-b border-zinc-200/60 dark:border-zinc-800">
+    <div className="min-h-full bg-[#fafaf9] text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
+      <section className="relative overflow-hidden border-b border-zinc-200/60 dark:border-zinc-800">
           <div
             className="pointer-events-none absolute inset-0 opacity-40 dark:opacity-25"
             aria-hidden
@@ -140,23 +114,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-      </main>
-
-      <footer className="border-t border-zinc-200 bg-white py-10 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-4 sm:flex-row sm:px-6">
-          <p className="text-sm text-zinc-500 dark:text-zinc-500">
-            © {new Date().getFullYear()} Online Learning Platform
-          </p>
-          <div className="flex gap-6 text-sm">
-            <Link href="/login" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
-              Log in
-            </Link>
-            <Link href="/signup" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
-              Sign up
-            </Link>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
