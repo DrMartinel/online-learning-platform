@@ -1,1 +1,0 @@
-{"version":3,"file":"CourseErrors.d.ts","sourceRoot":"","sources":["../../../src/domain/errors/CourseErrors.ts"],"names":[],"mappings":"AAAA,qBAAa,WAAY,SAAQ,KAAK;gBACxB,OAAO,EAAE,MAAM;CAI5B;AAED,qBAAa,mBAAoB,SAAQ,WAAW;gBACtC,QAAQ,EAAE,MAAM;CAI7B;AAED,qBAAa,qBAAsB,SAAQ,WAAW;gBACxC,OAAO,EAAE,MAAM;CAI5B;AAED,qBAAa,uBAAwB,SAAQ,WAAW;gBAC1C,OAAO,GAAE,MAA6D;CAInF"}
