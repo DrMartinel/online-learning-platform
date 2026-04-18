@@ -24,14 +24,12 @@ Copy or create a `.env` at the repository root. It must define Supabase-related 
 
 **Important:** `POSTGRES_PASSWORD` is applied when the Postgres data directory is **first** initialized. If you change `POSTGRES_PASSWORD` in `.env` after `./volumes/db/data` already exists, services such as analytics and auth will fail with `password authentication failed` until you either restore the old password or **reset the DB volume** (see Troubleshooting).
 
-## Docker  Compose layout
+## Docker Compose layout
 
-
-| File                     | Purpose                                                                                                                                                                                                                            |
+| File                     | Purpose                                                                                                                                                                                                                        |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `docker-compose.yml`     | **Production-style** builds: `frontend/Dockerfile` and `backend/Dockerfile` bake source and dependencies into images. No bind mounts for app source.                                                                           |
-| `docker-compose.dev.yml` | **Development**: same Supabase services as production compose, plus `app` and `backend` built from `frontend/Dockerfile.dev` and `backend/Dockerfile.dev`, with **bind-mounted** `./frontend` and `./backend`  for live reload. |
-
+| `docker-compose.dev.yml` | **Development**: same Supabase services as production compose, plus `app` and `backend` built from `frontend/Dockerfile.dev` and `backend/Dockerfile.dev`, with **bind-mounted** `./frontend` and `./backend` for live reload. |
 
 Optional overrides (S3 storage, nginx, etc.) remain as separate `docker-compose.*.yml` files in the repo; combine them with `-f` when needed.
 
@@ -43,18 +41,16 @@ Optional overrides (S3 storage, nginx, etc.) remain as separate `docker-compose.
 
 Run these from the project root:
 
-
-| Script                     | Command                                                  | Description                                                                                                                                |
-| -------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `npm run dev`              | `docker compose -f docker-compose.dev.yml up --build -d` | Start the **dev** stack (Supabase + hot-reload frontend/backend).                                                                          |
-| `npm run dev:down`         | `docker compose -f docker-compose.dev.yml down`          | Stop the dev stack.                                                                                                                        |
-| `npm run dev:reset`        | Compose down with volumes + up                           | Nuclear reset of dev stack volumes/orphans; use when things are inconsistent.                                                              |
-| `npm run dev:volume-reset` | Removes `./volumes/db/data` and `./volumes/storage`      | **Deletes local DB and file storage** on disk; stop Compose first. Then bring the stack up again so Postgres re-inits with current `.env`. |
-| `npm run build`            | Builds `frontend` then `backend` with local `npm run build` | Compile Next.js and TypeScript **without Docker** (run from repo root after `npm install` in each app, or use once).                      |
-| `npm run build:docker`     | `docker compose -f docker-compose.yml build`               | Build **production Docker images** (requires Docker).                                                                                        |
-| `npm run start`            | `docker compose -f docker-compose.yml up -d`             | Run **production** stack in the background.                                                                                                |
-| `npm run stop`             | `docker compose -f docker-compose.yml down`              | Stop production stack.                                                                                                                     |
-
+| Script                     | Command                                                     | Description                                                                                                                                |
+| -------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `npm run dev`              | `docker compose -f docker-compose.dev.yml up --build -d`    | Start the **dev** stack (Supabase + hot-reload frontend/backend).                                                                          |
+| `npm run dev:down`         | `docker compose -f docker-compose.dev.yml down`             | Stop the dev stack.                                                                                                                        |
+| `npm run dev:reset`        | Compose down with volumes + up                              | Nuclear reset of dev stack volumes/orphans; use when things are inconsistent.                                                              |
+| `npm run dev:volume-reset` | Removes `./volumes/db/data` and `./volumes/storage`         | **Deletes local DB and file storage** on disk; stop Compose first. Then bring the stack up again so Postgres re-inits with current `.env`. |
+| `npm run build`            | Builds `frontend` then `backend` with local `npm run build` | Compile Next.js and TypeScript **without Docker** (run from repo root after `npm install` in each app, or use once).                       |
+| `npm run build:docker`     | `docker compose -f docker-compose.yml build`                | Build **production Docker images** (requires Docker).                                                                                      |
+| `npm run start`            | `docker compose -f docker-compose.yml up -d`                | Run **production** stack in the background.                                                                                                |
+| `npm run stop`             | `docker compose -f docker-compose.yml down`                 | Stop production stack.                                                                                                                     |
 
 Equivalent manual invocations work if you prefer not to use npm.
 
@@ -62,13 +58,11 @@ Equivalent manual invocations work if you prefer not to use npm.
 
 Defaults depend on `.env` (for example `KONG_HTTP_PORT`). Commonly:
 
-
 | Service                          | URL / port                                             |
 | -------------------------------- | ------------------------------------------------------ |
 | Next.js app (Compose)            | `http://localhost:3002` (maps container port 3000)     |
 | Backend HTTP API (Compose)       | `http://localhost:3003` (maps container port 3001)     |
 | Supabase API / Studio (via Kong) | Often `http://localhost:8000` if `KONG_HTTP_PORT=8000` |
-
 
 Adjust if your `.env` changes host ports.
 

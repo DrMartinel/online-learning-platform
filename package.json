@@ -2,6 +2,9 @@
   "name": "online-learning-platform",
   "private": true,
   "scripts": {
+    "backend:build": "npm run build --prefix backend",
+    "backend:start": "npm start --prefix backend",
+    "backend:dev": "npm run dev --prefix backend",
     "dev": "docker compose -f docker-compose.dev.yml up --build -d",
     "dev:down": "docker compose -f docker-compose.dev.yml down",
     "dev:reset": "docker compose -f docker-compose.dev.yml down -v --remove-orphans && docker compose -f docker-compose.dev.yml up --build -d",
