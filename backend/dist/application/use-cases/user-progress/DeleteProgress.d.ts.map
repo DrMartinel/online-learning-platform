@@ -1,1 +1,0 @@
-{"version":3,"file":"DeleteProgress.d.ts","sourceRoot":"","sources":["../../../../src/application/use-cases/user-progress/DeleteProgress.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,uBAAuB,EAAE,MAAM,sDAAsD,CAAC;AAE/F,qBAAa,qBAAqB;IACpB,OAAO,CAAC,QAAQ,CAAC,UAAU;gBAAV,UAAU,EAAE,uBAAuB;IAE1D,OAAO,CAAC,EAAE,EAAE,MAAM,GAAG,OAAO,CAAC,IAAI,CAAC;CAOzC"}
