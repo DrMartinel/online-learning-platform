@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "NODE_OPTIONS=--max-old-space-size=8192 tsc",
+    "build": "NODE_OPTIONS=--max-old-space-size=8192 tsc -p tsconfig.json",
     "dev": "node --watch dist/presentation/http/server.js",
     "start": "node dist/presentation/http/server.js",
     "prepare": "npm run build",
