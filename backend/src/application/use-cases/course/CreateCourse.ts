@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { ICourseRepository } from '../../../domain/repositories/ICourseRepository';
 import { Course } from '../../../domain/entities/Course';
 import { CreateCourseDTO, CourseResponseDTO } from '../../dtos/CourseDTOs';
@@ -19,7 +19,7 @@ export class CreateCourseUseCase {
 
     // Create course entity
     const course = new Course(
-      uuidv4(),
+      randomUUID(),
       instructorId,
       dto.title.trim(),
       dto.description?.trim() || null,
