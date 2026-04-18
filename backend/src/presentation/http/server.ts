@@ -16,6 +16,8 @@ export async function buildServer() {
   await app.register(registerAuthRoutes);
   await app.register(registerCourseRoutes);
   await app.register(registerLessonRoutes);
+  await app.register(registerLessonRoutes);
+  await app.register(registerUserProgressRoutes);
 
   return app;
 }
