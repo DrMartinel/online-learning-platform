@@ -47,7 +47,6 @@ export const logoutSuccessSchema = toOpenApiSchema(logoutSuccessZ as ZodTypeAny)
 const healthOkZ = z.object({ ok: z.boolean() }).strict();
 export const healthOkSchema = toOpenApiSchema(healthOkZ as ZodTypeAny);
 
-<<<<<<< HEAD
 // Course schemas
 const createCourseBodyZ = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -76,8 +75,9 @@ export const createCourseBodySchema = toOpenApiSchema(createCourseBodyZ as ZodTy
 export const updateCourseBodySchema = toOpenApiSchema(updateCourseBodyZ as ZodTypeAny);
 export const courseResponseSchema = toOpenApiSchema(courseResponseZ as ZodTypeAny);
 export const courseListSchema = toOpenApiSchema(z.array(courseResponseZ) as ZodTypeAny);
-=======
 export const lessonJsonSchema = toOpenApiSchema(lessonSchema as ZodTypeAny);
 export const createLessonBodySchema = toOpenApiSchema(createLessonRequestSchema as ZodTypeAny);
 export const updateLessonBodySchema = toOpenApiSchema(updateLessonRequestSchema as ZodTypeAny);
->>>>>>> 4fec35b (feat: implement CRUD use cases and repository for lesson management)
+export const lessonJsonSchema = toOpenApiSchema(lessonSchema as ZodTypeAny);
+export const createLessonBodySchema = toOpenApiSchema(createLessonRequestSchema as ZodTypeAny);
+export const updateLessonBodySchema = toOpenApiSchema(updateLessonRequestSchema as ZodTypeAny);
