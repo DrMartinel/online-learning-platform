@@ -5,6 +5,8 @@ test.http
 docker-compose.override.yml
 frontend/node_modules
 backend/node_modules
+backend/dist
+backend/.tsbuildinfo
 
 # build output
 dist/
