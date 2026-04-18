@@ -1,10 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-<<<<<<< HEAD
 exports.courseListSchema = exports.courseResponseSchema = exports.updateCourseBodySchema = exports.createCourseBodySchema = exports.healthOkSchema = exports.logoutSuccessSchema = exports.errorBodySchema = exports.authResultJsonSchema = exports.signInBodySchema = exports.signUpBodySchema = void 0;
-=======
 exports.updateLessonBodySchema = exports.createLessonBodySchema = exports.lessonJsonSchema = exports.healthOkSchema = exports.logoutSuccessSchema = exports.errorBodySchema = exports.authResultJsonSchema = exports.signInBodySchema = exports.signUpBodySchema = void 0;
->>>>>>> 4fec35b (feat: implement CRUD use cases and repository for lesson management)
+exports.updateLessonBodySchema = exports.createLessonBodySchema = exports.lessonJsonSchema = exports.healthOkSchema = exports.logoutSuccessSchema = exports.errorBodySchema = exports.authResultJsonSchema = exports.signInBodySchema = exports.signUpBodySchema = void 0;
 const zod_1 = require("zod");
 const zod_to_json_schema_1 = require("zod-to-json-schema");
 const AuthDTOs_1 = require("../../../application/dtos/AuthDTOs");
@@ -37,7 +35,6 @@ const logoutSuccessZ = zod_1.z.object({ success: zod_1.z.boolean() }).strict();
 exports.logoutSuccessSchema = toOpenApiSchema(logoutSuccessZ);
 const healthOkZ = zod_1.z.object({ ok: zod_1.z.boolean() }).strict();
 exports.healthOkSchema = toOpenApiSchema(healthOkZ);
-<<<<<<< HEAD
 // Course schemas
 const createCourseBodyZ = zod_1.z.object({
     title: zod_1.z.string().min(3, 'Title must be at least 3 characters'),
@@ -63,8 +60,9 @@ exports.createCourseBodySchema = toOpenApiSchema(createCourseBodyZ);
 exports.updateCourseBodySchema = toOpenApiSchema(updateCourseBodyZ);
 exports.courseResponseSchema = toOpenApiSchema(courseResponseZ);
 exports.courseListSchema = toOpenApiSchema(zod_1.z.array(courseResponseZ));
-=======
 exports.lessonJsonSchema = toOpenApiSchema(LessonDTOs_1.lessonSchema);
 exports.createLessonBodySchema = toOpenApiSchema(LessonDTOs_1.createLessonRequestSchema);
 exports.updateLessonBodySchema = toOpenApiSchema(LessonDTOs_1.updateLessonRequestSchema);
->>>>>>> 4fec35b (feat: implement CRUD use cases and repository for lesson management)
+exports.lessonJsonSchema = toOpenApiSchema(LessonDTOs_1.lessonSchema);
+exports.createLessonBodySchema = toOpenApiSchema(LessonDTOs_1.createLessonRequestSchema);
+exports.updateLessonBodySchema = toOpenApiSchema(LessonDTOs_1.updateLessonRequestSchema);
