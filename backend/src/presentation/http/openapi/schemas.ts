@@ -78,6 +78,3 @@ export const courseListSchema = toOpenApiSchema(z.array(courseResponseZ) as ZodT
 export const lessonJsonSchema = toOpenApiSchema(lessonSchema as ZodTypeAny);
 export const createLessonBodySchema = toOpenApiSchema(createLessonRequestSchema as ZodTypeAny);
 export const updateLessonBodySchema = toOpenApiSchema(updateLessonRequestSchema as ZodTypeAny);
-export const lessonJsonSchema = toOpenApiSchema(lessonSchema as ZodTypeAny);
-export const createLessonBodySchema = toOpenApiSchema(createLessonRequestSchema as ZodTypeAny);
-export const updateLessonBodySchema = toOpenApiSchema(updateLessonRequestSchema as ZodTypeAny);

@@ -11,7 +11,10 @@ ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=8192
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+# Copy sources explicitly (better caching, clearer failures)
+COPY package.json ./package.json
+COPY tsconfig.json ./tsconfig.json
+COPY src ./src
 # Host `dist/` is excluded by .dockerignore; remove any stale output before tsc (clean incremental state)
 RUN rm -rf dist
 RUN npm run build
