@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
@@ -9,22 +9,21 @@ import {
   X,
   Sun,
   Moon,
-  Bell,
   LogOut,
   ChevronDown,
+  BookOpen,
+  User,
 } from "lucide-react";
 import { useTheme } from "@/components/layout/ThemeProvider";
 import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const navItems = [
   { href: "/", label: "Trang chủ" },
-  { href: "/dashboard", label: "Lớp học" },
-  { href: "/quiz", label: "Bài kiểm tra" },
-  { href: "/live", label: "Live Session" },
+  { href: "/courses", label: "Khóa học" },
 ];
 
-function getInitials(user: User): string {
+function getInitials(user: SupabaseUser): string {
   const meta = user.user_metadata;
   if (meta?.full_name) {
     return meta.full_name
@@ -44,20 +43,38 @@ export default function Header() {
   const pathname = usePathname();
   const { darkMode, setDarkMode } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      setIsLoading(false);
+    });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      setIsLoading(false);
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownOpen]);
 
   const handleLogout = async () => {
     setDropdownOpen(false);
@@ -107,16 +124,12 @@ export default function Header() {
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
-          {user ? (
+          {isLoading ? (
+            <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+          ) : user ? (
             <>
-              {/* Notification bell */}
-              <button className="hidden sm:flex p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative">
-                <Bell size={18} />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-              </button>
-
               {/* User avatar dropdown */}
-              <div className="relative">
+              <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center gap-1.5"
@@ -141,11 +154,20 @@ export default function Header() {
                       </p>
                     </div>
                     <Link
+                      href="/my-courses"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      <BookOpen size={14} />
+                      Khóa học của tôi
+                    </Link>
+                    <Link
                       href="/profile"
                       onClick={() => setDropdownOpen(false)}
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
-                      Hồ sơ cá nhân
+                      <User size={14} />
+                      Hồ sơ
                     </Link>
                     <button
                       onClick={handleLogout}
@@ -203,7 +225,32 @@ export default function Header() {
             </Link>
           ))}
 
-          {!user && (
+          {user && (
+            <div className="pt-2 border-t border-gray-200 dark:border-gray-800 space-y-1">
+              <Link
+                href="/my-courses"
+                onClick={() => setMobileOpen(false)}
+                className="block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                Khóa học của tôi
+              </Link>
+              <Link
+                href="/profile"
+                onClick={() => setMobileOpen(false)}
+                className="block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                Hồ sơ
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                Đăng xuất
+              </button>
+            </div>
+          )}
+
+          {!user && !isLoading && (
             <div className="pt-2 border-t border-gray-200 dark:border-gray-800 space-y-1">
               <Link
                 href="/login"

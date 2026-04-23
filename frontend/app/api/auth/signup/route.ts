@@ -1,27 +1,38 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const { fullName, email, password } = await request.json();
 
-    const backendUrl = process.env.BACKEND_URL;
-    if (!backendUrl) {
-      return NextResponse.json({ error: 'Missing BACKEND_URL' }, { status: 500 });
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    const res = await fetch(`${backendUrl}/auth/signup`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(body),
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: fullName ?? '' },
+      },
     });
 
-    const data = await res.json().catch(() => ({}));
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
 
-    return NextResponse.json(data, { status: res.status });
+    // Return session tokens (null when email confirmation is required)
+    return NextResponse.json({
+      user: data.user,
+      session: data.session
+        ? { access_token: data.session.access_token, refresh_token: data.session.refresh_token }
+        : null,
+    });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : String(error) },
-      { status: 400 }
+      { error: error instanceof Error ? error.message : 'An unexpected error occurred' },
+      { status: 500 }
     );
   }
 }
