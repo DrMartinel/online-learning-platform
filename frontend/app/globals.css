@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Enable class-based dark mode in Tailwind v4.
+   Without this, dark: utilities respond to prefers-color-scheme (media query)
+   and cannot be controlled by toggling a .dark class on <html>. */
+@custom-variant dark (&:is(.dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -17,11 +22,10 @@
   --color-surface-card: #FFFFFF;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* CSS variables for dark mode — driven by the .dark class on <html> */
+html.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 body {
