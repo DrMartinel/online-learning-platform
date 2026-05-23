@@ -446,6 +446,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_SUPABASE_URL=http://localhost:8000
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}
     ports:
       - "3002:3000"
     environment:
