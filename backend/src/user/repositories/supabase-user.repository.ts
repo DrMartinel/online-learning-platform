@@ -46,6 +46,15 @@ export class SupabaseUserRepository implements UserRepository {
     return this.mapToUser(data);
   }
 
+  async findAll(): Promise<User[]> {
+    const { data, error } = await this.client
+      .from('profiles')
+      .select();
+
+    if (error) throw error;
+    return (data || []).map(row => this.mapToUser(row));
+  }
+
   async save(user: User): Promise<User> {
     const { data, error } = await this.client
       .from('profiles')

@@ -5,7 +5,7 @@ Full-stack learning platform with a **Next.js (App Router)** frontend, a **Node 
 ## Architecture
 
 - **Frontend** (`frontend/`): Next.js 16. Route handlers under `app/api/` act as a thin BFF: they **proxy HTTP requests** to the backend service using `BACKEND_URL`. The frontend does **not** import the backend package as a library.
-- **Backend API** (`backend/`): A **NestJS** application structured using Feature-Based Modular Architecture (e.g., `auth`, `user`, `course`, `lesson`). Each module is divided into layered directories (`controllers/`, `services/`, `repositories/`, and `test/`). Request and response shapes are defined with **Zod** using `nestjs-zod`, enabling seamless validation and OpenAPI/Swagger documentation generation. **Swagger UI** is available at `/docs` (e.g., port **3003** on the host when using Compose).
+- **Backend API** (`backend/`): A **NestJS** application structured using Feature-Based Modular Architecture (e.g., `auth`, `user`, `course`, `lesson`). Each module is divided into layered directories (`controllers/`, `services/`, `repositories/`, and `test/`). Request and response shapes are defined with **Zod** using `nestjs-zod`, enabling seamless validation and OpenAPI/Swagger documentation generation. **Swagger UI** is available at `/docs` (e.g., port **3003** on the host when using Compose). Security is strictly enforced using a custom **IAM/RBAC module** with `@Auth()` decorators and URN-based permissions.
 - **Supabase stack**: Postgres, GoTrue (auth), Kong (API gateway), PostgREST, Realtime, Storage, Studio, Analytics, Edge Functions, pooler, etc., defined in the Compose files below.
 
 ```
@@ -28,8 +28,8 @@ Copy or create a `.env` at the repository root. It must define Supabase-related 
 
 | File                     | Purpose                                                                                                                                                                                                                        |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `docker-compose.yml`     | **Production-style** builds: `frontend/Dockerfile` and `backend/Dockerfile` bake source and dependencies into images. No bind mounts for app source.                                                                           |
-| `docker-compose.dev.yml` | **Development**: same Supabase services as production compose, plus `app` and `backend` built from `frontend/Dockerfile.dev` and `backend/Dockerfile.dev`, with **bind-mounted** `./frontend` and `./backend` for live reload. |
+| `docker-compose.yml`     | **Production-style** builds: `frontend/Dockerfile` and `backend/Dockerfile` bake source and dependencies into isolated images tagged `prod`. No bind mounts for app source.                                                                           |
+| `docker-compose.dev.yml` | **Development**: same Supabase services as production compose, plus `app` and `backend` built from `frontend/Dockerfile.dev` and `backend/Dockerfile.dev` tagged `dev`, with **bind-mounted** `./frontend` and `./backend` for live reload. |
 
 Optional overrides (S3 storage, nginx, etc.) remain as separate `docker-compose.*.yml` files in the repo; combine them with `-f` when needed.
 
@@ -122,9 +122,16 @@ online-learning-platform/
 └── .env                        # secrets and ports (not committed if gitignored)
 ```
 
-## Security and roles
+## Security and Identity Access Management (IAM)
 
-Row Level Security (RLS) is used where configured. New users are typically assigned a default role (for example student) via database triggers; privileged roles may be adjusted in Supabase Studio or SQL.
+Security is handled via a robust Identity and Access Management (IAM) module using **Role-Based Access Control (RBAC)**.
+
+1. **Authentication**: Handled via Supabase Auth (GoTrue). The Next.js BFF securely proxies the user's `access_token` to the NestJS backend.
+2. **Authorization**: The backend's `AuthGuard` verifies the JWT, while the `PermissionGuard` ensures the user possesses the necessary roles for the endpoint.
+3. **URN-based Permissions**: All endpoints are secured using granular URNs (e.g., `action:course:create`, `action:lesson:read`).
+4. **Normalized Schema**: Permissions are dynamically mapped via custom Postgres tables (`iam_roles`, `iam_permissions`, `iam_role_permissions`, and `iam_user_roles`).
+
+New users are typically assigned the `role:user:default` role, while platform administrators are assigned `role:user:admin`.
 
 ## Troubleshooting
 

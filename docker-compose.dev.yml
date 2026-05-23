@@ -254,6 +254,7 @@ services:
 
   app:
     container_name: olp-frontend
+    image: olp-frontend:dev
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
@@ -277,6 +278,7 @@ services:
 
   backend:
     container_name: olp-backend
+    image: olp-backend:dev
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
