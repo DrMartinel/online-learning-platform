@@ -14,6 +14,7 @@ describe('UserAdminController', () => {
       adminListUsers: jest.fn(),
       getProfile: jest.fn(),
       adminUpdateProfile: jest.fn(),
+      adminCreateUser: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -56,5 +57,12 @@ describe('UserAdminController', () => {
     service.adminUpdateProfile.mockResolvedValue({ id: '1' } as any);
     expect(await controller.updateUser('1', dto)).toEqual({ id: '1' });
     expect(service.adminUpdateProfile).toHaveBeenCalledWith('1', dto);
+  });
+
+  it('should create a new user', async () => {
+    const dto = { email: 'test@example.com', fullName: 'Test User', role: 'student' as any };
+    service.adminCreateUser.mockResolvedValue({ id: '2' } as any);
+    expect(await controller.createUser(dto)).toEqual({ id: '2' });
+    expect(service.adminCreateUser).toHaveBeenCalledWith(dto);
   });
 });

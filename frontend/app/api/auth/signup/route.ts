@@ -1,34 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { fullName, email, password } = await request.json();
+    const { email, password, fullName } = await request.json();
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+    if (!email || !password || !fullName) {
+      return NextResponse.json({ error: 'Email, password, and full name are required' }, { status: 400 });
     }
 
-    const supabase = await createClient();
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName ?? '' },
-      },
-    });
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+    const backendUrl = process.env.BACKEND_URL;
+    if (!backendUrl) {
+      throw new Error('BACKEND_URL is not configured');
     }
 
-    // Return session tokens (null when email confirmation is required)
-    return NextResponse.json({
-      user: data.user,
-      session: data.session
-        ? { access_token: data.session.access_token, refresh_token: data.session.refresh_token }
-        : null,
+    const res = await fetch(`${backendUrl}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, fullName }),
     });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      return NextResponse.json({ error: data.message || 'Signup failed' }, { status: res.status });
+    }
+
+    const response = NextResponse.json({
+      user: { id: data.userId, role: data.role },
+      success: true,
+    });
+
+    response.cookies.set('olp_session', data.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return response;
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'An unexpected error occurred' },

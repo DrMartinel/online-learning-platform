@@ -11,6 +11,7 @@
     "dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "load-iam": "ts-node src/utils/load-iam-data.ts",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",

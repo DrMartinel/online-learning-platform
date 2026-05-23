@@ -2,7 +2,7 @@ import { Controller, Get, Post, Put, Delete, Param, Body, Query, HttpCode, HttpS
 import { LessonService } from '../../services/lesson.service';
 import { CreateLessonDTO, UpdateLessonDTO, LessonResponseDTO } from '../../dto/lesson.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
-import { OperatorAuth } from '../../../iam/decorators/auth.decorator';
+import { Auth } from '../../../iam/decorators/auth.decorator';
 
 @ApiTags('admin/lessons')
 @ApiBearerAuth()
@@ -11,7 +11,7 @@ export class LessonAdminController {
   constructor(private readonly lessonService: LessonService) {}
 
   @Post()
-  @OperatorAuth('action:admin:lesson:create')
+  @Auth('action:admin:lesson:create')
   @ApiOperation({ summary: 'Admin: Create a new lesson' })
   @ApiResponse({ status: 201, type: LessonResponseDTO })
   async createLesson(@Body() dto: CreateLessonDTO): Promise<LessonResponseDTO> {
@@ -19,7 +19,7 @@ export class LessonAdminController {
   }
 
   @Get()
-  @OperatorAuth('action:admin:lesson:list')
+  @Auth('action:admin:lesson:list')
   @ApiOperation({ summary: 'Admin: List lessons for a course' })
   @ApiQuery({ name: 'courseId', required: true })
   @ApiQuery({ name: 'publishedOnly', required: false, type: Boolean })
@@ -32,7 +32,7 @@ export class LessonAdminController {
   }
 
   @Get(':id')
-  @OperatorAuth('action:admin:lesson:read')
+  @Auth('action:admin:lesson:read')
   @ApiOperation({ summary: 'Admin: Get lesson by ID' })
   @ApiResponse({ status: 200, type: LessonResponseDTO })
   async getLesson(@Param('id') id: string): Promise<LessonResponseDTO> {
@@ -40,7 +40,7 @@ export class LessonAdminController {
   }
 
   @Put(':id')
-  @OperatorAuth('action:admin:lesson:update')
+  @Auth('action:admin:lesson:update')
   @ApiOperation({ summary: 'Admin: Update a lesson' })
   @ApiResponse({ status: 200, type: LessonResponseDTO })
   async updateLesson(@Param('id') id: string, @Body() dto: UpdateLessonDTO): Promise<LessonResponseDTO> {
@@ -48,7 +48,7 @@ export class LessonAdminController {
   }
 
   @Delete(':id')
-  @OperatorAuth('action:admin:lesson:delete')
+  @Auth('action:admin:lesson:delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Admin: Delete a lesson' })
   @ApiResponse({ status: 204 })
