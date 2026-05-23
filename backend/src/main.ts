@@ -1,14 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ZodValidationPipe } from 'nestjs-zod';
+import { ZodValidationPipe, patchNestJsSwagger } from 'nestjs-zod';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
-  
+
   // Set up global validation pipe for nestjs-zod
   app.useGlobalPipes(new ZodValidationPipe());
+
+
+
+  // Patch Swagger to support nestjs-zod DTOs
+  patchNestJsSwagger();
 
   // Set up Swagger API docs
   const config = new DocumentBuilder()
@@ -16,7 +21,7 @@ async function bootstrap() {
     .setDescription('The API description for the learning platform')
     .setVersion('1.0')
     .build();
-  
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 

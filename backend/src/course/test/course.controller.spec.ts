@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CourseController } from '../controllers/course.controller';
 import { CourseService } from '../services/course.service';
+import { AuthGuard } from '../../iam/guards/auth.guard';
+import { PermissionGuard } from '../../iam/guards/permission.guard';
 
 describe('CourseController', () => {
   let controller: CourseController;
@@ -21,7 +23,10 @@ describe('CourseController', () => {
           },
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard).useValue({ canActivate: () => true })
+      .overrideGuard(PermissionGuard).useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<CourseController>(CourseController);
     service = module.get<CourseService>(CourseService);
@@ -32,13 +37,8 @@ describe('CourseController', () => {
   });
 
   it('should create a course', async () => {
-    await expect(controller.createCourse('inst1', { title: 'Test' })).resolves.toEqual({ id: '1' });
+    await expect(controller.createCourse({ id: 'inst1' }, { title: 'Test' })).resolves.toEqual({ id: '1' });
     expect(service.create).toHaveBeenCalledWith('inst1', { title: 'Test' });
-  });
-
-  it('should fallback to mock instructor id on create if missing', async () => {
-    await controller.createCourse('', { title: 'Test' });
-    expect(service.create).toHaveBeenCalledWith('mock-instructor-id', { title: 'Test' });
   });
 
   it('should get a course', async () => {
@@ -52,12 +52,12 @@ describe('CourseController', () => {
   });
 
   it('should update a course', async () => {
-    await expect(controller.updateCourse('1', 'inst1', { title: 'New' })).resolves.toEqual({ id: '1' });
+    await expect(controller.updateCourse('1', { id: 'inst1' }, { title: 'New' })).resolves.toEqual({ id: '1' });
     expect(service.update).toHaveBeenCalledWith('1', { title: 'New' }, 'inst1');
   });
 
   it('should delete a course', async () => {
-    await expect(controller.deleteCourse('1', 'inst1')).resolves.toBeUndefined();
+    await expect(controller.deleteCourse('1', { id: 'inst1' })).resolves.toBeUndefined();
     expect(service.delete).toHaveBeenCalledWith('1', 'inst1');
   });
 });
