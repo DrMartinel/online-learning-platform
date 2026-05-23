@@ -4,12 +4,15 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "strict": true,
+    "strictPropertyInitialization": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "declarationMap": true,
     "incremental": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "outDir": "./dist",
     "rootDir": "./src",
@@ -21,4 +24,3 @@
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
-
