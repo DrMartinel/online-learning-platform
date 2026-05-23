@@ -21,3 +21,4 @@ frontend/.turbo
 *.d.ts
 *.d.ts.map
 coverage
+.pnpm-store
