@@ -4,20 +4,20 @@
 
 ## Project Overview
 
-A full-stack online learning platform (OLP) built with a **Next.js** frontend, a **Node.js/Fastify** backend following **Clean Architecture**, and a **self-hosted Supabase** infrastructure.
+A full-stack online learning platform (OLP) built with a **Next.js** frontend, a **Node.js/NestJS** backend utilizing feature-based modules, and a **self-hosted Supabase** infrastructure.
 
 ### Architecture
 
 - **Frontend (`frontend/`):** Next.js 16 (App Router). Acting as a thin BFF, it proxies HTTP requests to the backend service via route handlers in `app/api/`.
-- **Backend (`backend/`):** Node.js API using Fastify. Follows Clean Architecture (Domain, Application, Infrastructure, Presentation).
-  - **Validation:** Zod schemas in `application/dtos/` are used for request/response validation and type inference.
+- **Backend (`backend/`):** Node.js API using **NestJS**. Structured into Feature-Based Modules (Auth, User, Course, etc.) grouping Domain, Application, and Presentation concerns per feature.
+  - **Validation:** Zod schemas wrapped with `nestjs-zod` in feature `dto/` folders are used for request/response validation and type inference.
   - **Documentation:** OpenAPI 3 / Swagger UI is available at `/docs` (port 3003 in dev).
 - **Infrastructure:** Full Supabase stack (Postgres, Auth, Kong, PostgREST, Realtime, Storage, Studio, etc.) orchestrated via Docker Compose.
 
 ## Key Technologies
 
 - **Frontend:** Next.js, React, Tailwind CSS, Supabase SSR.
-- **Backend:** Fastify, Zod, Supabase JS Client, TypeScript.
+- **Backend:** NestJS, Zod (`nestjs-zod`), Supabase JS Client, TypeScript.
 - **Database/Auth:** PostgreSQL (v15), GoTrue (Auth), Kong (Gateway).
 - **Orchestration:** Docker Compose.
 
@@ -26,7 +26,7 @@ A full-stack online learning platform (OLP) built with a **Next.js** frontend, a
 ### Prerequisites
 
 - Docker & Docker Compose
-- Node.js 18+ & npm
+- Node.js 20+ & pnpm
 
 ### Environment Setup
 
@@ -42,25 +42,27 @@ A full-stack online learning platform (OLP) built with a **Next.js** frontend, a
 
 | Command                    | Description                                                   |
 | -------------------------- | ------------------------------------------------------------- |
-| `npm run dev`              | Starts the dev stack (Supabase + hot-reload frontend/backend) |
-| `npm run dev:reset`        | Nukes volumes and orphans, then restarts the dev stack        |
-| `npm run dev:volume-reset` | **Deletes local DB and storage data** on disk                 |
-| `npm run build`            | Local build (Next.js + Backend TSC)                           |
-| `npm run start`            | Runs the production-style stack                               |
+| `pnpm run dev`             | Starts the dev stack (Supabase + hot-reload frontend/backend) |
+| `pnpm run dev:reset`       | Nukes volumes and orphans, then restarts the dev stack        |
+| `pnpm run dev:volume-reset`| **Deletes local DB and storage data** on disk                 |
+| `pnpm run build`           | Local build (Next.js + Backend NestJS)                        |
+| `pnpm run start`           | Runs the production-style stack                               |
 
 ## Development Conventions
 
 ### Backend Structure
 
-- **Domain:** Entities, repositories (interfaces), and business errors.
-- **Application:** Use cases and DTOs (Zod schemas).
-- **Infrastructure:** Supabase repository implementations and external services.
-- **Presentation:** Fastify handlers, routes, and OpenAPI registration.
+The backend follows a **Feature-Based Module** structure via NestJS. Each feature (e.g., `course`, `user`) contains:
+- **Entities:** Pure domain models (`entities/` folder).
+- **DTOs:** `nestjs-zod` schemas defining I/O (`dto/` folder).
+- **Service:** Business logic and use cases.
+- **Controller:** NestJS HTTP request handlers and Swagger decorators.
+- **Repository:** Interfaces and Supabase implementations handling database persistence.
 
 ### API Contracts
 
-- Always define request/response shapes using **Zod** in `backend/src/application/dtos/`.
-- Backend types should be inferred from these schemas.
+- Always define request/response shapes using **Zod** within the respective feature's `dto/` folder.
+- Backend types should be inferred from these schemas using `createZodDto`.
 - The frontend should stay in sync with these DTOs via the proxy layer.
 
 ### Database Migrations
