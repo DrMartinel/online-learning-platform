@@ -8,13 +8,13 @@ interface UserProfile {
   id: string;
   email: string;
   fullName: string;
-  role: 'student' | 'instructor' | 'admin';
+  role: string;
 }
 
 interface UserModalProps {
   isOpen: boolean;
   onClose: () => void;
-  user: UserProfile | null; // null means create mode
+  user: UserProfile | null;
 }
 
 export default function UserModal({ isOpen, onClose, user }: UserModalProps) {
@@ -49,11 +49,11 @@ export default function UserModal({ isOpen, onClose, user }: UserModalProps) {
         res = await fetch(`/api/admin/users`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            email, 
-            fullName, 
-            role, 
-            ...(password ? { password } : {}) 
+          body: JSON.stringify({
+            email,
+            fullName,
+            role,
+            ...(password ? { password } : {})
           }),
         });
       }
@@ -148,7 +148,7 @@ export default function UserModal({ isOpen, onClose, user }: UserModalProps) {
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             >
               <option value="student">Student</option>
-              <option value="instructor">Instructor</option>
+              <option value="instructor">Operator</option>
               <option value="admin">Admin</option>
             </select>
           </div>
