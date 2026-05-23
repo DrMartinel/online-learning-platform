@@ -8,6 +8,7 @@ import {
   CourseResponseDTO,
   ListCoursesFilterDTO,
 } from '../dto/course.dto';
+import { AdminCreateCourseDTO, AdminUpdateCourseDTO } from '../dto/course-admin.dto';
 import { randomUUID } from 'crypto';
 
 @Injectable()
@@ -77,6 +78,51 @@ export class CourseService {
     }
     if (course.instructorId !== instructorId) {
       throw new CourseError('You do not have permission to delete this course');
+    }
+    await this.courseRepo.delete(id);
+  }
+
+  // --- Admin Methods ---
+
+  async adminCreate(dto: AdminCreateCourseDTO): Promise<CourseResponseDTO> {
+    const course = new Course(
+      randomUUID(),
+      dto.instructorId,
+      dto.title,
+      dto.description || null,
+      dto.thumbnailUrl || null,
+      false,
+      new Date(),
+    );
+    await this.courseRepo.create(course);
+    return this.mapToResponse(course);
+  }
+
+  async adminUpdate(id: string, dto: AdminUpdateCourseDTO): Promise<CourseResponseDTO> {
+    const course = await this.courseRepo.findById(id);
+    if (!course) {
+      throw new CourseError('Course not found');
+    }
+    if (dto.title) course.title = dto.title;
+    if (dto.description !== undefined) course.description = dto.description || null;
+    if (dto.thumbnailUrl !== undefined) course.thumbnailUrl = dto.thumbnailUrl || null;
+    if (dto.instructorId) course.instructorId = dto.instructorId;
+    
+    if (dto.isPublished !== undefined) {
+      if (dto.isPublished && !course.isPublished) {
+        course.publish();
+      } else if (!dto.isPublished && course.isPublished) {
+        course.unpublish();
+      }
+    }
+    await this.courseRepo.update(course);
+    return this.mapToResponse(course);
+  }
+
+  async adminDelete(id: string): Promise<void> {
+    const course = await this.courseRepo.findById(id);
+    if (!course) {
+      throw new CourseError('Course not found');
     }
     await this.courseRepo.delete(id);
   }

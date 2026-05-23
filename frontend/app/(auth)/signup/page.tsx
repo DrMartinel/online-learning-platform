@@ -3,8 +3,6 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
-
 function SignUpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -31,20 +29,13 @@ function SignUpForm() {
         throw new Error(data.error || 'Đăng ký thất bại');
       }
 
-      // If email confirmation is required, data.session is null
-      if (!data.session) {
+      // If email confirmation is required, data.user might be null or requires attention
+      if (!data.success && !data.user) {
         // Show message — do not redirect yet
         setError('Vui lòng kiểm tra email để xác nhận tài khoản trước khi đăng nhập.');
         setLoading(false);
         return;
       }
-
-      // Sync session to browser Supabase client so onAuthStateChange fires
-      const supabase = createClient();
-      await supabase.auth.setSession({
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-      });
 
       const next = searchParams.get('next');
       router.push(next && next.startsWith('/') ? next : '/');

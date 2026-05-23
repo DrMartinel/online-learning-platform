@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
 import ProfileForm from '@/components/user/ProfileForm';
 import { BookOpen, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
@@ -11,25 +11,33 @@ export const metadata: Metadata = {
 };
 
 export default async function ProfilePage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const cookieStore = await cookies();
+  const token = cookieStore.get('olp_session')?.value;
 
-  if (!user) {
+  if (!token) {
     redirect('/login?next=/profile');
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, full_name, role, created_at, avatar_url')
-    .eq('id', user.id)
-    .single();
+  const backendUrl = process.env.BACKEND_URL;
+  if (!backendUrl) redirect('/login?next=/profile');
+
+  const res = await fetch(`${backendUrl}/users/me`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+    cache: 'no-store'
+  });
+
+  if (!res.ok) {
+    redirect('/login?next=/profile');
+  }
+
+  const user = await res.json();
 
   const initialProfile = {
     id: user.id,
-    fullName: (profile?.full_name as string) ?? null,
-    role: (profile?.role as string) ?? 'student',
-    createdAt: (profile?.created_at as string) ?? user.created_at,
-    avatarUrl: (profile?.avatar_url as string) ?? null,
+    fullName: user.fullName || null,
+    role: user.role || 'student',
+    createdAt: user.createdAt || new Date().toISOString(),
+    avatarUrl: user.avatarUrl || null,
     email: user.email,
   };
 

@@ -5,7 +5,7 @@ Full-stack learning platform with a **Next.js (App Router)** frontend, a **Node 
 ## Architecture
 
 - **Frontend** (`frontend/`): Next.js 16. Route handlers under `app/api/` act as a thin BFF: they **proxy HTTP requests** to the backend service using `BACKEND_URL`. The frontend does **not** import the backend package as a library.
-- **Backend API** (`backend/`): A **NestJS** application structured using Feature-Based Modular Architecture (e.g., `auth`, `user`, `course`, `lesson`). Each module is divided into layered directories (`controllers/`, `services/`, `repositories/`, and `test/`). Request and response shapes are defined with **Zod** using `nestjs-zod`, enabling seamless validation and OpenAPI/Swagger documentation generation. **Swagger UI** is available at `/docs` (e.g., port **3003** on the host when using Compose).
+- **Backend API** (`backend/`): A **NestJS** application structured using Feature-Based Modular Architecture (e.g., `auth`, `user`, `course`, `lesson`). Each module is divided into layered directories (`controllers/`, `services/`, `repositories/`, and `test/`). Request and response shapes are defined with **Zod** using `nestjs-zod`, enabling seamless validation and OpenAPI/Swagger documentation generation. **Swagger UI** is available at `/docs` (e.g., port **3003** on the host when using Compose). Security is strictly enforced using a custom **IAM/RBAC module** with `@Auth()` decorators and URN-based permissions.
 - **Supabase stack**: Postgres, GoTrue (auth), Kong (API gateway), PostgREST, Realtime, Storage, Studio, Analytics, Edge Functions, pooler, etc., defined in the Compose files below.
 
 ```
@@ -15,7 +15,7 @@ Browser → Next.js (e.g. /api/auth/signup) → Backend HTTP API → Supabase (K
 ## Prerequisites
 
 - Docker and Docker Compose
-- Node.js 18+ and npm (optional; useful for local lint/typecheck without Docker)
+- Node.js 20+ and pnpm (optional; useful for local lint/typecheck without Docker)
 - Git
 
 ## Environment
@@ -28,8 +28,8 @@ Copy or create a `.env` at the repository root. It must define Supabase-related 
 
 | File                     | Purpose                                                                                                                                                                                                                        |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `docker-compose.yml`     | **Production-style** builds: `frontend/Dockerfile` and `backend/Dockerfile` bake source and dependencies into images. No bind mounts for app source.                                                                           |
-| `docker-compose.dev.yml` | **Development**: same Supabase services as production compose, plus `app` and `backend` built from `frontend/Dockerfile.dev` and `backend/Dockerfile.dev`, with **bind-mounted** `./frontend` and `./backend` for live reload. |
+| `docker-compose.yml`     | **Production-style** builds: `frontend/Dockerfile` and `backend/Dockerfile` bake source and dependencies into isolated images tagged `prod`. No bind mounts for app source.                                                                           |
+| `docker-compose.dev.yml` | **Development**: same Supabase services as production compose, plus `app` and `backend` built from `frontend/Dockerfile.dev` and `backend/Dockerfile.dev` tagged `dev`, with **bind-mounted** `./frontend` and `./backend` for live reload. |
 
 Optional overrides (S3 storage, nginx, etc.) remain as separate `docker-compose.*.yml` files in the repo; combine them with `-f` when needed.
 
@@ -41,16 +41,16 @@ Optional overrides (S3 storage, nginx, etc.) remain as separate `docker-compose.
 
 Run these from the project root:
 
-| Script                     | Command                                                     | Description                                                                                                                                |
-| -------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `npm run dev`              | `docker compose -f docker-compose.dev.yml up --build -d`    | Start the **dev** stack (Supabase + hot-reload frontend/backend).                                                                          |
-| `npm run dev:down`         | `docker compose -f docker-compose.dev.yml down`             | Stop the dev stack.                                                                                                                        |
-| `npm run dev:reset`        | Compose down with volumes + up                              | Nuclear reset of dev stack volumes/orphans; use when things are inconsistent.                                                              |
-| `npm run dev:volume-reset` | Removes `./volumes/db/data` and `./volumes/storage`         | **Deletes local DB and file storage** on disk; stop Compose first. Then bring the stack up again so Postgres re-inits with current `.env`. |
-| `npm run build`            | Builds `frontend` then `backend` with local `npm run build` | Compile Next.js and TypeScript **without Docker** (run from repo root after `npm install` in each app, or use once).                       |
-| `npm run build:docker`     | `docker compose -f docker-compose.yml build`                | Build **production Docker images** (requires Docker).                                                                                      |
-| `npm run start`            | `docker compose -f docker-compose.yml up -d`                | Run **production** stack in the background.                                                                                                |
-| `npm run stop`             | `docker compose -f docker-compose.yml down`                 | Stop production stack.                                                                                                                     |
+| Script                     | Command                                                      | Description                                                                                                                                |
+| -------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm run dev`             | `docker compose -f docker-compose.dev.yml up --build -d`     | Start the **dev** stack (Supabase + hot-reload frontend/backend).                                                                          |
+| `pnpm run dev:down`        | `docker compose -f docker-compose.dev.yml down`              | Stop the dev stack.                                                                                                                        |
+| `pnpm run dev:reset`       | Compose down with volumes + up                               | Nuclear reset of dev stack volumes/orphans; use when things are inconsistent.                                                              |
+| `pnpm run dev:volume-reset`| Removes `./volumes/db/data` and `./volumes/storage`          | **Deletes local DB and file storage** on disk; stop Compose first. Then bring the stack up again so Postgres re-inits with current `.env`. |
+| `pnpm run build`           | Builds `frontend` then `backend` with local `npm run build`  | Compile Next.js and TypeScript **without Docker** (run from repo root after `pnpm install` in each app).                                   |
+| `pnpm run build:docker`    | `docker compose -f docker-compose.yml build`                 | Build **production Docker images** (requires Docker).                                                                                      |
+| `pnpm run start`           | `docker compose -f docker-compose.yml up -d`                 | Run **production** stack in the background.                                                                                                |
+| `pnpm run stop`            | `docker compose -f docker-compose.yml down`                  | Stop production stack.                                                                                                                     |
 
 Equivalent manual invocations work if you prefer not to use npm.
 
@@ -77,13 +77,23 @@ SQL migrations live under `backend/migrations/`. On a **fresh** Postgres volume,
 
 If you add migrations later:
 
-- **Clean slate:** stop Compose, remove `./volumes/db/data` (or use `npm run dev:volume-reset` after stopping), then start again so init runs with your current `.env`.
-- **Manual:** run SQL in Supabase Studio’s SQL editor against your project.
+- **Clean slate:** stop Compose, remove `./volumes/db/data` (or use `pnpm run dev:volume-reset` after stopping), then start again so init runs with your current `.env`.
+- **Manual:** run SQL in Supabase Studio's SQL editor against your project.
+
+### IAM data seeding
+
+After a fresh database initialization, you must seed the IAM roles and permissions:
+
+```bash
+docker exec -it olp-backend pnpm run load-iam
+```
+
+This runs `backend/src/utils/load-iam-data.ts`, which reads the role-to-permission mapping from `backend/src/iam/iam.constants.ts` and upserts the `iam_roles`, `iam_permissions`, and `iam_role_permissions` tables. The admin role automatically receives all permissions.
 
 ## Local development without Docker (optional)
 
-- **Frontend:** `cd frontend && npm install && npm run dev`
-- **Backend:** `cd backend && pnpm install && pnpm run start:dev` (set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `PORT` as needed)
+- **Frontend:** `cd frontend && pnpm install && pnpm run dev`
+- **Backend:** `cd backend && pnpm install && pnpm run dev` (set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SERVICE_ROLE_KEY`, `PORT` as needed)
 - Point `BACKEND_URL` at the backend URL your Next dev server should proxy to.
 
 ## Testing & Quality Assurance
@@ -91,6 +101,7 @@ If you add migrations later:
 - **Unit Tests:** Run `pnpm run test` inside the `backend/` directory to execute all Jest unit tests and generate a code coverage report.
 - **Pre-commit Hooks:** This repository uses **Husky** to enforce code quality. Every time you attempt to run `git commit`, a pre-commit hook automatically executes the backend unit tests.
 - **Coverage Requirement:** The backend has a strictly enforced **70% global code coverage threshold** (for branches, functions, lines, and statements). If your commit causes the coverage to dip below 70%, the pre-commit hook will block the commit.
+- **Current status:** 13 test suites, 98 tests, all passing with >98% statement coverage.
 
 ## Repository layout
 
@@ -99,21 +110,28 @@ online-learning-platform/
 ├── backend/
 │   ├── Dockerfile              # production image (build + node dist server)
 │   ├── Dockerfile.dev          # dev image (deps only; source bind-mounted)
-│   ├── migrations/             # SQL migrations
+│   ├── migrations/             # SQL migrations (00001 schema, 00002 policies, 00003 IAM)
 │   └── src/
-│       ├── auth/               # Feature module: Auth
-│       ├── course/             # Feature module: Course
-│       ├── lesson/             # Feature module: Lesson
-│       └── user/               # Feature module: User (includes user progress)
-│           ├── controllers/    # NestJS HTTP request handlers
-│           ├── services/       # Core business logic
-│           ├── repositories/   # Supabase data persistence layer
-│           ├── dto/            # Zod validation schemas
-│           └── test/           # Unit tests for the module
+│       ├── auth/               # Feature module: Auth (signup, signin, signout)
+│       ├── course/             # Feature module: Course (CRUD + admin)
+│       ├── database/           # Global Supabase client provider
+│       ├── iam/                # IAM module: guards, decorators, constants
+│       │   ├── guards/         # AuthGuard (JWT) + PermissionGuard (action URNs)
+│       │   ├── decorators/     # @Auth(), @Permission() decorators
+│       │   └── iam.constants.ts # DEFAULT_ROLES → action_urn mapping
+│       ├── lesson/             # Feature module: Lesson (CRUD + admin)
+│       ├── user/               # Feature module: User (profile, admin, progress)
+│       │   ├── controllers/    # NestJS HTTP request handlers
+│       │   ├── services/       # Core business logic
+│       │   ├── repositories/   # Supabase data persistence layer
+│       │   ├── dto/            # Zod validation schemas
+│       │   └── test/           # Unit tests for the module
+│       └── utils/              # Utility scripts (load-iam-data.ts)
 ├── frontend/
 │   ├── Dockerfile
 │   ├── Dockerfile.dev
 │   ├── app/                    # App Router, including api/ route handlers (proxy to backend)
+│   ├── components/             # Reusable UI components (admin, layout, etc.)
 │   └── lib/supabase/           # Supabase clients (browser/server/middleware)
 ├── volumes/                    # Docker persistence (db data, storage, kong config, …)
 ├── docker-compose.yml          # production stack
@@ -122,9 +140,20 @@ online-learning-platform/
 └── .env                        # secrets and ports (not committed if gitignored)
 ```
 
-## Security and roles
+## Security and Identity Access Management (IAM)
 
-Row Level Security (RLS) is used where configured. New users are typically assigned a default role (for example student) via database triggers; privileged roles may be adjusted in Supabase Studio or SQL.
+Security is handled via a robust Identity and Access Management (IAM) module using **action-based permissions** (no column-based role checks).
+
+1. **Authentication**: Handled via Supabase Auth (GoTrue). The Next.js BFF securely proxies the user's `access_token` to the NestJS backend.
+2. **Authorization**: The backend's `AuthGuard` verifies the JWT, while the `PermissionGuard` resolves the user's granted `action_urn`s from the IAM tables and checks them against the endpoint's required permission.
+3. **URN-based Permissions**: All endpoints are secured using granular action URNs (e.g., `action:course:create`, `action:admin:user:list`). The guard **never** checks a role name directly — it only checks whether the user's roles grant the required action.
+4. **Normalized Schema**: Permissions are dynamically mapped via Postgres tables (`iam_roles`, `iam_permissions`, `iam_role_permissions`, `iam_user_roles`). The `profiles` table has **no `role` column**; roles are resolved entirely from `iam_user_roles`.
+5. **Predefined Roles**: Three system roles are defined in `iam.constants.ts`:
+   - `role:user:student` — read-only access to courses, lessons, and own profile/progress
+   - `role:user:operator` — student permissions + CRUD on courses/lessons + admin panel access
+   - `role:user:admin` — all permissions (automatically granted during IAM seeding)
+
+New users are automatically assigned `role:user:student` via a database trigger on signup.
 
 ## Troubleshooting
 
@@ -136,4 +165,4 @@ Row Level Security (RLS) is used where configured. New users are typically assig
 
 ## Legacy compose note
 
-Older docs referred to `docker compose -f docker-compose.yml -f ./dev/docker-compose.dev.yml`. Dev overrides now live in **`docker-compose.dev.yml`** at the repo root; use `npm run dev` or `docker compose -f docker-compose.dev.yml up` instead.
+Older docs referred to `docker compose -f docker-compose.yml -f ./dev/docker-compose.dev.yml`. Dev overrides now live in **`docker-compose.dev.yml`** at the repo root; use `pnpm run dev` or `docker compose -f docker-compose.dev.yml up` instead.

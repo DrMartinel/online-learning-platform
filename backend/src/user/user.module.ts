@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { UserService } from './services/user.service';
 import { UserController } from './controllers/user.controller';
+import { UserAdminController } from './controllers/admin/user.admin.controller';
 import { SupabaseUserRepository } from './repositories/supabase-user.repository';
 import { UserProgressService } from './services/user-progress.service';
 import { UserProgressController } from './controllers/user-progress.controller';
@@ -8,7 +9,7 @@ import { SupabaseUserProgressRepository } from './repositories/supabase-user-pro
 import { SupabaseClient } from '@supabase/supabase-js';
 
 @Module({
-  controllers: [UserController, UserProgressController],
+  controllers: [UserController, UserProgressController, UserAdminController],
   providers: [
     UserService,
     UserProgressService,

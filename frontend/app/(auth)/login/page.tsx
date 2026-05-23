@@ -3,7 +3,6 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
 
 function LoginForm() {
   const router = useRouter();
@@ -28,16 +27,6 @@ function LoginForm() {
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Đăng nhập thất bại');
-      }
-
-      // Sync session to browser Supabase client so onAuthStateChange fires
-      // and the Header updates immediately (fixes cookie-name mismatch in Docker)
-      if (data.session?.access_token && data.session?.refresh_token) {
-        const supabase = createClient();
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        });
       }
 
       const next = searchParams.get('next');
