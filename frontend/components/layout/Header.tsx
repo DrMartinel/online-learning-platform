@@ -14,7 +14,7 @@ import {
   BookOpen,
   User,
 } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/layout/ThemeProvider";
 import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
@@ -41,7 +41,7 @@ function getInitials(user: SupabaseUser): string {
 
 export default function Header() {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
+  const { darkMode, toggleTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -120,10 +120,10 @@ export default function Header() {
         <div className="flex items-center gap-2">
           {/* Dark mode toggle */}
           <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            onClick={toggleTheme}
             className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
-            {mounted && (theme === "dark" ? <Sun size={18} /> : <Moon size={18} />)}
+            {mounted && (darkMode ? <Sun size={18} /> : <Moon size={18} />)}
           </button>
 
           {isLoading ? (
