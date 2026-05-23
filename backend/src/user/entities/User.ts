@@ -1,4 +1,4 @@
-export type UserRole = 'student' | 'instructor' | 'admin';
+export type UserRole = 'student' | 'operator' | 'admin';
 
 export class User {
   constructor(
@@ -11,8 +11,8 @@ export class User {
     public readonly createdAt: Date
   ) {}
 
-  public isInstructor(): boolean {
-    return this.role === 'instructor' || this.role === 'admin';
+  public isOperator(): boolean {
+    return this.role === 'operator' || this.role === 'admin';
   }
 
   public isAdmin(): boolean {

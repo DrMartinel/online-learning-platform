@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import LearnShell from "@/components/learn/LearnShell";
 import VideoPlayer from "@/components/learn/VideoPlayer";
 import CompleteButton from "@/components/learn/CompleteButton";
@@ -118,16 +118,12 @@ export default async function LearnPage({ params }: PageProps) {
   const { courseId, lessonId } = await params;
 
   // Auth check — redirect to login if not authenticated
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const cookieStore = await cookies();
+  const bearerToken = cookieStore.get("olp_session")?.value;
 
-  if (!session) {
+  if (!bearerToken) {
     redirect(`/login?next=/learn/${courseId}/${lessonId}`);
   }
-
-  const bearerToken = session.access_token;
 
   // Parallel fetch: course metadata, all lessons, active lesson, progress
   const [course, lessons, lesson, progressData] = await Promise.all([

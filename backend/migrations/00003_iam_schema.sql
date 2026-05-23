@@ -38,45 +38,18 @@ ALTER TABLE public.iam_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.iam_role_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.iam_user_roles ENABLE ROW LEVEL SECURITY;
 
--- Only allow service role (or postgres) to bypass RLS to manage these.
--- Since the backend service connects with admin privileges (postgres user), it bypasses RLS.
--- Normal authenticated users have no RLS policies on these tables, meaning they cannot select or modify them directly via PostgREST. This is secure since the backend handles it.
+-- RLS Policies for IAM tables
+-- Service role gets full CRUD (used by backend for seeding and role management)
+CREATE POLICY "Service role full access on iam_roles" ON public.iam_roles FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "Service role full access on iam_permissions" ON public.iam_permissions FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "Service role full access on iam_role_permissions" ON public.iam_role_permissions FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "Service role full access on iam_user_roles" ON public.iam_user_roles FOR ALL USING (auth.role() = 'service_role');
 
--- Seed some default data (optional but helpful)
-INSERT INTO public.iam_roles (urn, description) VALUES
-  ('role:user:default', 'Default user role with minimal permissions'),
-  ('role:user:admin', 'Admin role with full access')
-ON CONFLICT (urn) DO NOTHING;
+-- Authenticated users can read roles and permissions (needed for the PermissionGuard join query)
+CREATE POLICY "Authenticated users can read roles" ON public.iam_roles FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Authenticated users can read permissions" ON public.iam_permissions FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Authenticated users can read role permissions" ON public.iam_role_permissions FOR SELECT USING (auth.role() = 'authenticated');
+-- Users can only read their own role assignments
+CREATE POLICY "Users can read own role assignments" ON public.iam_user_roles FOR SELECT USING (auth.uid() = user_id);
 
-INSERT INTO public.iam_permissions (urn, description) VALUES
-  ('action:course:create', 'Can create courses'),
-  ('action:course:update', 'Can update courses'),
-  ('action:course:delete', 'Can delete courses'),
-  ('action:course:list', 'Can list courses'),
-  ('action:course:read', 'Can read course details'),
-  ('action:lesson:create', 'Can create lessons'),
-  ('action:lesson:update', 'Can update lessons'),
-  ('action:lesson:delete', 'Can delete lessons'),
-  ('action:lesson:list', 'Can list lessons'),
-  ('action:lesson:read', 'Can read lesson details'),
-  ('action:user_progress:create', 'Can create user progress'),
-  ('action:user_progress:read', 'Can read user progress'),
-  ('action:user_progress:update', 'Can update user progress'),
-  ('action:user:read:me', 'Can read own profile'),
-  ('action:user:update:me', 'Can update own profile')
-ON CONFLICT (urn) DO NOTHING;
-
--- Map admin role to all permissions
-DO $$
-DECLARE
-    admin_role_id UUID;
-    perm_record RECORD;
-BEGIN
-    SELECT id INTO admin_role_id FROM public.iam_roles WHERE urn = 'role:user:admin';
-    
-    FOR perm_record IN SELECT id FROM public.iam_permissions LOOP
-        INSERT INTO public.iam_role_permissions (role_id, permission_id)
-        VALUES (admin_role_id, perm_record.id)
-        ON CONFLICT DO NOTHING;
-    END LOOP;
-END $$;
+-- Note: Seeding is handled by the backend load-iam-data utility script.
