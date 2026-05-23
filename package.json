@@ -1,6 +1,7 @@
 {
   "name": "online-learning-platform",
   "private": true,
+  "packageManager": "pnpm@9.15.4",
   "scripts": {
     "backend:build": "npm run build --prefix backend",
     "backend:start": "npm start --prefix backend",
