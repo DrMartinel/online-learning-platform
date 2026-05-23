@@ -10,8 +10,6 @@ async function bootstrap() {
   // Set up global validation pipe for nestjs-zod
   app.useGlobalPipes(new ZodValidationPipe());
 
-
-
   // Patch Swagger to support nestjs-zod DTOs
   patchNestJsSwagger();
 
