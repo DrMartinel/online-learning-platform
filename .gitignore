@@ -12,6 +12,12 @@ backend/.tsbuildinfo
 dist/
 .next/
 
+backend/dist
+frontend/dist
+backend/.tsbuildinfo
+frontend/.turbo
+
 # typescript
 *.d.ts
 *.d.ts.map
+coverage
