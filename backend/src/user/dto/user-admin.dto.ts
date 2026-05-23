@@ -11,6 +11,7 @@ export class AdminUpdateUserDTO extends createZodDto(adminUpdateUserSchema) {}
 
 export const adminCreateUserSchema = z.object({
   email: z.string().email(),
+  password: z.string().min(6).optional(),
   fullName: z.string().min(1),
   role: z.enum(['student', 'operator', 'admin']),
 });

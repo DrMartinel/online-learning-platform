@@ -2,8 +2,6 @@
 -- Combined from dev/data.sql and supabase_schema.sql
 -- Note: The `profiles` table definitions and RLS policies were logically merged
 
--- 1. Create custom types
-CREATE TYPE user_role AS ENUM ('student', 'instructor', 'admin');
 
 -- 2. Create Profiles table (extends auth.users)
 CREATE TABLE profiles (
@@ -12,7 +10,6 @@ CREATE TABLE profiles (
   full_name TEXT,
   avatar_url TEXT,
   website TEXT,
-  role user_role DEFAULT 'student'::user_role NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE,
   CONSTRAINT username_length CHECK (char_length(username) >= 3)
@@ -65,7 +62,11 @@ CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.
 CREATE POLICY "Anyone can view published courses" ON courses FOR SELECT USING (is_published = true);
 CREATE POLICY "Instructors can view their own unpublished courses" ON courses FOR SELECT USING (auth.uid() = instructor_id);
 CREATE POLICY "Instructors can insert courses" ON courses FOR INSERT WITH CHECK (
-  auth.uid() = instructor_id AND EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'instructor')
+  auth.uid() = instructor_id AND EXISTS (
+    SELECT 1 FROM iam_user_roles iur
+    JOIN iam_roles ir ON ir.id = iur.role_id
+    WHERE iur.user_id = auth.uid() AND ir.urn = 'role:user:operator'
+  )
 );
 CREATE POLICY "Instructors can update own courses" ON courses FOR UPDATE USING (auth.uid() = instructor_id);
 CREATE POLICY "Instructors can delete own courses" ON courses FOR DELETE USING (auth.uid() = instructor_id);
@@ -86,9 +87,18 @@ CREATE POLICY "Users can update own progress" ON user_progress FOR UPDATE USING 
 -- 11. Trigger to create a profile automatically when a new user signs up
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
+DECLARE
+  default_role_id UUID;
 BEGIN
-  INSERT INTO public.profiles (id, full_name, role)
-  VALUES (new.id, new.raw_user_meta_data->>'full_name', 'student');
+  INSERT INTO public.profiles (id, full_name)
+  VALUES (new.id, new.raw_user_meta_data->>'full_name');
+  
+  -- Automatically assign the student role using the IAM system
+  SELECT id INTO default_role_id FROM public.iam_roles WHERE urn = 'role:user:student';
+  IF default_role_id IS NOT NULL THEN
+    INSERT INTO public.iam_user_roles (user_id, role_id) VALUES (new.id, default_role_id);
+  END IF;
+
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

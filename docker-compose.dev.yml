@@ -255,6 +255,7 @@ services:
   app:
     container_name: olp-frontend
     image: olp-frontend:dev
+    restart: unless-stopped
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
@@ -279,6 +280,7 @@ services:
   backend:
     container_name: olp-backend
     image: olp-backend:dev
+    restart: unless-stopped
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
@@ -293,6 +295,7 @@ services:
       - PORT=3001
       - SUPABASE_URL=http://kong:8000
       - SUPABASE_ANON_KEY=${ANON_KEY}
+      - SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}
     depends_on:
       - kong
       - db
