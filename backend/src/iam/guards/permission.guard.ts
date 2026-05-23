@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { PERMISSION_KEY, ADMIN_PERMISSION_KEY } from '../decorators/permission.decorator';
+import { PERMISSION_KEY, ROLE_KEY } from '../decorators/permission.decorator';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -11,7 +11,7 @@ export class PermissionGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isAdminOnly = this.reflector.getAllAndOverride<boolean>(ADMIN_PERMISSION_KEY, [
+    const requiredRole = this.reflector.getAllAndOverride<string>(ROLE_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
@@ -21,7 +21,7 @@ export class PermissionGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    if (!isAdminOnly && !requiredPermission) {
+    if (!requiredRole && !requiredPermission) {
       return true; // No permission required
     }
 
@@ -30,6 +30,31 @@ export class PermissionGuard implements CanActivate {
 
     if (!user) {
       throw new ForbiddenException('User not authenticated');
+    }
+
+    // Fetch user profile to get the main role
+    const { data: profile, error: profileError } = await this.supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('IAM Profile resolve error:', profileError);
+      throw new ForbiddenException('Unable to resolve user profile');
+    }
+
+    // Admin role bypasses all action checks
+    if (profile.role === 'admin') {
+      return true;
+    }
+
+    if (requiredRole && profile.role !== requiredRole) {
+      throw new ForbiddenException(`${requiredRole} access required`);
+    }
+
+    if (!requiredPermission) {
+      return true;
     }
 
     // Resolve user's permissions by joining iam_user_roles, iam_role_permissions, iam_permissions, iam_roles
@@ -59,15 +84,6 @@ export class PermissionGuard implements CanActivate {
       for (const rp of role?.iam_role_permissions || []) {
         if (rp.permission?.urn) grantedPermissions.add(rp.permission.urn);
       }
-    }
-
-    // Admin role bypasses all checks
-    if (roles.has('role:user:admin')) {
-      return true;
-    }
-
-    if (isAdminOnly && !roles.has('role:user:admin')) {
-      throw new ForbiddenException('Admin access required');
     }
 
     if (requiredPermission && !grantedPermissions.has(requiredPermission)) {
