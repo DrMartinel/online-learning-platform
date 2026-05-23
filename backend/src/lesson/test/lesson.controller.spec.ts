@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LessonController } from '../controllers/lesson.controller';
 import { LessonService } from '../services/lesson.service';
+import { AuthGuard } from '../../iam/guards/auth.guard';
+import { PermissionGuard } from '../../iam/guards/permission.guard';
 
 describe('LessonController', () => {
   let controller: LessonController;
@@ -21,7 +23,10 @@ describe('LessonController', () => {
           },
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard).useValue({ canActivate: () => true })
+      .overrideGuard(PermissionGuard).useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<LessonController>(LessonController);
     service = module.get<LessonService>(LessonService);
