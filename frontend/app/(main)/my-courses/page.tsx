@@ -1,5 +1,5 @@
-﻿import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import MyCourseCard from '@/components/user/MyCourseCard';
 import type { EnrolledCourse } from '@/components/user/MyCourseCard';
 import { BookOpen, Search } from 'lucide-react';
@@ -12,94 +12,33 @@ export const metadata: Metadata = {
 };
 
 async function fetchMyCourses(): Promise<EnrolledCourse[]> {
-  const supabase = await createClient();
-  const { data: progressRows, error } = await supabase
-    .from('user_progress')
-    .select(`
-      id,
-      completed,
-      completed_at,
-      lessons!inner (
-        id,
-        order_index,
-        course_id,
-        courses!inner (
-          id,
-          title,
-          description,
-          thumbnail_url,
-          instructor_id
-        )
-      )
-    `);
+  try {
+    const backendUrl = process.env.BACKEND_URL;
+    if (!backendUrl) return [];
 
-  if (error || !progressRows) return [];
+    const cookieStore = await cookies();
+    const token = cookieStore.get('olp_session')?.value;
+    
+    if (!token) return [];
 
-  const courseMap = new Map<string, {
-    course: Record<string, unknown>;
-    totalLessons: number;
-    completedLessons: number;
-    lastActivityAt: string | null;
-    firstIncompleteLessonId: string | null;
-    firstIncompleteOrderIndex: number;
-  }>();
+    const res = await fetch(`${backendUrl}/user-progress/my-courses`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+      cache: 'no-store'
+    });
 
-  for (const row of progressRows) {
-    const lesson = row.lessons as unknown as {
-      id: string;
-      order_index: number;
-      course_id: string;
-      courses: Record<string, unknown>;
-    };
-    if (!lesson) continue;
-    const course = lesson.courses;
-    if (!course) continue;
-    const courseId = course.id as string;
-
-    if (!courseMap.has(courseId)) {
-      courseMap.set(courseId, {
-        course,
-        totalLessons: 0,
-        completedLessons: 0,
-        lastActivityAt: null,
-        firstIncompleteLessonId: null,
-        firstIncompleteOrderIndex: Infinity,
-      });
-    }
-    const entry = courseMap.get(courseId)!;
-    entry.totalLessons += 1;
-    if (row.completed) {
-      entry.completedLessons += 1;
-    } else {
-      if (lesson.order_index < entry.firstIncompleteOrderIndex) {
-        entry.firstIncompleteLessonId = lesson.id;
-        entry.firstIncompleteOrderIndex = lesson.order_index;
-      }
-    }
-    if (row.completed_at && (!entry.lastActivityAt || (row.completed_at as string) > entry.lastActivityAt)) {
-      entry.lastActivityAt = row.completed_at as string;
-    }
+    if (!res.ok) return [];
+    
+    return res.json();
+  } catch {
+    return [];
   }
-
-  return Array.from(courseMap.values()).map(({ course, totalLessons, completedLessons, lastActivityAt, firstIncompleteLessonId }) => ({
-    id: course.id as string,
-    title: course.title as string,
-    description: (course.description as string) ?? null,
-    thumbnailUrl: (course.thumbnail_url as string) ?? null,
-    instructorId: course.instructor_id as string,
-    completedLessons,
-    totalLessons,
-    percentage: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0,
-    lastActivityAt,
-    firstIncompleteLessonId,
-  }));
 }
 
 export default async function MyCoursesPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const cookieStore = await cookies();
+  const token = cookieStore.get('olp_session')?.value;
 
-  if (!user) {
+  if (!token) {
     redirect('/login?next=/my-courses');
   }
 

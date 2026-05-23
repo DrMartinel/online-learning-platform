@@ -15,18 +15,22 @@ import {
   User,
 } from "lucide-react";
 import { useTheme } from "@/components/layout/ThemeProvider";
-import { createClient } from "@/lib/supabase/client";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const navItems = [
   { href: "/", label: "Trang chủ" },
   { href: "/courses", label: "Khóa học" },
 ];
 
-function getInitials(user: SupabaseUser): string {
-  const meta = user.user_metadata;
-  if (meta?.full_name) {
-    return meta.full_name
+interface UserProfile {
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
+}
+
+function getInitials(user: UserProfile): string {
+  if (user.fullName) {
+    return user.fullName
       .split(" ")
       .map((w: string) => w[0])
       .join("")
@@ -44,27 +48,25 @@ export default function Header() {
   const { darkMode, toggleTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      setIsLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+      })
+      .catch(() => setUser(null))
+      .finally(() => setIsLoading(false));
+  }, [pathname]); // Re-fetch or verify on route changes if necessary
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -81,8 +83,6 @@ export default function Header() {
   const handleLogout = async () => {
     setDropdownOpen(false);
     await fetch("/api/auth/logout", { method: "POST" });
-    const supabase = createClient();
-    await supabase.auth.signOut();
     window.location.href = "/login";
   };
 
@@ -149,12 +149,22 @@ export default function Header() {
                   <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg py-1 z-50">
                     <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                       <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                        {user.user_metadata?.full_name || user.email}
+                        {user.fullName || user.email}
                       </p>
                       <p className="text-xs text-gray-400 truncate">
                         {user.email}
                       </p>
                     </div>
+                    {user.role === 'admin' && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-primary dark:text-primary hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <User size={14} />
+                        Admin Dashboard
+                      </Link>
+                    )}
                     <Link
                       href="/my-courses"
                       onClick={() => setDropdownOpen(false)}
@@ -229,6 +239,15 @@ export default function Header() {
 
           {user && (
             <div className="pt-2 border-t border-gray-200 dark:border-gray-800 space-y-1">
+              {user.role === 'admin' && (
+                <Link
+                  href="/admin"
+                  onClick={() => setMobileOpen(false)}
+                  className="block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-primary hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  Admin Dashboard
+                </Link>
+              )}
               <Link
                 href="/my-courses"
                 onClick={() => setMobileOpen(false)}

@@ -1,27 +1,22 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { PERMISSION_KEY, ADMIN_PERMISSION_KEY } from '../decorators/permission.decorator';
+import { PERMISSION_KEY } from '../decorators/permission.decorator';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private readonly supabase: SupabaseClient,
-  ) {}
+  ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isAdminOnly = this.reflector.getAllAndOverride<boolean>(ADMIN_PERMISSION_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-
     const requiredPermission = this.reflector.getAllAndOverride<string>(PERMISSION_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
-    if (!isAdminOnly && !requiredPermission) {
+    if (!requiredPermission) {
       return true; // No permission required
     }
 
@@ -61,13 +56,9 @@ export class PermissionGuard implements CanActivate {
       }
     }
 
-    // Admin role bypasses all checks
+    // Admin role bypasses all action checks
     if (roles.has('role:user:admin')) {
       return true;
-    }
-
-    if (isAdminOnly && !roles.has('role:user:admin')) {
-      throw new ForbiddenException('Admin access required');
     }
 
     if (requiredPermission && !grantedPermissions.has(requiredPermission)) {
