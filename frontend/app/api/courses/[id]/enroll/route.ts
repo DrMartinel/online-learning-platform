@@ -1,68 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: courseId } = await params;
-  const backendUrl = process.env.BACKEND_URL;
-  if (!backendUrl) {
-    return NextResponse.json({ error: 'Missing BACKEND_URL' }, { status: 500 });
-  }
-
-  // Require authenticated user — read session from Supabase cookies
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const bearerToken = session.access_token;
-
   try {
-    // Fetch the lessons for this course to get the first one
-    const lessonsRes = await fetch(`${backendUrl}/courses/${courseId}/lessons`, {
-      headers: { authorization: `Bearer ${bearerToken}` },
-      cache: 'no-store',
+    const { id } = await params;
+    
+    const token = request.cookies.get('olp_session')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const backendUrl = process.env.BACKEND_URL;
+    if (!backendUrl) throw new Error('Missing BACKEND_URL');
+
+    // To simulate enrollment, we get the course's lessons and create progress for the first one
+    const lessonsRes = await fetch(`${backendUrl}/courses/${id}/lessons`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` }
     });
-
+    
     if (!lessonsRes.ok) {
-      const err = await lessonsRes.json().catch(() => ({}));
-      return NextResponse.json(err, { status: lessonsRes.status });
+      return NextResponse.json({ error: 'Failed to fetch course lessons for enrollment' }, { status: lessonsRes.status });
     }
-
-    const lessons: Array<{ id: string; orderIndex: number }> = await lessonsRes.json();
-
+    
+    const lessons = await lessonsRes.json();
     if (!lessons || lessons.length === 0) {
-      return NextResponse.json(
-        { error: 'This course has no lessons yet.' },
-        { status: 422 }
-      );
+      return NextResponse.json({ error: 'Course has no lessons to enroll in' }, { status: 400 });
     }
 
-    // Sort by orderIndex and take the first lesson
-    const firstLesson = lessons.sort((a, b) => a.orderIndex - b.orderIndex)[0];
+    // Create progress for the first lesson to mark as enrolled
+    const sortedLessons = lessons.sort((a: any, b: any) => a.orderIndex - b.orderIndex);
+    const firstLesson = sortedLessons[0];
 
-    // Create a UserProgress record for the first lesson (upsert semantics on the backend)
-    const progressRes = await fetch(`${backendUrl}/user-progress`, {
+    const res = await fetch(`${backendUrl}/user-progress`, {
       method: 'POST',
       headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${bearerToken}`,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ lessonId: firstLesson.id, completed: false }),
+      body: JSON.stringify({
+        courseId: id,
+        lessonId: firstLesson.id
+      })
     });
 
-    const progressData = await progressRes.json().catch(() => ({}));
-    return NextResponse.json(progressData, { status: progressRes.status });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      return NextResponse.json({ error: errorData.message || 'Failed to enroll in course' }, { status: res.status });
+    }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : String(error) },
-      { status: 502 }
+      { error: error instanceof Error ? error.message : 'An error occurred' },
+      { status: 500 }
     );
   }
 }

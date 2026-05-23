@@ -5,12 +5,26 @@ import { UserRepository } from './Iuser.repository';
 export class SupabaseUserRepository implements UserRepository {
   constructor(private client: SupabaseClient) {}
 
-  private mapToUser(row: any): User {
+  private async resolveRole(userId: string): Promise<string> {
+    const { data } = await this.client
+      .from('iam_user_roles')
+      .select('role:iam_roles!inner(urn)')
+      .eq('user_id', userId)
+      .limit(1);
+
+    if (data && data.length > 0) {
+      const urn = (data[0] as any).role?.urn;
+      if (urn) return urn.replace('role:user:', '');
+    }
+    return 'student';
+  }
+
+  private mapToUser(row: any, role: string): User {
     return new User(
       row.id,
       row.email,
       row.full_name,
-      row.role,
+      role as any,
       row.bio,
       row.avatar_url,
       new Date(row.created_at)
@@ -23,7 +37,6 @@ export class SupabaseUserRepository implements UserRepository {
       .insert({
         email: user.email,
         full_name: user.fullName,
-        role: user.role,
         bio: user.bio,
         avatar_url: user.avatarUrl,
       })
@@ -31,7 +44,8 @@ export class SupabaseUserRepository implements UserRepository {
       .single();
 
     if (error) throw error;
-    return this.mapToUser(data);
+    const role = await this.resolveRole(data.id);
+    return this.mapToUser(data, role);
   }
 
   async findById(id: string): Promise<User | null> {
@@ -43,7 +57,8 @@ export class SupabaseUserRepository implements UserRepository {
 
     if (error) throw error;
     if (!data) return null;
-    return this.mapToUser(data);
+    const role = await this.resolveRole(id);
+    return this.mapToUser(data, role);
   }
 
   async findAll(): Promise<User[]> {
@@ -52,7 +67,14 @@ export class SupabaseUserRepository implements UserRepository {
       .select();
 
     if (error) throw error;
-    return (data || []).map(row => this.mapToUser(row));
+
+    // Resolve roles for all users
+    const users: User[] = [];
+    for (const row of data || []) {
+      const role = await this.resolveRole(row.id);
+      users.push(this.mapToUser(row, role));
+    }
+    return users;
   }
 
   async save(user: User): Promise<User> {
@@ -68,6 +90,7 @@ export class SupabaseUserRepository implements UserRepository {
       .single();
 
     if (error) throw error;
-    return this.mapToUser(data);
+    const role = await this.resolveRole(user.id);
+    return this.mapToUser(data, role);
   }
 }

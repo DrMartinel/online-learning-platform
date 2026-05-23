@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { PlayCircle, BookOpen, Clock, User, ChevronLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import LessonList, { type Lesson } from "@/components/courses/LessonList";
 import EnrollButton from "@/components/courses/EnrollButton";
 import type { Course } from "@/components/courses/CourseCard";
@@ -65,31 +65,45 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function CourseDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  // Fetch course + lessons + auth state in parallel
-  const [course, lessons, supabase] = await Promise.all([
+  // Fetch course + lessons in parallel
+  const [course, lessons] = await Promise.all([
     getCourse(id),
     getLessons(id),
-    createClient(),
   ]);
 
   if (!course) {
     notFound();
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const isLoggedIn = !!user;
-
-  // Check if user is already enrolled (has any progress record for this course)
+  const cookieStore = await cookies();
+  const token = cookieStore.get("olp_session")?.value;
+  
+  let isLoggedIn = false;
   let isEnrolled = false;
-  if (user) {
-    const { data: progressCheck } = await supabase
-      .from('user_progress')
-      .select('id, lessons!inner(course_id)')
-      .eq('lessons.course_id', id)
-      .limit(1);
-    isEnrolled = !!(progressCheck && progressCheck.length > 0);
+
+  if (token) {
+    const backendUrl = process.env.BACKEND_URL;
+    if (backendUrl) {
+      // Check auth status
+      try {
+        const userRes = await fetch(`${backendUrl}/users/me`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+          cache: 'no-store'
+        });
+        isLoggedIn = userRes.ok;
+
+        // Check enrollment
+        if (isLoggedIn) {
+          const progressRes = await fetch(`${backendUrl}/user-progress/course/${id}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            cache: 'no-store'
+          });
+          isEnrolled = progressRes.ok;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }
 
   const sortedLessons = [...lessons].sort((a, b) => a.orderIndex - b.orderIndex);
