@@ -294,7 +294,6 @@ services:
       - NODE_ENV=development
       - PORT=3001
       - SUPABASE_URL=http://kong:8000
-      - SUPABASE_ANON_KEY=${ANON_KEY}
       - SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}
     depends_on:
       - kong
