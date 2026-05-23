@@ -6,7 +6,10 @@ const supabaseProvider = {
   provide: SupabaseClient,
   useFactory: () => {
     const supabaseUrl = process.env.SUPABASE_URL || process.env.SUPABASE_PUBLIC_URL || '';
-    const supabaseKey = process.env.SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
+    const supabaseKey = process.env.SERVICE_ROLE_KEY;
+    if (!supabaseKey) {
+      throw new Error('SERVICE_ROLE_KEY environment variable is required. The backend must connect with the service_role to access IAM tables and admin APIs.');
+    }
     return createClient(supabaseUrl, supabaseKey, {
       auth: {
         persistSession: false,
