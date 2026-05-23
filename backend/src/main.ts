@@ -15,15 +15,37 @@ async function bootstrap() {
   // Patch Swagger to support nestjs-zod DTOs
   patchNestJsSwagger();
 
-  // Set up Swagger API docs
+  // Base Swagger Configuration
   const config = new DocumentBuilder()
     .setTitle('Online Learning Platform API')
     .setDescription('The API description for the learning platform')
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+
+  // Split into Public and Admin documents
+  const publicDocument = JSON.parse(JSON.stringify(document));
+  const adminDocument = JSON.parse(JSON.stringify(document));
+
+  for (const path in publicDocument.paths) {
+    if (path.startsWith('/admin')) {
+      delete publicDocument.paths[path];
+    }
+  }
+
+  for (const path in adminDocument.paths) {
+    if (!path.startsWith('/admin')) {
+      delete adminDocument.paths[path];
+    }
+  }
+
+  // Setup Public Swagger
+  SwaggerModule.setup('docs', app, publicDocument);
+
+  // Setup Admin Swagger
+  SwaggerModule.setup('admin/docs', app, adminDocument);
 
   const port = process.env.PORT || 3003;
   await app.listen(port);

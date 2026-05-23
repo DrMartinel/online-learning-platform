@@ -15,6 +15,7 @@ describe('UserService', () => {
           provide: 'IUserRepository',
           useValue: {
             findById: jest.fn(),
+            findAll: jest.fn(),
             save: jest.fn(),
           },
         },
@@ -57,6 +58,30 @@ describe('UserService', () => {
     it('should throw if not found', async () => {
       repo.findById.mockResolvedValue(null);
       await expect(service.updateProfile('1', { fullName: 'New' })).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('admin methods', () => {
+    it('should list all users as admin', async () => {
+      const u = new User('1', 'e@e.com', 'F', 'student', undefined, undefined, new Date());
+      repo.findAll.mockResolvedValue([u]);
+      const result = await service.adminListUsers();
+      expect(result.length).toBe(1);
+      expect(result[0].id).toBe('1');
+    });
+
+    it('should update user profile as admin', async () => {
+      const u = new User('1', 'e@e.com', 'F', 'student', undefined, undefined, new Date());
+      repo.findById.mockResolvedValue(u);
+      repo.save.mockResolvedValue(u);
+      const result = await service.adminUpdateProfile('1', { fullName: 'New', role: 'operator' });
+      expect(result.fullName).toBe('New');
+      expect(result.role).toBe('operator');
+    });
+
+    it('should throw if user to admin update is not found', async () => {
+      repo.findById.mockResolvedValue(null);
+      await expect(service.adminUpdateProfile('1', { fullName: 'New' })).rejects.toThrow(NotFoundException);
     });
   });
 });
