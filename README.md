@@ -5,7 +5,7 @@ Full-stack learning platform with a **Next.js (App Router)** frontend, a **Node 
 ## Architecture
 
 - **Frontend** (`frontend/`): Next.js 16. Route handlers under `app/api/` act as a thin BFF: they **proxy HTTP requests** to the backend service using `BACKEND_URL`. The frontend does **not** import the backend package as a library.
-- **Backend API** (`backend/`): Clean Architecture (domain, application, infrastructure). A **Fastify** server exposes HTTP routes (for example `/auth/signup`, `/auth/login`, `/auth/logout`, `/health`) and uses the Supabase JS client with `SUPABASE_URL` and `SUPABASE_ANON_KEY`. Request and response shapes for HTTP are defined with **Zod** in the application layer (`application/dtos/`); **OpenAPI 3** JSON Schema for Fastify and Swagger is generated with **`zod-to-json-schema`**, so types and API docs stay aligned. **Swagger UI** is at `/docs` and the spec at `/docs/json` on the backend port (e.g. **3003** on the host when using Compose).
+- **Backend API** (`backend/`): A **NestJS** application structured using Feature-Based Modular Architecture (e.g., `auth`, `user`, `course`, `lesson`). Each module is divided into layered directories (`controllers/`, `services/`, `repositories/`, and `test/`). Request and response shapes are defined with **Zod** using `nestjs-zod`, enabling seamless validation and OpenAPI/Swagger documentation generation. **Swagger UI** is available at `/docs` (e.g., port **3003** on the host when using Compose).
 - **Supabase stack**: Postgres, GoTrue (auth), Kong (API gateway), PostgREST, Realtime, Storage, Studio, Analytics, Edge Functions, pooler, etc., defined in the Compose files below.
 
 ```
@@ -68,8 +68,8 @@ Adjust if your `.env` changes host ports.
 
 ## API contracts (Zod and OpenAPI)
 
-- **Zod** (`backend` dependencies): DTOs such as sign-up and sign-in are `z.object(...)` schemas in `backend/src/application/dtos/`. Types are inferred with `z.infer<typeof schema>` for use cases and controllers.
-- **OpenAPI / Swagger**: `backend/src/presentation/http/openapi/` registers `@fastify/swagger` and `@fastify/swagger-ui`. Route `schema` bodies and responses use JSON Schema produced from the same Zod definitions, so you do not maintain parallel hand-written OpenAPI models for those routes.
+- **Zod** (`backend` dependencies): DTOs such as sign-up and sign-in are `z.object(...)` schemas in each feature's `dto/` folder. Types are inferred using `createZodDto` from `nestjs-zod` for use in controllers and services.
+- **OpenAPI / Swagger**: By using `@nestjs/swagger` and `nestjs-zod`, the Swagger documentation is automatically generated from the DTOs without needing parallel hand-written OpenAPI models.
 
 ## Database migrations
 
@@ -83,8 +83,14 @@ If you add migrations later:
 ## Local development without Docker (optional)
 
 - **Frontend:** `cd frontend && npm install && npm run dev`
-- **Backend:** `cd backend && npm install && npm run build && npm run start` (set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `PORT` as needed)
+- **Backend:** `cd backend && pnpm install && pnpm run start:dev` (set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `PORT` as needed)
 - Point `BACKEND_URL` at the backend URL your Next dev server should proxy to.
+
+## Testing & Quality Assurance
+
+- **Unit Tests:** Run `pnpm run test` inside the `backend/` directory to execute all Jest unit tests and generate a code coverage report.
+- **Pre-commit Hooks:** This repository uses **Husky** to enforce code quality. Every time you attempt to run `git commit`, a pre-commit hook automatically executes the backend unit tests.
+- **Coverage Requirement:** The backend has a strictly enforced **70% global code coverage threshold** (for branches, functions, lines, and statements). If your commit causes the coverage to dip below 70%, the pre-commit hook will block the commit.
 
 ## Repository layout
 
@@ -95,10 +101,15 @@ online-learning-platform/
 │   ├── Dockerfile.dev          # dev image (deps only; source bind-mounted)
 │   ├── migrations/             # SQL migrations
 │   └── src/
-│       ├── domain/
-│       ├── application/        # use cases, DTOs (Zod schemas + inferred types)
-│       ├── infrastructure/
-│       └── presentation/       # handlers + http/ (Fastify routes, OpenAPI, server)
+│       ├── auth/               # Feature module: Auth
+│       ├── course/             # Feature module: Course
+│       ├── lesson/             # Feature module: Lesson
+│       └── user/               # Feature module: User (includes user progress)
+│           ├── controllers/    # NestJS HTTP request handlers
+│           ├── services/       # Core business logic
+│           ├── repositories/   # Supabase data persistence layer
+│           ├── dto/            # Zod validation schemas
+│           └── test/           # Unit tests for the module
 ├── frontend/
 │   ├── Dockerfile
 │   ├── Dockerfile.dev

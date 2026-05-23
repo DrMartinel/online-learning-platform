@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
@@ -41,7 +41,8 @@ function getInitials(user: SupabaseUser): string {
 
 export default function Header() {
   const pathname = usePathname();
-  const { darkMode, setDarkMode } = useTheme();
+  const { darkMode, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,6 +50,7 @@ export default function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setMounted(true);
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
@@ -118,10 +120,10 @@ export default function Header() {
         <div className="flex items-center gap-2">
           {/* Dark mode toggle */}
           <button
-            onClick={() => setDarkMode(!darkMode)}
+            onClick={toggleTheme}
             className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            {mounted && (darkMode ? <Sun size={18} /> : <Moon size={18} />)}
           </button>
 
           {isLoading ? (

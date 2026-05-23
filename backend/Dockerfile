@@ -1,26 +1,30 @@
 FROM node:20-bookworm-slim AS deps
 WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 
-COPY package.json package-lock.json ./
-# Do not run lifecycle scripts (e.g. `prepare` → `tsc`): no tsconfig/src in this layer yet
-RUN npm ci --ignore-scripts
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 FROM node:20-bookworm-slim AS build
 WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+
 ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=8192
 
 COPY --from=deps /app/node_modules ./node_modules
-# Copy sources explicitly (better caching, clearer failures)
 COPY package.json ./package.json
 COPY tsconfig.json ./tsconfig.json
 COPY src ./src
-# Host `dist/` is excluded by .dockerignore; remove any stale output before tsc (clean incremental state)
+COPY nest-cli.json ./nest-cli.json
+
 RUN rm -rf dist
-RUN npm run build
+RUN pnpm run build
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+
 ENV NODE_ENV=production
 ENV PORT=3001
 
@@ -29,5 +33,4 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 
 EXPOSE 3001
-CMD ["npm", "run", "start"]
-
+CMD ["pnpm", "run", "start:prod"]
