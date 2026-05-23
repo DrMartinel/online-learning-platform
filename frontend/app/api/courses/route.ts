@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: NextRequest) {
   const backendUrl = process.env.BACKEND_URL;
@@ -18,15 +19,23 @@ export async function GET(request: NextRequest) {
   const allCookies = cookieStore.getAll();
   const cookieHeader = allCookies.map((c) => `${c.name}=${c.value}`).join('; ');
 
+  // Extract JWT from Supabase Server session
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  const headers: Record<string, string> = {
+    ...(cookieHeader ? { cookie: cookieHeader } : {}),
+  };
+  
+  if (session?.access_token) {
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+  } else if (request.headers.get('authorization')) {
+    headers['Authorization'] = request.headers.get('authorization')!;
+  }
+
   try {
     const res = await fetch(upstream.toString(), {
-      headers: {
-        ...(cookieHeader ? { cookie: cookieHeader } : {}),
-        // Also forward Bearer token from the incoming Authorization header if present
-        ...(request.headers.get('authorization')
-          ? { authorization: request.headers.get('authorization')! }
-          : {}),
-      },
+      headers,
       // Don't cache by default so fresh data is always served
       cache: 'no-store',
     });
