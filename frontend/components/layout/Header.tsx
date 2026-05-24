@@ -26,6 +26,7 @@ interface UserProfile {
   email: string;
   fullName: string;
   role: string;
+  permissions?: string[];
 }
 
 function getInitials(user: UserProfile): string {
@@ -165,6 +166,16 @@ export default function Header() {
                         Admin Dashboard
                       </Link>
                     )}
+                    {user.permissions?.includes('action:course:create') && (
+                      <Link
+                        href="/courses/create"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <BookOpen size={14} />
+                        Tạo khóa học
+                      </Link>
+                    )}
                     <Link
                       href="/my-courses"
                       onClick={() => setDropdownOpen(false)}
@@ -246,6 +257,15 @@ export default function Header() {
                   className="block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-primary hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   Admin Dashboard
+                </Link>
+              )}
+              {user.permissions?.includes('action:course:create') && (
+                <Link
+                  href="/courses/create"
+                  onClick={() => setMobileOpen(false)}
+                  className="block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  Tạo khóa học
                 </Link>
               )}
               <Link

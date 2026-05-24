@@ -1,8 +1,9 @@
 FROM node:20-bookworm-slim AS deps
 WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 FROM node:20-bookworm-slim AS build
 WORKDIR /app
@@ -17,7 +18,8 @@ ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+RUN pnpm run build
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
@@ -31,5 +33,6 @@ COPY --from=build /app/.next ./.next
 COPY --from=build /app/node_modules ./node_modules
 
 EXPOSE 3000
-CMD ["npm", "run", "start"]
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+CMD ["pnpm", "run", "start"]
 

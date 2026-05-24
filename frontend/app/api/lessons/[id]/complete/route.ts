@@ -6,7 +6,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const { completed } = await request.json();
+    const { completed, courseId } = await request.json();
 
     const token = request.cookies.get('olp_session')?.value;
     if (!token) {
@@ -16,7 +16,7 @@ export async function POST(
     const backendUrl = process.env.BACKEND_URL;
     if (!backendUrl) throw new Error('Missing BACKEND_URL');
 
-    const res = await fetch(`${backendUrl}/user-progress/lesson/${id}`, {
+    let res = await fetch(`${backendUrl}/user-progress/lesson/${id}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -24,6 +24,26 @@ export async function POST(
       },
       body: JSON.stringify({ isCompleted: completed }),
     });
+    
+    if (res.status === 404 && courseId) {
+      await fetch(`${backendUrl}/user-progress`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ lessonId: id, courseId }),
+      });
+      
+      res = await fetch(`${backendUrl}/user-progress/lesson/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isCompleted: completed }),
+      });
+    }
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));

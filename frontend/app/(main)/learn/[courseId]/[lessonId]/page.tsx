@@ -8,6 +8,7 @@ import {
   StickyNote,
 } from "lucide-react";
 import Link from "next/link";
+import { getMediaUrl } from "@/lib/supabase";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import LearnShell from "@/components/learn/LearnShell";
@@ -22,18 +23,14 @@ interface PageProps {
 
 // ── Data fetchers ──────────────────────────────────────────────────────────────
 
-async function getRequestCookie(): Promise<string> {
-  const h = await headers();
-  return h.get("cookie") ?? "";
-}
-
-async function getCourse(courseId: string): Promise<Course | null> {
+async function getCourse(courseId: string, bearerToken?: string): Promise<Course | null> {
   const backendUrl = process.env.BACKEND_URL;
   if (!backendUrl) return null;
   try {
-    const cookie = await getRequestCookie();
+    const headers: Record<string, string> = {};
+    if (bearerToken) headers['Authorization'] = `Bearer ${bearerToken}`;
     const res = await fetch(`${backendUrl}/courses/${courseId}`, {
-      headers: { ...(cookie ? { cookie } : {}) },
+      headers,
       cache: "no-store",
     });
     if (!res.ok) return null;
@@ -43,13 +40,14 @@ async function getCourse(courseId: string): Promise<Course | null> {
   }
 }
 
-async function getLessons(courseId: string): Promise<Lesson[]> {
+async function getLessons(courseId: string, bearerToken?: string): Promise<Lesson[]> {
   const backendUrl = process.env.BACKEND_URL;
   if (!backendUrl) return [];
   try {
-    const cookie = await getRequestCookie();
-    const res = await fetch(`${backendUrl}/courses/${courseId}/lessons`, {
-      headers: { ...(cookie ? { cookie } : {}) },
+    const headers: Record<string, string> = {};
+    if (bearerToken) headers['Authorization'] = `Bearer ${bearerToken}`;
+    const res = await fetch(`${backendUrl}/lessons?courseId=${courseId}`, {
+      headers,
       cache: "no-store",
     });
     if (!res.ok) return [];
@@ -59,13 +57,14 @@ async function getLessons(courseId: string): Promise<Lesson[]> {
   }
 }
 
-async function getLesson(lessonId: string): Promise<Lesson | null> {
+async function getLesson(lessonId: string, bearerToken?: string): Promise<Lesson | null> {
   const backendUrl = process.env.BACKEND_URL;
   if (!backendUrl) return null;
   try {
-    const cookie = await getRequestCookie();
+    const headers: Record<string, string> = {};
+    if (bearerToken) headers['Authorization'] = `Bearer ${bearerToken}`;
     const res = await fetch(`${backendUrl}/lessons/${lessonId}`, {
-      headers: { ...(cookie ? { cookie } : {}) },
+      headers,
       cache: "no-store",
     });
     if (!res.ok) return null;
@@ -104,7 +103,9 @@ async function getCourseProgress(
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { lessonId } = await params;
-  const lesson = await getLesson(lessonId);
+  const cookieStore = await cookies();
+  const bearerToken = cookieStore.get("olp_session")?.value;
+  const lesson = await getLesson(lessonId, bearerToken);
   if (!lesson) return { title: "Bài học | EduSpace" };
   return {
     title: `${lesson.title} | EduSpace`,
@@ -127,9 +128,9 @@ export default async function LearnPage({ params }: PageProps) {
 
   // Parallel fetch: course metadata, all lessons, active lesson, progress
   const [course, lessons, lesson, progressData] = await Promise.all([
-    getCourse(courseId),
-    getLessons(courseId),
-    getLesson(lessonId),
+    getCourse(courseId, bearerToken),
+    getLessons(courseId, bearerToken),
+    getLesson(lessonId, bearerToken),
     getCourseProgress(courseId, bearerToken),
   ]);
 
@@ -211,7 +212,7 @@ export default async function LearnPage({ params }: PageProps) {
 
         {/* Video player or document icon */}
         {lesson.videoUrl ? (
-          <VideoPlayer src={lesson.videoUrl} title={lesson.title} />
+          <VideoPlayer src={getMediaUrl(lesson.videoUrl)} title={lesson.title} />
         ) : (
           <div className="aspect-video rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center border border-gray-200 dark:border-gray-700">
             <div className="text-center">
@@ -265,6 +266,7 @@ export default async function LearnPage({ params }: PageProps) {
             <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between flex-wrap gap-3">
               <CompleteButton
                 lessonId={lessonId}
+                courseId={courseId}
                 initialCompleted={isCurrentCompleted}
               />
 
