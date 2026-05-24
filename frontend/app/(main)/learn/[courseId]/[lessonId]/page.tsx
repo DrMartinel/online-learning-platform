@@ -8,12 +8,14 @@ import {
   StickyNote,
 } from "lucide-react";
 import Link from "next/link";
-import { getMediaUrl } from "@/lib/supabase";
+import { getSignedMediaUrl } from "@/lib/supabase";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import LearnShell from "@/components/learn/LearnShell";
 import VideoPlayer from "@/components/learn/VideoPlayer";
 import CompleteButton from "@/components/learn/CompleteButton";
+import LessonActionMenu from "@/components/admin/LessonActionMenu";
+import ChatWidget from "@/components/rag/ChatWidget";
 import type { Lesson } from "@/components/courses/LessonList";
 import type { Course } from "@/components/courses/CourseCard";
 
@@ -99,6 +101,21 @@ async function getCourseProgress(
   }
 }
 
+async function getUser(bearerToken: string) {
+  const backendUrl = process.env.BACKEND_URL;
+  if (!backendUrl) return null;
+  try {
+    const res = await fetch(`${backendUrl}/users/me`, {
+      headers: { authorization: `Bearer ${bearerToken}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
 // ── Metadata ───────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -126,17 +143,21 @@ export default async function LearnPage({ params }: PageProps) {
     redirect(`/login?next=/learn/${courseId}/${lessonId}`);
   }
 
-  // Parallel fetch: course metadata, all lessons, active lesson, progress
-  const [course, lessons, lesson, progressData] = await Promise.all([
+  // Parallel fetch: course metadata, all lessons, active lesson, progress, user
+  const [course, lessons, lesson, progressData, user] = await Promise.all([
     getCourse(courseId, bearerToken),
     getLessons(courseId, bearerToken),
     getLesson(lessonId, bearerToken),
     getCourseProgress(courseId, bearerToken),
+    getUser(bearerToken),
   ]);
 
   if (!course || !lesson) {
     notFound();
   }
+
+  const hasLessonPermission = user?.permissions?.includes('action:lesson:create');
+  const isInstructor = user?.id === course.instructorId && hasLessonPermission;
 
   const sortedLessons = [...lessons].sort((a, b) => a.orderIndex - b.orderIndex);
 
@@ -156,6 +177,8 @@ export default async function LearnPage({ params }: PageProps) {
       ? sortedLessons[currentIndex + 1]
       : null;
 
+  const videoSignedUrl = await getSignedMediaUrl(lesson.videoUrl);
+
   return (
     <LearnShell
       courseId={courseId}
@@ -167,15 +190,20 @@ export default async function LearnPage({ params }: PageProps) {
     >
       <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-5">
         {/* Title bar */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs text-primary font-semibold mb-0.5 flex items-center gap-1">
               <BookOpen size={12} />
               {course.title}
             </p>
-            <h2 className="text-lg md:text-xl font-bold text-gray-800 dark:text-white truncate">
-              {lesson.title}
-            </h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg md:text-xl font-bold text-gray-800 dark:text-white truncate">
+                {lesson.title}
+              </h2>
+              {isInstructor && (
+                <LessonActionMenu lessonId={lesson.id} />
+              )}
+            </div>
           </div>
 
           {/* Prev / Next navigation */}
@@ -211,8 +239,8 @@ export default async function LearnPage({ params }: PageProps) {
         </div>
 
         {/* Video player or document icon */}
-        {lesson.videoUrl ? (
-          <VideoPlayer src={getMediaUrl(lesson.videoUrl)} title={lesson.title} />
+        {videoSignedUrl ? (
+          <VideoPlayer src={videoSignedUrl} title={lesson.title} />
         ) : (
           <div className="aspect-video rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center border border-gray-200 dark:border-gray-700">
             <div className="text-center">
@@ -283,6 +311,9 @@ export default async function LearnPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+      
+      {/* RAG Chat Widget */}
+      <ChatWidget courseId={course.id} courseName={course.title} />
     </LearnShell>
   );
 }

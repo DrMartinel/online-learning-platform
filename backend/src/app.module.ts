@@ -7,6 +7,7 @@ import { LessonModule } from './lesson/lesson.module';
 import { UserModule } from './user/user.module';
 import { IamModule } from './iam/iam.module';
 import { SystemAnalyticsModule } from './system-analytics/system-analytics.module';
+import { RagModule } from './rag/rag.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SystemAnalyticsModule } from './system-analytics/system-analytics.modul
     UserModule,
     IamModule,
     SystemAnalyticsModule,
+    RagModule,
   ],
 })
 export class AppModule {}
