@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { ArrowRight, Users, BookOpen, Award, TrendingUp } from "lucide-react";
 import CourseCatalog from "@/components/courses/CourseCatalog";
 import type { Course } from "@/components/courses/CourseCard";
+import { getSignedMediaUrl } from "@/lib/supabase";
 
 async function getCourses(): Promise<Course[]> {
   try {
@@ -21,7 +22,17 @@ async function getCourses(): Promise<Course[]> {
     });
 
     if (!res.ok) return [];
-    return res.json();
+    const courses: Course[] = await res.json();
+    
+    // Resolve signed URLs for all thumbnails
+    const coursesWithSignedUrls = await Promise.all(
+      courses.map(async (course) => ({
+        ...course,
+        thumbnailUrl: course.thumbnailUrl ? await getSignedMediaUrl(course.thumbnailUrl) : course.thumbnailUrl
+      }))
+    );
+    
+    return coursesWithSignedUrls;
   } catch {
     return [];
   }
