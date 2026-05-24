@@ -4,7 +4,7 @@ import { createZodDto } from 'nestjs-zod';
 export const adminUpdateUserSchema = z.object({
   fullName: z.string().min(1).optional(),
   bio: z.string().optional(),
-  avatarUrl: z.string().url().optional(),
+  avatarUrl: z.string().optional(),
   role: z.enum(['student', 'operator', 'admin']).optional(),
 });
 export class AdminUpdateUserDTO extends createZodDto(adminUpdateUserSchema) {}

@@ -10,10 +10,6 @@ async function getStats() {
     const cookieStore = await cookies();
     const token = cookieStore.get('olp_session')?.value;
     
-    // Instead of directly querying Supabase, we would call a backend endpoint.
-    // For now, if the endpoint doesn't exist, we return mocked stats 
-    // to decouple the frontend from the database entirely.
-    
     const headers: Record<string, string> = {};
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
@@ -48,9 +44,34 @@ async function getStats() {
   }
 }
 
+async function getSystemMetrics(token?: string) {
+  const backendUrl = process.env.BACKEND_URL;
+  if (!backendUrl) return { requests: [], errors: [] };
+  
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const [reqsRes, errsRes] = await Promise.all([
+      fetch(`${backendUrl}/admin/system-analytics/requests`, { headers, cache: "no-store" }),
+      fetch(`${backendUrl}/admin/system-analytics/errors`, { headers, cache: "no-store" })
+    ]);
+    
+    return {
+      requests: reqsRes.ok ? await reqsRes.json() : [],
+      errors: errsRes.ok ? await errsRes.json() : [],
+    };
+  } catch (e) {
+    console.error("Failed to fetch system metrics", e);
+    return { requests: [], errors: [] };
+  }
+}
+
 export default async function AdminDashboardPage() {
   const stats = await getStats();
   const cookieStore = await cookies();
+  const token = cookieStore.get('olp_session')?.value;
+  const metrics = await getSystemMetrics(token);
 
   const statCards = [
     { label: 'Total Users', value: stats.users, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
@@ -80,7 +101,7 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
-      <SystemMetrics token={cookieStore.get('olp_session')?.value} backendUrl={process.env.BACKEND_URL} />
+      <SystemMetrics requests={metrics.requests} errors={metrics.errors} />
     </div>
   );
 }

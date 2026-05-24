@@ -20,7 +20,13 @@ Browser → Next.js (e.g. /api/auth/signup) → Backend HTTP API → Supabase (K
 
 ## Environment
 
-Copy or create a `.env` at the repository root. It must define Supabase-related variables (for example `ANON_KEY`, `JWT_SECRET`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, ports, and URLs). The stack reads this file when you run Compose.
+1. Copy `.env.example` to `.env` at the repository root.
+2. Generate required secure keys for Supabase using the provided utilities:
+   ```bash
+   sh ./utils/generate-keys.sh
+   sh ./utils/add-new-auth-keys.sh
+   ```
+3. Open `.env` and ensure `POSTGRES_PASSWORD` is set to a secure password.
 
 **Important:** `POSTGRES_PASSWORD` is applied when the Postgres data directory is **first** initialized. If you change `POSTGRES_PASSWORD` in `.env` after `./volumes/db/data` already exists, services such as analytics and auth will fail with `password authentication failed` until you either restore the old password or **reset the DB volume** (see Troubleshooting).
 

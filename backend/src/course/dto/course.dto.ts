@@ -4,14 +4,14 @@ import { createZodDto } from 'nestjs-zod';
 export const createCourseSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
-  thumbnailUrl: z.string().url().optional(),
+  thumbnailUrl: z.string().optional(),
 });
 export class CreateCourseDTO extends createZodDto(createCourseSchema) {}
 
 export const updateCourseSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional(),
-  thumbnailUrl: z.string().url().optional(),
+  thumbnailUrl: z.string().optional(),
   isPublished: z.boolean().optional(),
 });
 export class UpdateCourseDTO extends createZodDto(updateCourseSchema) {}
