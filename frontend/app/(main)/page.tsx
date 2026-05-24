@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { headers } from "next/headers";
+import { cookies } from "next/headers";
 import { ArrowRight, Users, BookOpen, Award, TrendingUp } from "lucide-react";
 import CourseCatalog from "@/components/courses/CourseCatalog";
 import type { Course } from "@/components/courses/CourseCard";
@@ -9,11 +9,14 @@ async function getCourses(): Promise<Course[]> {
     const backendUrl = process.env.BACKEND_URL;
     if (!backendUrl) return [];
 
-    const headerStore = await headers();
-    const cookie = headerStore.get("cookie") ?? "";
+    const cookieStore = await cookies();
+    const token = cookieStore.get("olp_session")?.value;
+    
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
 
     const res = await fetch(`${backendUrl}/courses`, {
-      headers: { ...(cookie ? { cookie } : {}) },
+      headers,
       cache: "no-store",
     });
 

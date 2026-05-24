@@ -426,6 +426,9 @@ services:
       - SUPABASE_URL=http://kong:8000
       - SUPABASE_ANON_KEY=${ANON_KEY}
       - SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     depends_on:
       - kong
       - db
