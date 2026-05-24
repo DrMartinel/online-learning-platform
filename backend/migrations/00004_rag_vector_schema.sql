@@ -35,17 +35,12 @@ CREATE INDEX idx_document_chunks_source_type ON document_chunks(source_type);
 -- 6. Enable RLS
 ALTER TABLE document_chunks ENABLE ROW LEVEL SECURITY;
 
--- Anyone can read chunks from published courses (for RAG queries)
-CREATE POLICY "Anyone can read chunks of published courses"
-    ON document_chunks FOR SELECT
-    USING (EXISTS (
-        SELECT 1 FROM courses WHERE id = document_chunks.course_id AND is_published = true
-    ));
+-- 8. Enable public open access policy
+CREATE POLICY "Allow public full access on document_chunks"
+    ON document_chunks FOR ALL
+    USING (true) WITH CHECK (true);
 
--- Only service_role can insert/update/delete (backend manages embeddings)
--- (No user-facing write policies needed — backend uses SERVICE_ROLE_KEY)
-
--- 7. Similarity search function
+-- 9. Similarity search function
 CREATE OR REPLACE FUNCTION match_documents(
     query_embedding VECTOR(768),
     match_count INT DEFAULT 5,
@@ -73,9 +68,7 @@ BEGIN
         dc.metadata,
         1 - (dc.embedding <=> query_embedding) AS similarity
     FROM document_chunks dc
-    JOIN courses c ON c.id = dc.course_id
-    WHERE c.is_published = true
-      AND (filter_course_id IS NULL OR dc.course_id = filter_course_id)
+    WHERE (filter_course_id IS NULL OR dc.course_id = filter_course_id)
     ORDER BY dc.embedding <=> query_embedding
     LIMIT match_count;
 END;

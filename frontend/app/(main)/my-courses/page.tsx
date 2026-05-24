@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   description: 'Xem tất cả khóa học bạn đã đăng ký.',
 };
 
+import { getSignedMediaUrl } from '@/lib/supabase';
+
 async function fetchMyCourses(): Promise<EnrolledCourse[]> {
   try {
     const backendUrl = process.env.BACKEND_URL;
@@ -28,7 +30,17 @@ async function fetchMyCourses(): Promise<EnrolledCourse[]> {
 
     if (!res.ok) return [];
     
-    return res.json();
+    const courses: EnrolledCourse[] = await res.json();
+    
+    // Resolve signed URLs for all thumbnails
+    const coursesWithSignedUrls = await Promise.all(
+      courses.map(async (course) => ({
+        ...course,
+        thumbnailUrl: course.thumbnailUrl ? await getSignedMediaUrl(course.thumbnailUrl) : course.thumbnailUrl
+      }))
+    );
+    
+    return coursesWithSignedUrls;
   } catch {
     return [];
   }
