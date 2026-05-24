@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { PlayCircle, BookOpen, Clock, User, ChevronLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { getMediaUrl } from "@/lib/supabase";
 import LessonList, { type Lesson } from "@/components/courses/LessonList";
 import EnrollButton from "@/components/courses/EnrollButton";
 import type { Course } from "@/components/courses/CourseCard";
@@ -12,9 +13,9 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-async function getCourseCookies(): Promise<string> {
-  const headerStore = await headers();
-  return headerStore.get("cookie") ?? "";
+async function getAuthToken(): Promise<string | undefined> {
+  const cookieStore = await cookies();
+  return cookieStore.get("olp_session")?.value;
 }
 
 async function getCourse(id: string): Promise<Course | null> {
@@ -22,9 +23,12 @@ async function getCourse(id: string): Promise<Course | null> {
   if (!backendUrl) return null;
 
   try {
-    const cookie = await getCourseCookies();
+    const token = await getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
     const res = await fetch(`${backendUrl}/courses/${id}`, {
-      headers: { ...(cookie ? { cookie } : {}) },
+      headers,
       cache: "no-store",
     });
     if (res.status === 404) return null;
@@ -40,14 +44,19 @@ async function getLessons(courseId: string): Promise<Lesson[]> {
   if (!backendUrl) return [];
 
   try {
-    const cookie = await getCourseCookies();
-    const res = await fetch(`${backendUrl}/courses/${courseId}/lessons`, {
-      headers: { ...(cookie ? { cookie } : {}) },
+    const token = await getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${backendUrl}/lessons?courseId=${courseId}`, {
+      headers,
       cache: "no-store",
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      return [];
+    }
     return res.json();
-  } catch {
+  } catch (e) {
     return [];
   }
 }
@@ -80,6 +89,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
   
   let isLoggedIn = false;
   let isEnrolled = false;
+  let isInstructor = false;
 
   if (token) {
     const backendUrl = process.env.BACKEND_URL;
@@ -92,8 +102,12 @@ export default async function CourseDetailPage({ params }: PageProps) {
         });
         isLoggedIn = userRes.ok;
 
-        // Check enrollment
+        // Check enrollment and instructor status
         if (isLoggedIn) {
+          const user = await userRes.json();
+          const hasLessonPermission = user.permissions?.includes('action:lesson:create');
+          isInstructor = user.id === course.instructorId && hasLessonPermission;
+
           const progressRes = await fetch(`${backendUrl}/user-progress/course/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` },
             cache: 'no-store'
@@ -175,7 +189,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
             <div className="w-full aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-primary/10 to-blue-100 dark:from-primary/20 dark:to-blue-900/30 flex items-center justify-center shadow-md">
               {course.thumbnailUrl ? (
                 <img
-                  src={course.thumbnailUrl}
+                  src={getMediaUrl(course.thumbnailUrl)}
                   alt={course.title}
                   className="w-full h-full object-cover"
                 />
@@ -186,10 +200,20 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
             {/* ── Syllabus ── */}
             <section>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <BookOpen size={20} className="text-primary" />
-                Nội dung khóa học
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <BookOpen size={20} className="text-primary" />
+                  Nội dung khóa học
+                </h2>
+                {isInstructor && (
+                  <Link
+                    href={`/courses/${id}/lessons/create`}
+                    className="inline-flex items-center text-sm font-medium text-white bg-primary hover:bg-primary/90 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    + Thêm bài học
+                  </Link>
+                )}
+              </div>
               <LessonList lessons={sortedLessons} />
             </section>
           </div>
@@ -201,7 +225,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
               <div className="aspect-video bg-gradient-to-br from-primary/10 to-blue-100 dark:from-primary/20 dark:to-blue-900/30 flex items-center justify-center">
                 {course.thumbnailUrl ? (
                   <img
-                    src={course.thumbnailUrl}
+                    src={getMediaUrl(course.thumbnailUrl)}
                     alt={course.title}
                     className="w-full h-full object-cover"
                   />
