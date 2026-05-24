@@ -11,6 +11,8 @@ export class User {
     public readonly createdAt: Date
   ) {}
 
+  public permissions: string[] = [];
+
   public isOperator(): boolean {
     return this.role === 'operator' || this.role === 'admin';
   }

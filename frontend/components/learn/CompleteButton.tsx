@@ -2,18 +2,22 @@
 
 import { useState } from "react";
 import { CheckCircle2, Loader2, RotateCcw } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface CompleteButtonProps {
   lessonId: string;
+  courseId: string;
   initialCompleted: boolean;
   onCompleted?: () => void;
 }
 
 export default function CompleteButton({
   lessonId,
+  courseId,
   initialCompleted,
   onCompleted,
 }: CompleteButtonProps) {
+  const router = useRouter();
   const [done, setDone] = useState(initialCompleted);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -26,11 +30,16 @@ export default function CompleteButton({
     try {
       const res = await fetch(`/api/lessons/${lessonId}/complete`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ completed: true, courseId }),
       });
 
       if (res.ok) {
         setDone(true);
         onCompleted?.();
+        router.refresh();
       } else {
         const data = await res.json().catch(() => ({}));
         setError(data?.error ?? "Không thể cập nhật. Thử lại sau.");

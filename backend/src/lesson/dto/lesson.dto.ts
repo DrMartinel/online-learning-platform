@@ -5,7 +5,7 @@ export const createLessonSchema = z.object({
   courseId: z.string().uuid(),
   title: z.string().min(1),
   content: z.string().optional(),
-  videoUrl: z.string().url().optional(),
+  videoUrl: z.string().optional(),
   orderIndex: z.number().int().min(0),
 });
 export class CreateLessonDTO extends createZodDto(createLessonSchema) {}
@@ -13,7 +13,7 @@ export class CreateLessonDTO extends createZodDto(createLessonSchema) {}
 export const updateLessonSchema = z.object({
   title: z.string().min(1).optional(),
   content: z.string().optional(),
-  videoUrl: z.string().url().optional(),
+  videoUrl: z.string().optional(),
   orderIndex: z.number().int().min(0).optional(),
   isPublished: z.boolean().optional(),
 });
