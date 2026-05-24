@@ -36,6 +36,20 @@ export class SystemAnalyticsService implements OnModuleInit, OnModuleDestroy {
       if (sourceRes.rows.length === 0) return null;
       
       const token = sourceRes.rows[0].token.replace(/-/g, '_');
+      
+      const tableExistsRes = await this.pool.query(
+        `SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = '_analytics' 
+          AND table_name = $1
+        );`,
+        [token]
+      );
+      
+      if (!tableExistsRes.rows[0].exists) {
+        return null;
+      }
+
       return `"${token}"`;
     } catch (e) {
       this.logger.error(`Failed to find table for source ${sourceName}`, e);
