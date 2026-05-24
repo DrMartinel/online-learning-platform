@@ -25,11 +25,13 @@
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/swagger": "^7.3.0",
     "@supabase/supabase-js": "^2.103.0",
+    "@types/pg": "^8.20.0",
     "nestjs-zod": "^3.0.0",
+    "pg": "^8.21.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
-    "zod": "^3.25.76",
-    "ws": "^8.16.0"
+    "ws": "^8.16.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
