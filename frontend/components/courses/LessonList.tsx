@@ -1,4 +1,5 @@
 import { PlayCircle, FileText, Clock } from "lucide-react";
+import Link from "next/link";
 
 export interface Lesson {
   id: string;
@@ -35,14 +36,15 @@ export default function LessonList({ lessons }: LessonListProps) {
       {sorted.map((lesson, index) => {
         const Icon = getLessonIcon(lesson);
         return (
-          <li
-            key={lesson.id}
-            className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800"
-          >
-            {/* Index badge */}
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 dark:bg-primary/20 text-primary text-xs font-bold mt-0.5">
-              {index + 1}
-            </span>
+          <li key={lesson.id}>
+            <Link
+              href={`/learn/${lesson.courseId}/${lesson.id}`}
+              className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer group"
+            >
+              {/* Index badge */}
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 dark:bg-primary/20 text-primary group-hover:bg-primary/20 dark:group-hover:bg-primary/30 text-xs font-bold mt-0.5 transition-colors">
+                {index + 1}
+              </span>
 
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-snug">
@@ -68,6 +70,7 @@ export default function LessonList({ lessons }: LessonListProps) {
                 {lesson.videoUrl ? "Video" : "Tài liệu"}
               </span>
             </div>
+            </Link>
           </li>
         );
       })}
