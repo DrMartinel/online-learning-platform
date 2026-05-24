@@ -1,6 +1,6 @@
 volumes/db/data
 volumes/storage
-.env
+.env*
 test.http
 docker-compose.override.yml
 node_modules
