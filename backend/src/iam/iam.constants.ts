@@ -9,6 +9,7 @@ export const DEFAULT_ROLES: Record<string, string[]> = {
     'action:user_progress:read',
     'action:user_progress:create',
     'action:user_progress:update',
+    'action:rag:query',
   ],
   'role:user:operator': [
     'action:user:read:me',
@@ -42,6 +43,8 @@ export const DEFAULT_ROLES: Record<string, string[]> = {
     'action:admin:user:update',
     'action:admin:iam:manage',
     'action:admin:read',
+    'action:rag:query',
+    'action:admin:rag:ingest',
   ],
   'role:user:admin': [
     'action:user:read:me',
@@ -75,5 +78,7 @@ export const DEFAULT_ROLES: Record<string, string[]> = {
     'action:admin:user:update',
     'action:admin:iam:manage',
     'action:admin:read',
+    'action:rag:query',
+    'action:admin:rag:ingest',
   ],
 };

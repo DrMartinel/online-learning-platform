@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { MoreVertical, Trash2, EyeOff, Eye, Loader2 } from 'lucide-react';
+import { MoreVertical, Trash2, EyeOff, Eye, Loader2, BrainCircuit } from 'lucide-react';
 
 interface Props {
   courseId: string;
@@ -28,6 +28,24 @@ export default function CourseActionMenu({ courseId, isPublished }: Props) {
           throw new Error(errorData.error || 'Failed to update course status');
         }
         router.refresh();
+      } catch (err) {
+        alert(err instanceof Error ? err.message : 'An error occurred');
+      }
+    });
+  };
+
+  const ingestCourse = () => {
+    setIsOpen(false);
+    startTransition(async () => {
+      try {
+        const res = await fetch(`/api/rag/ingest/course/${courseId}`, {
+          method: 'POST',
+        });
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to ingest course to AI');
+        }
+        alert('Ingestion started successfully! The AI knowledge base is being updated.');
       } catch (err) {
         alert(err instanceof Error ? err.message : 'An error occurred');
       }
@@ -76,6 +94,12 @@ export default function CourseActionMenu({ courseId, isPublished }: Props) {
               ) : (
                 <><Eye size={14} /> Publish Course</>
               )}
+            </button>
+            <button 
+              onClick={ingestCourse}
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2"
+            >
+              <BrainCircuit size={14} className="text-primary" /> Sync to AI Knowledge Base
             </button>
             <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
             <button 

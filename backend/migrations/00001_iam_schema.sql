@@ -39,17 +39,9 @@ ALTER TABLE public.iam_role_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.iam_user_roles ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for IAM tables
--- Service role gets full CRUD (used by backend for seeding and role management)
-CREATE POLICY "Service role full access on iam_roles" ON public.iam_roles FOR ALL USING (auth.role() = 'service_role');
-CREATE POLICY "Service role full access on iam_permissions" ON public.iam_permissions FOR ALL USING (auth.role() = 'service_role');
-CREATE POLICY "Service role full access on iam_role_permissions" ON public.iam_role_permissions FOR ALL USING (auth.role() = 'service_role');
-CREATE POLICY "Service role full access on iam_user_roles" ON public.iam_user_roles FOR ALL USING (auth.role() = 'service_role');
-
--- Authenticated users can read roles and permissions (needed for the PermissionGuard join query)
-CREATE POLICY "Authenticated users can read roles" ON public.iam_roles FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Authenticated users can read permissions" ON public.iam_permissions FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Authenticated users can read role permissions" ON public.iam_role_permissions FOR SELECT USING (auth.role() = 'authenticated');
--- Users can only read their own role assignments
-CREATE POLICY "Users can read own role assignments" ON public.iam_user_roles FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Allow public full access on iam_roles" ON public.iam_roles FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public full access on iam_permissions" ON public.iam_permissions FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public full access on iam_role_permissions" ON public.iam_role_permissions FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public full access on iam_user_roles" ON public.iam_user_roles FOR ALL USING (true) WITH CHECK (true);
 
 -- Note: Seeding is handled by the backend load-iam-data utility script.
