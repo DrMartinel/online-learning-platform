@@ -8,12 +8,10 @@ export class SupabaseUserProgressRepository implements IUserProgressRepository {
   private mapToUserProgress(row: any): any {
     return {
       userId: row.user_id,
-      courseId: row.course_id,
+      courseId: row.lessons?.course_id,
       lessonId: row.lesson_id,
-      isCompleted: row.is_completed,
-      lastPosition: row.last_position,
+      isCompleted: row.completed,
       completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
-      updatedAt: new Date(row.updated_at),
     };
   }
 
@@ -23,15 +21,13 @@ export class SupabaseUserProgressRepository implements IUserProgressRepository {
       .upsert(
         {
           user_id: dto.userId,
-          course_id: dto.courseId,
           lesson_id: dto.lessonId,
-          is_completed: dto.isCompleted,
-          last_position: dto.lastPosition,
+          completed: dto.isCompleted,
           completed_at: dto.isCompleted ? new Date().toISOString() : null,
         },
         { onConflict: 'user_id, lesson_id' }
       )
-      .select()
+      .select('*, lessons(course_id)')
       .single();
 
     if (error) throw error;
@@ -41,7 +37,7 @@ export class SupabaseUserProgressRepository implements IUserProgressRepository {
   async findByLesson(userId: string, lessonId: string): Promise<any | null> {
     const { data, error } = await this.client
       .from('user_progress')
-      .select()
+      .select('*, lessons(course_id)')
       .eq('user_id', userId)
       .eq('lesson_id', lessonId)
       .maybeSingle();
@@ -54,9 +50,9 @@ export class SupabaseUserProgressRepository implements IUserProgressRepository {
   async findByCourse(userId: string, courseId: string): Promise<any[]> {
     const { data, error } = await this.client
       .from('user_progress')
-      .select()
+      .select('*, lessons!inner(course_id)')
       .eq('user_id', userId)
-      .eq('course_id', courseId);
+      .eq('lessons.course_id', courseId);
 
     if (error) throw error;
     return data.map(this.mapToUserProgress);

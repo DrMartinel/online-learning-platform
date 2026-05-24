@@ -98,6 +98,7 @@ export class UserService {
       email: user.email,
       fullName: user.fullName,
       role: user.role,
+      permissions: user.permissions,
       bio: user.bio,
       avatarUrl: user.avatarUrl,
       createdAt: user.createdAt,

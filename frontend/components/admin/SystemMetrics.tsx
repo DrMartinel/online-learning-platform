@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -20,48 +19,22 @@ interface MetricPoint {
   count: number;
 }
 
-export function SystemMetrics({ token, backendUrl }: { token?: string, backendUrl?: string }) {
-  const [requests, setRequests] = useState<MetricPoint[]>([]);
-  const [errors, setErrors] = useState<MetricPoint[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchData() {
-      if (!backendUrl) return;
-      try {
-        const headers: Record<string, string> = {};
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-
-        const [reqsRes, errsRes] = await Promise.all([
-          fetch(`${backendUrl}/admin/system-analytics/requests`, { headers, cache: "no-store" }),
-          fetch(`${backendUrl}/admin/system-analytics/errors`, { headers, cache: "no-store" })
-        ]);
-
-        if (reqsRes.ok) setRequests(await reqsRes.json());
-        if (errsRes.ok) setErrors(await errsRes.json());
-      } catch (err) {
-        console.error("Failed to load metrics", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, [token, backendUrl]);
-
-  if (loading) {
+export function SystemMetrics({ requests, errors }: { requests: MetricPoint[], errors: MetricPoint[] }) {
+  if (!requests.length && !errors.length) {
     return (
       <div className="mt-8 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-8 flex items-center justify-center min-h-[300px]">
-         <div className="text-center animate-pulse">
-            <Activity className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Loading Analytics...</h3>
-         </div>
+        <div className="text-center">
+          <Activity className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Analytics Engine</h3>
+          <p className="text-gray-500 dark:text-gray-400 max-w-sm mt-2">Awaiting metrics data...</p>
+        </div>
       </div>
     );
   }
 
   // Combine data by time for joint chart
   const combinedDataMap = new Map<string, { time: string, requests: number, errors: number }>();
-  
+
   requests.forEach(r => {
     const timeLabel = new Date(r.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     combinedDataMap.set(timeLabel, { time: timeLabel, requests: r.count, errors: 0 });
@@ -92,14 +65,14 @@ export function SystemMetrics({ token, backendUrl }: { token?: string, backendUr
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                 <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
                 <Line type="monotone" dataKey="requests" stroke="#3b82f6" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>
           ) : (
-             <div className="h-full flex items-center justify-center text-gray-400">No data available</div>
+            <div className="h-full flex items-center justify-center text-gray-400">No data available</div>
           )}
         </div>
       </div>
@@ -116,7 +89,7 @@ export function SystemMetrics({ token, backendUrl }: { token?: string, backendUr
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                 <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   cursor={{ fill: '#f3f4f6' }}
                 />
