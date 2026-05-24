@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { Users, BookOpen, Presentation, Activity } from 'lucide-react';
+import { SystemMetrics } from '@/components/admin/SystemMetrics';
 
 async function getStats() {
   try {
@@ -49,6 +50,7 @@ async function getStats() {
 
 export default async function AdminDashboardPage() {
   const stats = await getStats();
+  const cookieStore = await cookies();
 
   const statCards = [
     { label: 'Total Users', value: stats.users, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
@@ -78,14 +80,7 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
-      {/* Decorative empty state for future charts */}
-      <div className="mt-8 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-8 flex items-center justify-center min-h-[300px]">
-         <div className="text-center">
-            <Activity className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Analytics Engine</h3>
-            <p className="text-gray-500 dark:text-gray-400 max-w-sm mt-2">More detailed analytics and charts will appear here as the platform grows.</p>
-         </div>
-      </div>
+      <SystemMetrics token={cookieStore.get('olp_session')?.value} backendUrl={process.env.BACKEND_URL} />
     </div>
   );
 }
