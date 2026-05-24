@@ -2,10 +2,18 @@
 
 import { useState } from 'react';
 import { getSupabaseClient } from '@/lib/supabase';
-import { createCourseAction } from '@/app/actions/courses';
-import { Loader2, UploadCloud, Image as ImageIcon } from 'lucide-react';
+import { updateCourseAction } from '@/app/actions/courses';
+import { Loader2, UploadCloud, Image as ImageIcon, Save } from 'lucide-react';
 
-export default function CreateCourseForm({ token }: { token: string }) {
+interface CourseData {
+  id: string;
+  title: string;
+  description?: string;
+  thumbnailUrl?: string;
+  isPublished?: boolean;
+}
+
+export default function EditCourseForm({ course, token }: { course: CourseData; token: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -17,8 +25,8 @@ export default function CreateCourseForm({ token }: { token: string }) {
 
     try {
       const formData = new FormData(e.currentTarget);
-      
-      // Upload thumbnail if provided
+
+      // Upload new thumbnail if provided
       if (file) {
         const supabase = getSupabaseClient(token);
         // Explicitly load session into Supabase client to authenticate Storage RLS checks
@@ -42,10 +50,10 @@ export default function CreateCourseForm({ token }: { token: string }) {
         formData.set('thumbnailUrl', filePath);
       }
 
-      await createCourseAction(formData);
+      await updateCourseAction(course.id, formData);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'An error occurred while creating the course.');
+      setError(err.message || 'An error occurred while updating the course.');
       setLoading(false);
     }
   };
@@ -67,6 +75,7 @@ export default function CreateCourseForm({ token }: { token: string }) {
           name="title"
           id="title"
           required
+          defaultValue={course.title}
           className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
           placeholder="Nhập tiêu đề khóa học..."
         />
@@ -80,6 +89,7 @@ export default function CreateCourseForm({ token }: { token: string }) {
           name="description"
           id="description"
           rows={4}
+          defaultValue={course.description || ''}
           className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"
           placeholder="Giới thiệu sơ lược về khóa học này..."
         ></textarea>
@@ -89,6 +99,11 @@ export default function CreateCourseForm({ token }: { token: string }) {
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Ảnh bìa khóa học
         </label>
+        {course.thumbnailUrl && !file && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+            Ảnh hiện tại: <span className="font-mono">{course.thumbnailUrl}</span>
+          </p>
+        )}
         <div className="flex items-center justify-center w-full">
           <label htmlFor="thumbnail" className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-xl cursor-pointer bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -104,7 +119,7 @@ export default function CreateCourseForm({ token }: { token: string }) {
                 <>
                   <UploadCloud className="w-10 h-10 text-gray-400 mb-3" />
                   <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                    <span className="font-semibold text-primary">Nhấn để tải lên</span> hoặc kéo thả file
+                    <span className="font-semibold text-primary">Nhấn để thay đổi ảnh</span> hoặc kéo thả file
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG hoặc GIF</p>
                 </>
@@ -125,7 +140,13 @@ export default function CreateCourseForm({ token }: { token: string }) {
         </div>
       </div>
 
-      <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-end">
+      <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3">
+        <a
+          href={`/courses/${course.id}`}
+          className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+        >
+          Hủy
+        </a>
         <button
           type="submit"
           disabled={loading}
@@ -134,10 +155,13 @@ export default function CreateCourseForm({ token }: { token: string }) {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Đang tạo...
+              Đang lưu...
             </>
           ) : (
-            'Tạo khóa học'
+            <>
+              <Save className="w-4 h-4 mr-2" />
+              Lưu thay đổi
+            </>
           )}
         </button>
       </div>

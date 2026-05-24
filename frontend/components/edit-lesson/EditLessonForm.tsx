@@ -21,7 +21,26 @@ interface Chapter {
   title: string;
 }
 
+interface LessonData {
+  id: string;
+  courseId: string; // compatibility
+  chapter_id?: string;
+  title: string;
+  content?: string | null;
+  order_index: number;
+}
+
+interface LessonMedia {
+  id: string;
+  lesson_id: string;
+  title: string;
+  type: 'video' | 'document' | 'link';
+  url: string;
+  order_index: number;
+}
+
 interface MediaItemInput {
+  id?: string; // existing DB id if any
   title: string;
   type: 'video' | 'document' | 'link';
   file?: File;
@@ -29,52 +48,84 @@ interface MediaItemInput {
   isUploading?: boolean;
 }
 
-export default function CreateLessonForm({ courseId, token }: { courseId: string; token: string }) {
+export default function EditLessonForm({ lesson, token }: { lesson: LessonData; token: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialChapterId = searchParams.get('chapterId') || '';
+  const queryChapterId = searchParams.get('chapterId') || '';
 
   const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [selectedChapterId, setSelectedChapterId] = useState(initialChapterId);
+  const [selectedChapterId, setSelectedChapterId] = useState(lesson.chapter_id || queryChapterId);
   const [loading, setLoading] = useState(false);
-  const [loadingChapters, setLoadingChapters] = useState(true);
+  const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState('');
 
   // Form Fields
-  const [title, setTitle] = useState('');
-  const [orderIndex, setOrderIndex] = useState(0);
-  const [content, setContent] = useState('');
+  const [title, setTitle] = useState(lesson.title);
+  const [orderIndex, setOrderIndex] = useState(lesson.order_index);
+  const [content, setContent] = useState(lesson.content || '');
 
-  // Multiple Media Attachments State
+  // Media Attachments State
   const [attachments, setAttachments] = useState<MediaItemInput[]>([]);
+  const [deletedMediaIds, setDeletedMediaIds] = useState<string[]>([]);
 
   const supabase = getSupabaseClient(token);
 
-  // Load chapters to let them choose
+  // Load chapters & current media list
   useEffect(() => {
-    const fetchChapters = async () => {
+    const fetchData = async () => {
       try {
         await supabase.auth.setSession({ access_token: token, refresh_token: '' });
-        const { data, error } = await supabase
+        
+        // 1. Fetch chapters of this course
+        // Wait, where is courseId?
+        // Let's resolve the course_id first from the lesson's chapter!
+        let courseId = lesson.courseId;
+        
+        if (lesson.chapter_id) {
+          const { data: chInfo } = await supabase
+            .from('chapters')
+            .select('course_id')
+            .eq('id', lesson.chapter_id)
+            .single();
+          if (chInfo?.course_id) courseId = chInfo.course_id;
+        }
+
+        const { data: chData, error: chErr } = await supabase
           .from('chapters')
           .select('id, title')
           .eq('course_id', courseId)
           .order('order_index', { ascending: true });
 
-        if (error) throw error;
-        const loaded = data || [];
-        setChapters(loaded);
-        if (loaded.length > 0 && !selectedChapterId) {
-          setSelectedChapterId(loaded[0].id);
+        if (chErr) throw chErr;
+        setChapters(chData || []);
+        if (!selectedChapterId && chData && chData.length > 0) {
+          setSelectedChapterId(chData[0].id);
+        }
+
+        // 2. Fetch existing media assets for this lesson
+        const { data: medData, error: medErr } = await supabase
+          .from('lesson_media')
+          .select('*')
+          .eq('lesson_id', lesson.id)
+          .order('order_index', { ascending: true });
+
+        if (!medErr && medData) {
+          const mapped: MediaItemInput[] = medData.map(m => ({
+            id: m.id,
+            title: m.title,
+            type: m.type,
+            url: m.url
+          }));
+          setAttachments(mapped);
         }
       } catch (err) {
-        console.error('Failed to load chapters for lesson form:', err);
+        console.error('Failed to load edit lesson form assets:', err);
       } finally {
-        setLoadingChapters(false);
+        setLoadingData(false);
       }
     };
-    fetchChapters();
-  }, [courseId, token]);
+    fetchData();
+  }, [lesson, token]);
 
   const addAttachmentRow = (type: 'video' | 'document' | 'link') => {
     setAttachments(prev => [
@@ -84,6 +135,10 @@ export default function CreateLessonForm({ courseId, token }: { courseId: string
   };
 
   const removeAttachmentRow = (index: number) => {
+    const item = attachments[index];
+    if (item.id) {
+      setDeletedMediaIds(prev => [...prev, item.id!]);
+    }
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -99,7 +154,7 @@ export default function CreateLessonForm({ courseId, token }: { courseId: string
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedChapterId) {
-      setError('Vui lòng chọn hoặc tạo ít nhất một chương học trước.');
+      setError('Vui lòng chọn chương học cho bài giảng.');
       return;
     }
     if (!title.trim()) {
@@ -113,28 +168,35 @@ export default function CreateLessonForm({ courseId, token }: { courseId: string
     try {
       await supabase.auth.setSession({ access_token: token, refresh_token: '' });
 
-      // 1. Create the lesson
-      const { data: newLesson, error: lessonError } = await supabase
+      // 1. Update the lesson metadata in lessons table
+      const { error: lessonError } = await supabase
         .from('lessons')
-        .insert({
-          course_id: courseId,
+        .update({
           chapter_id: selectedChapterId,
           title: title.trim(),
           content: content.trim() || null,
           order_index: orderIndex
         })
-        .select()
-        .single();
+        .eq('id', lesson.id);
 
       if (lessonError) throw lessonError;
 
-      // 2. Handle attachments
+      // 2. Perform deletions of deleted existing media assets
+      if (deletedMediaIds.length > 0) {
+        const { error: delErr } = await supabase
+          .from('lesson_media')
+          .delete()
+          .in('id', deletedMediaIds);
+        if (delErr) throw delErr;
+      }
+
+      // 3. Save new attachments / update existing ones
       if (attachments.length > 0) {
         for (let i = 0; i < attachments.length; i++) {
           const item = attachments[i];
           let finalUrl = item.url || '';
 
-          // If a file is uploaded, upload to Supabase storage
+          // If a new file is uploaded
           if (item.file) {
             updateAttachment(i, 'isUploading', true);
             const fileExt = item.file.name.split('.').pop();
@@ -151,34 +213,54 @@ export default function CreateLessonForm({ courseId, token }: { courseId: string
             updateAttachment(i, 'isUploading', false);
           }
 
-          // Insert into public.lesson_media table
-          if (finalUrl) {
-            const { error: mediaError } = await supabase.from('lesson_media').insert({
-              lesson_id: newLesson.id,
-              title: item.title.trim() || item.file?.name || 'Tài liệu bổ trợ',
+          if (item.id) {
+            // Update existing media row
+            const { error: medUpErr } = await supabase
+              .from('lesson_media')
+              .update({
+                title: item.title.trim(),
+                url: finalUrl,
+                order_index: i
+              })
+              .eq('id', item.id);
+            if (medUpErr) throw medUpErr;
+          } else {
+            // Insert new media row
+            const { error: medInsErr } = await supabase.from('lesson_media').insert({
+              lesson_id: lesson.id,
+              title: item.title.trim() || item.file?.name || 'Tài liệu',
               type: item.type,
               url: finalUrl,
               order_index: i
             });
-            if (mediaError) throw mediaError;
+            if (medInsErr) throw medInsErr;
           }
         }
       }
+
+      // Fetch courseId to redirect back to edit page
+      let courseId = lesson.courseId;
+      const { data: chInfo } = await supabase
+        .from('chapters')
+        .select('course_id')
+        .eq('id', selectedChapterId)
+        .single();
+      if (chInfo?.course_id) courseId = chInfo.course_id;
 
       router.push(`/courses/${courseId}/edit`);
       router.refresh();
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Có lỗi xảy ra khi tạo bài học.');
+      setError(err.message || 'Có lỗi xảy ra khi cập nhật bài học.');
       setLoading(false);
     }
   };
 
-  if (loadingChapters) {
+  if (loadingData) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-gray-500">
         <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
-        <p className="text-xs">Đang tải danh sách chương học...</p>
+        <p className="text-xs">Đang tải thông tin bài học...</p>
       </div>
     );
   }
@@ -191,14 +273,14 @@ export default function CreateLessonForm({ courseId, token }: { courseId: string
         </div>
       )}
 
-      {/* Chapter Selection */}
+      {/* Chapter Selector Dropdown */}
       <div>
         <label htmlFor="chapter" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
           Thuộc chương học <span className="text-red-500">*</span>
         </label>
         {chapters.length === 0 ? (
           <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 text-xs text-amber-600">
-            Khóa học hiện chưa có chương nào. Bạn cần vào cấu hình trang chỉnh sửa khóa học để thêm ít nhất 1 chương học trước khi tạo bài giảng.
+            Khóa học hiện không có chương nào. Vui lòng thêm chương trước.
           </div>
         ) : (
           <select
@@ -349,23 +431,43 @@ export default function CreateLessonForm({ courseId, token }: { courseId: string
                       />
                     ) : (
                       <div className="flex items-center gap-2">
-                        <label className="flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-750 bg-white dark:bg-gray-950 text-xs text-gray-500 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-                          <span className="truncate max-w-[180px] font-semibold">
-                            {item.file ? item.file.name : 'Chọn tệp tải lên...'}
-                          </span>
-                          <UploadCloud size={14} className="text-gray-400" />
-                          <input
-                            type="file"
-                            required={!item.file}
-                            accept={item.type === 'video' ? 'video/*' : '*'}
-                            className="hidden"
-                            onChange={(e) => {
-                              if (e.target.files && e.target.files.length > 0) {
-                                updateAttachment(idx, 'file', e.target.files[0]);
-                              }
-                            }}
-                          />
-                        </label>
+                        {item.id && !item.file ? (
+                          <div className="flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-emerald-150 dark:border-emerald-900 bg-emerald-50/10 dark:bg-emerald-950/5 text-xs text-emerald-600">
+                            <span className="truncate max-w-[200px] font-semibold">{item.url || 'Đã có file đính kèm'}</span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30">Có sẵn</span>
+                            <label className="ml-2 hover:underline cursor-pointer font-bold text-gray-400 hover:text-primary">
+                              Đổi tệp
+                              <input
+                                type="file"
+                                accept={item.type === 'video' ? 'video/*' : '*'}
+                                className="hidden"
+                                onChange={(e) => {
+                                  if (e.target.files && e.target.files.length > 0) {
+                                    updateAttachment(idx, 'file', e.target.files[0]);
+                                  }
+                                }}
+                              />
+                            </label>
+                          </div>
+                        ) : (
+                          <label className="flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-750 bg-white dark:bg-gray-950 text-xs text-gray-500 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                            <span className="truncate max-w-[180px] font-semibold">
+                              {item.file ? item.file.name : 'Chọn tệp tải lên...'}
+                            </span>
+                            <UploadCloud size={14} className="text-gray-400" />
+                            <input
+                              type="file"
+                              required={!item.file && !item.id}
+                              accept={item.type === 'video' ? 'video/*' : '*'}
+                              className="hidden"
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files.length > 0) {
+                                  updateAttachment(idx, 'file', e.target.files[0]);
+                                }
+                              }}
+                            />
+                          </label>
+                        )}
                       </div>
                     )}
                   </div>
@@ -378,12 +480,17 @@ export default function CreateLessonForm({ courseId, token }: { courseId: string
 
       {/* Action footer */}
       <div className="pt-4 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-3">
-        <Link
-          href={`/courses/${courseId}/edit`}
+        <button
+          type="button"
+          onClick={() => {
+            // Get courseId back to redirect
+            let courseId = lesson.courseId;
+            router.push(`/courses/${courseId}/edit`);
+          }}
           className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl border border-gray-300 dark:border-gray-750 text-gray-700 dark:text-gray-300 font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
         >
           Hủy
-        </Link>
+        </button>
         <button
           type="submit"
           disabled={loading || chapters.length === 0}
@@ -392,7 +499,7 @@ export default function CreateLessonForm({ courseId, token }: { courseId: string
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Đang tạo bài học...
+              Đang lưu thay đổi...
             </>
           ) : (
             <>

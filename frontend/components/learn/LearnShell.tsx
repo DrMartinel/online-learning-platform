@@ -9,6 +9,7 @@ interface LearnShellProps {
   courseId: string;
   courseTitle: string;
   activeLessonId: string;
+  chapters: any[];
   lessons: Lesson[];
   completedLessonIds: string[];
   progressPct: number;
@@ -19,6 +20,7 @@ export default function LearnShell({
   courseId,
   courseTitle,
   activeLessonId,
+  chapters,
   lessons,
   completedLessonIds,
   progressPct,
@@ -41,6 +43,7 @@ export default function LearnShell({
         <LessonSidebar
           courseId={courseId}
           activeLessonId={activeLessonId}
+          chapters={chapters}
           lessons={lessons}
           completedLessonIds={completedSet}
           isOpen={sidebarOpen}

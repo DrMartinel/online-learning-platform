@@ -57,6 +57,7 @@ ALTER TABLE user_progress ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can insert their own profile." ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Service role full access on profiles" ON profiles FOR ALL TO service_role, postgres USING (true) WITH CHECK (true);
 
 -- 8. Define RLS Policies for Courses
 CREATE POLICY "Anyone can view published courses" ON courses FOR SELECT USING (is_published = true);
@@ -70,6 +71,7 @@ CREATE POLICY "Instructors can insert courses" ON courses FOR INSERT WITH CHECK 
 );
 CREATE POLICY "Instructors can update own courses" ON courses FOR UPDATE USING (auth.uid() = instructor_id);
 CREATE POLICY "Instructors can delete own courses" ON courses FOR DELETE USING (auth.uid() = instructor_id);
+CREATE POLICY "Service role full access on courses" ON courses FOR ALL TO service_role, postgres USING (true) WITH CHECK (true);
 
 -- 9. Define RLS Policies for Lessons
 CREATE POLICY "Anyone can view lessons of published courses" ON lessons FOR SELECT USING (
@@ -78,11 +80,13 @@ CREATE POLICY "Anyone can view lessons of published courses" ON lessons FOR SELE
 CREATE POLICY "Instructors can manage lessons for their courses" ON lessons FOR ALL USING (
   EXISTS (SELECT 1 FROM courses WHERE id = lessons.course_id AND instructor_id = auth.uid())
 );
+CREATE POLICY "Service role full access on lessons" ON lessons FOR ALL TO service_role, postgres USING (true) WITH CHECK (true);
 
 -- 10. Define RLS Policies for User Progress
 CREATE POLICY "Users can view own progress" ON user_progress FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own progress" ON user_progress FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own progress" ON user_progress FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Service role full access on user_progress" ON user_progress FOR ALL TO service_role, postgres USING (true) WITH CHECK (true);
 
 -- 11. Trigger to create a profile automatically when a new user signs up
 CREATE OR REPLACE FUNCTION public.handle_new_user()

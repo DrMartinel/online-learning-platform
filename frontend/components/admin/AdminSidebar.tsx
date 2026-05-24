@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, BookOpen, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, BookOpen, Shield, FolderOpen } from 'lucide-react';
 
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Roles & Permissions', href: '/admin/iam', icon: Shield },
+  { name: 'Tài nguyên hệ thống', href: '/admin/resources', icon: FolderOpen },
 ];
 
 export default function AdminSidebar() {

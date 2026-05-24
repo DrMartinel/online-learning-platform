@@ -7,6 +7,9 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 // The user must pass the 'Authorization: Bearer <session-token>' when making requests.
 export const getSupabaseClient = (sessionToken: string) => {
   return createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      persistSession: false,
+    },
     global: {
       headers: {
         Authorization: `Bearer ${sessionToken}`,

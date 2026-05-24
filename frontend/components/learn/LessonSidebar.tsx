@@ -12,9 +12,17 @@ import {
 } from "lucide-react";
 import type { Lesson } from "@/components/courses/LessonList";
 
+interface Chapter {
+  id: string;
+  course_id: string;
+  title: string;
+  order_index: number;
+}
+
 interface LessonSidebarProps {
   courseId: string;
   activeLessonId: string;
+  chapters: Chapter[];
   lessons: Lesson[];
   /** IDs of lessons the user has already completed */
   completedLessonIds: Set<string>;
@@ -25,15 +33,31 @@ interface LessonSidebarProps {
 export default function LessonSidebar({
   courseId,
   activeLessonId,
+  chapters,
   lessons,
   completedLessonIds,
   isOpen,
   onClose,
 }: LessonSidebarProps) {
   const sorted = [...lessons].sort((a, b) => a.orderIndex - b.orderIndex);
+  const sortedChapters = [...chapters].sort((a, b) => a.order_index - b.order_index);
 
-  // Group into a single "module" since the backend currently has a flat lesson list
-  const [expanded, setExpanded] = useState(true);
+  // Initialize expanded chapters state (active lesson's chapter is expanded by default)
+  const [expandedChapters, setExpandedChapters] = useState<Record<string, boolean>>(() => {
+    const activeLesson = lessons.find((l) => l.id === activeLessonId);
+    const activeChId = activeLesson?.chapterId;
+    if (activeChId) {
+      return { [activeChId]: true };
+    }
+    return sortedChapters[0] ? { [sortedChapters[0].id]: true } : {};
+  });
+
+  const toggleChapter = (chapterId: string) => {
+    setExpandedChapters((prev) => ({
+      ...prev,
+      [chapterId]: !prev[chapterId],
+    }));
+  };
 
   return (
     <>
@@ -65,91 +89,117 @@ export default function LessonSidebar({
           </div>
           <button
             onClick={onClose}
-            className="lg:hidden p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="lg:hidden p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-205"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Accordion — single module */}
-        <div className="flex-1 overflow-y-auto pb-4">
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="w-full flex items-center gap-2 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
-          >
-            <ChevronDown
-              size={16}
-              className={`text-gray-400 shrink-0 transition-transform duration-200 ${
-                expanded ? "" : "-rotate-90"
-              }`}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                Danh sách bài học
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {sorted.length} bài
-              </p>
+        {/* Chapters and nested lessons */}
+        <div className="flex-1 overflow-y-auto pb-4 divide-y divide-gray-100 dark:divide-gray-800/60">
+          {sortedChapters.length === 0 ? (
+            <div className="p-5 text-center text-xs text-gray-400 italic">
+              Chưa có chương học nào.
             </div>
-          </button>
+          ) : (
+            sortedChapters.map((chapter, chIdx) => {
+              const chLessons = sorted.filter((l) => l.chapterId === chapter.id);
+              const isExpanded = !!expandedChapters[chapter.id];
 
-          {expanded && (
-            <div className="pb-1">
-              {sorted.map((lesson) => {
-                const isActive = lesson.id === activeLessonId;
-                const isDone = completedLessonIds.has(lesson.id);
-                const Icon = lesson.videoUrl ? PlayCircle : FileText;
-
-                return (
-                  <Link
-                    key={lesson.id}
-                    href={`/learn/${courseId}/${lesson.id}`}
-                    onClick={onClose}
-                    className={`flex items-center gap-2.5 pl-10 pr-4 py-2.5 transition-colors ${
-                      isActive
-                        ? "bg-primary/5 dark:bg-primary/10 border-r-2 border-primary"
-                        : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                    }`}
+              return (
+                <div key={chapter.id} className="w-full">
+                  <button
+                    onClick={() => toggleChapter(chapter.id)}
+                    className="w-full flex items-center gap-2 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left bg-gray-50/20 dark:bg-gray-900/10"
                   >
-                    {isDone ? (
-                      <CheckCircle2
-                        size={16}
-                        className="text-emerald-500 shrink-0"
-                      />
-                    ) : (
-                      <Circle
-                        size={16}
-                        className="text-gray-300 dark:text-gray-600 shrink-0"
-                      />
-                    )}
-
-                    <Icon
+                    <ChevronDown
                       size={15}
-                      className={`shrink-0 ${
-                        lesson.videoUrl
-                          ? "text-blue-500"
-                          : "text-emerald-500"
+                      className={`text-gray-400 shrink-0 transition-transform duration-200 ${
+                        isExpanded ? "" : "-rotate-90"
                       }`}
                     />
-
                     <div className="flex-1 min-w-0">
-                      <p
-                        className={`text-sm truncate ${
-                          isActive
-                            ? "text-primary font-medium"
-                            : "text-gray-700 dark:text-gray-300"
-                        }`}
-                      >
-                        {lesson.title}
+                      <p className="text-[10px] font-bold text-primary/80 uppercase tracking-wider mb-0.5">
+                        Chương {chIdx + 1}
                       </p>
-                      <p className="text-xs text-gray-400">
-                        {lesson.videoUrl ? "Video" : "Tài liệu"}
+                      <p className="text-sm font-bold text-gray-850 dark:text-gray-200 truncate leading-snug">
+                        {chapter.title}
+                      </p>
+                      <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 font-medium">
+                        {chLessons.length} bài học
                       </p>
                     </div>
-                  </Link>
-                );
-              })}
-            </div>
+                  </button>
+
+                  {isExpanded && (
+                    <div className="pb-1 bg-white dark:bg-gray-900/40">
+                      {chLessons.length === 0 ? (
+                        <p className="text-xs text-gray-400 dark:text-gray-500 italic pl-10 pr-4 py-3">
+                          Chưa có bài học nào trong chương này.
+                        </p>
+                      ) : (
+                        chLessons.map((lesson) => {
+                          const isActive = lesson.id === activeLessonId;
+                          const isDone = completedLessonIds.has(lesson.id);
+                          const Icon = lesson.videoUrl ? PlayCircle : FileText;
+
+                          return (
+                            <Link
+                              key={lesson.id}
+                              href={`/learn/${courseId}/${lesson.id}`}
+                              onClick={onClose}
+                              className={`flex items-center gap-2.5 pl-10 pr-4 py-3 transition-colors border-b border-gray-50 dark:border-gray-850/20 last:border-b-0 ${
+                                isActive
+                                  ? "bg-primary/5 dark:bg-primary/10 border-r-2 border-primary"
+                                  : "hover:bg-gray-50 dark:hover:bg-gray-800/30"
+                              }`}
+                            >
+                              {isDone ? (
+                                <CheckCircle2
+                                  size={15}
+                                  className="text-emerald-500 shrink-0"
+                                />
+                              ) : (
+                                <Circle
+                                  size={15}
+                                  className="text-gray-300 dark:text-gray-750 shrink-0"
+                                />
+                              )}
+
+                              <Icon
+                                size={14}
+                                className={`shrink-0 ${
+                                  lesson.videoUrl
+                                    ? "text-blue-500"
+                                    : "text-emerald-500"
+                                }`}
+                              />
+
+                              <div className="flex-1 min-w-0">
+                                <p
+                                  className={`text-sm leading-snug truncate ${
+                                    isActive
+                                      ? "text-primary font-semibold"
+                                      : "text-gray-700 dark:text-gray-300"
+                                  }`}
+                                >
+                                  {lesson.title}
+                                </p>
+                                {lesson.content && (
+                                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 line-clamp-1">
+                                    {lesson.content}
+                                  </p>
+                                )}
+                              </div>
+                            </Link>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </aside>

@@ -6,10 +6,12 @@ import { ChevronLeft } from 'lucide-react';
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ chapterId?: string }>;
 }
 
-export default async function CreateLessonPage({ params }: PageProps) {
+export default async function CreateLessonPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const { chapterId } = await searchParams;
   const cookieStore = await cookies();
   const token = cookieStore.get('olp_session')?.value;
 

@@ -27,6 +27,27 @@ async function getCourses(): Promise<Course[]> {
   }
 }
 
+async function getCurrentUser() {
+  try {
+    const backendUrl = process.env.BACKEND_URL;
+    if (!backendUrl) return null;
+
+    const cookieStore = await cookies();
+    const token = cookieStore.get("olp_session")?.value;
+    if (!token) return null;
+
+    const res = await fetch(`${backendUrl}/users/me`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+      cache: 'no-store'
+    });
+
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
 const stats = [
   { icon: Users, value: "50,000+", label: "Học viên" },
   { icon: BookOpen, value: "1,200+", label: "Khóa học" },
@@ -35,7 +56,10 @@ const stats = [
 ];
 
 export default async function Home() {
-  const courses = await getCourses();
+  const [courses, currentUser] = await Promise.all([
+    getCourses(),
+    getCurrentUser()
+  ]);
 
   return (
     <div className="min-h-full bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-50">
@@ -147,7 +171,7 @@ export default async function Home() {
       </section>
 
       {/* ── Course Catalog ── */}
-      <CourseCatalog initialCourses={courses} />
+      <CourseCatalog initialCourses={courses} currentUser={currentUser} />
 
       {/* ── CTA ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">

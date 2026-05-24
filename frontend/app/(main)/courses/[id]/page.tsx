@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { PlayCircle, BookOpen, Clock, User, ChevronLeft, CheckCircle2 } from "lucide-react";
+import { PlayCircle, BookOpen, Clock, User, ChevronLeft, CheckCircle2, Pencil, Settings } from "lucide-react";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { getMediaUrl } from "@/lib/supabase";
-import LessonList, { type Lesson } from "@/components/courses/LessonList";
+import CurriculumView from "@/components/courses/CurriculumView";
 import EnrollButton from "@/components/courses/EnrollButton";
+import CourseManagementPanel from "@/components/courses/CourseManagementPanel";
 import type { Course } from "@/components/courses/CourseCard";
 import type { Metadata } from "next";
 
@@ -90,6 +91,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
   let isLoggedIn = false;
   let isEnrolled = false;
   let isInstructor = false;
+  let isAdmin = false;
 
   if (token) {
     const backendUrl = process.env.BACKEND_URL;
@@ -105,6 +107,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
         // Check enrollment and instructor status
         if (isLoggedIn) {
           const user = await userRes.json();
+          isAdmin = user.role === 'admin';
           const hasLessonPermission = user.permissions?.includes('action:lesson:create');
           isInstructor = user.id === course.instructorId && hasLessonPermission;
 
@@ -119,6 +122,8 @@ export default async function CourseDetailPage({ params }: PageProps) {
       }
     }
   }
+
+  const canManage = isInstructor || isAdmin;
 
   const sortedLessons = [...lessons].sort((a, b) => a.orderIndex - b.orderIndex);
   const lessonCount = sortedLessons.length;
@@ -156,9 +161,20 @@ export default async function CourseDetailPage({ params }: PageProps) {
                 </span>
               )}
 
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
-                {course.title}
-              </h1>
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight flex-1">
+                  {course.title}
+                </h1>
+                {canManage && (
+                  <Link
+                    href={`/courses/${id}/edit`}
+                    className="shrink-0 inline-flex items-center gap-1.5 text-sm font-semibold text-primary bg-primary/10 hover:bg-primary hover:text-white px-4 py-2 rounded-xl transition-all shadow-sm transform active:scale-95 border border-transparent"
+                  >
+                    <Settings size={14} className="animate-spin-slow" />
+                    Quản lý khóa học
+                  </Link>
+                )}
+              </div>
 
               {course.description && (
                 <p className="mt-4 text-base text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -205,16 +221,8 @@ export default async function CourseDetailPage({ params }: PageProps) {
                   <BookOpen size={20} className="text-primary" />
                   Nội dung khóa học
                 </h2>
-                {isInstructor && (
-                  <Link
-                    href={`/courses/${id}/lessons/create`}
-                    className="inline-flex items-center text-sm font-medium text-white bg-primary hover:bg-primary/90 px-3 py-1.5 rounded-lg transition-colors"
-                  >
-                    + Thêm bài học
-                  </Link>
-                )}
               </div>
-              <LessonList lessons={sortedLessons} />
+              <CurriculumView courseId={id} token={token} />
             </section>
           </div>
 

@@ -6,9 +6,14 @@ import CourseCard, { type Course } from "./CourseCard";
 
 interface CourseCatalogProps {
   initialCourses: Course[];
+  currentUser?: {
+    id: string;
+    role: string;
+    permissions?: string[];
+  } | null;
 }
 
-export default function CourseCatalog({ initialCourses }: CourseCatalogProps) {
+export default function CourseCatalog({ initialCourses, currentUser }: CourseCatalogProps) {
   const [query, setQuery] = useState("");
   const [showPublishedOnly, setShowPublishedOnly] = useState(false);
 
@@ -98,7 +103,7 @@ export default function CourseCatalog({ initialCourses }: CourseCatalogProps) {
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.map((course) => (
-              <CourseCard key={course.id} course={course} />
+              <CourseCard key={course.id} course={course} currentUser={currentUser} />
             ))}
           </div>
         </>

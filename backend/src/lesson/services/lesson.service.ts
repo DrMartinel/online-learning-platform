@@ -14,6 +14,7 @@ export class LessonService {
   async create(dto: CreateLessonDTO): Promise<LessonResponseDTO> {
     const lesson = await this.lessonRepo.create({
       courseId: dto.courseId,
+      chapterId: dto.chapterId || null,
       title: dto.title,
       content: dto.content || null,
       videoUrl: dto.videoUrl || null,
@@ -39,6 +40,7 @@ export class LessonService {
     if (!lesson) throw new NotFoundException('Lesson not found');
 
     const updated = await this.lessonRepo.update(id, {
+      chapterId: dto.chapterId !== undefined ? dto.chapterId : lesson.chapterId,
       title: dto.title !== undefined ? dto.title : lesson.title,
       content: dto.content !== undefined ? dto.content : lesson.content,
       videoUrl: dto.videoUrl !== undefined ? dto.videoUrl : lesson.videoUrl,
@@ -59,12 +61,14 @@ export class LessonService {
     return {
       id: lesson.id,
       courseId: lesson.courseId,
+      chapterId: lesson.chapterId || undefined,
       title: lesson.title,
       content: lesson.content || undefined,
       videoUrl: lesson.videoUrl || undefined,
       orderIndex: lesson.orderIndex,
       isPublished: true, // Placeholder since DB doesn't have it
       createdAt: new Date(lesson.createdAt),
+      media: lesson.media,
     };
   }
 }
