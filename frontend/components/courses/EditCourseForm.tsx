@@ -8,8 +8,8 @@ import { Loader2, UploadCloud, Image as ImageIcon, Save } from 'lucide-react';
 interface CourseData {
   id: string;
   title: string;
-  description?: string;
-  thumbnailUrl?: string;
+  description?: string | null;
+  thumbnailUrl?: string | null;
   isPublished?: boolean;
 }
 
