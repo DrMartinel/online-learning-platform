@@ -8,6 +8,8 @@ import { UserModule } from './user/user.module';
 import { IamModule } from './iam/iam.module';
 import { SystemAnalyticsModule } from './system-analytics/system-analytics.module';
 import { RagModule } from './rag/rag.module';
+import { QuestionModule } from './question/question.module';
+import { ExamModule } from './exam/exam.module';
 
 @Module({
   imports: [
@@ -23,6 +25,9 @@ import { RagModule } from './rag/rag.module';
     IamModule,
     SystemAnalyticsModule,
     RagModule,
+    QuestionModule,
+    ExamModule,
   ],
 })
 export class AppModule {}
+
