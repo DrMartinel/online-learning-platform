@@ -78,11 +78,10 @@ export default function CourseCatalog({ initialCourses, currentUser }: CourseCat
         {/* Published filter toggle */}
         <button
           onClick={() => setShowPublishedOnly((v) => !v)}
-          className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-colors shadow-sm shrink-0 ${
-            showPublishedOnly
-              ? "bg-primary text-white border-primary"
-              : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-primary hover:text-primary"
-          }`}
+          className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-colors shadow-sm shrink-0 ${showPublishedOnly
+            ? "bg-primary text-white border-primary"
+            : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-primary hover:text-primary"
+            }`}
         >
           <SlidersHorizontal size={16} />
           Đã xuất bản

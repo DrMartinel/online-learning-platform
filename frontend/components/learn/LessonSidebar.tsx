@@ -114,9 +114,8 @@ export default function LessonSidebar({
                   >
                     <ChevronDown
                       size={15}
-                      className={`text-gray-400 shrink-0 transition-transform duration-200 ${
-                        isExpanded ? "" : "-rotate-90"
-                      }`}
+                      className={`text-gray-400 shrink-0 transition-transform duration-200 ${isExpanded ? "" : "-rotate-90"
+                        }`}
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-[10px] font-bold text-primary/80 uppercase tracking-wider mb-0.5">
@@ -148,11 +147,10 @@ export default function LessonSidebar({
                               key={lesson.id}
                               href={`/learn/${courseId}/${lesson.id}`}
                               onClick={onClose}
-                              className={`flex items-center gap-2.5 pl-10 pr-4 py-3 transition-colors border-b border-gray-50 dark:border-gray-850/20 last:border-b-0 ${
-                                isActive
-                                  ? "bg-primary/5 dark:bg-primary/10 border-r-2 border-primary"
-                                  : "hover:bg-gray-50 dark:hover:bg-gray-800/30"
-                              }`}
+                              className={`flex items-center gap-2.5 pl-10 pr-4 py-3 transition-colors border-b border-gray-50 dark:border-gray-850/20 last:border-b-0 ${isActive
+                                ? "bg-primary/5 dark:bg-primary/10 border-r-2 border-primary"
+                                : "hover:bg-gray-50 dark:hover:bg-gray-800/30"
+                                }`}
                             >
                               {isDone ? (
                                 <CheckCircle2
@@ -168,20 +166,18 @@ export default function LessonSidebar({
 
                               <Icon
                                 size={14}
-                                className={`shrink-0 ${
-                                  lesson.videoUrl
-                                    ? "text-blue-500"
-                                    : "text-emerald-500"
-                                }`}
+                                className={`shrink-0 ${lesson.videoUrl
+                                  ? "text-blue-500"
+                                  : "text-emerald-500"
+                                  }`}
                               />
 
                               <div className="flex-1 min-w-0">
                                 <p
-                                  className={`text-sm leading-snug truncate ${
-                                    isActive
-                                      ? "text-primary font-semibold"
-                                      : "text-gray-700 dark:text-gray-300"
-                                  }`}
+                                  className={`text-sm leading-snug truncate ${isActive
+                                    ? "text-primary font-semibold"
+                                    : "text-gray-700 dark:text-gray-300"
+                                    }`}
                                 >
                                   {lesson.title}
                                 </p>
@@ -202,7 +198,7 @@ export default function LessonSidebar({
             })
           )}
         </div>
-      </aside>
+      </aside >
     </>
   );
 }

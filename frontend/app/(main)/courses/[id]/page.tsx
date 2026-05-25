@@ -8,6 +8,7 @@ import CurriculumView from "@/components/courses/CurriculumView";
 import EnrollButton from "@/components/courses/EnrollButton";
 import CourseManagementPanel from "@/components/courses/CourseManagementPanel";
 import type { Course } from "@/components/courses/CourseCard";
+import type { Lesson } from "@/components/courses/LessonList";
 import type { Metadata } from "next";
 
 interface PageProps {
@@ -87,7 +88,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
   const cookieStore = await cookies();
   const token = cookieStore.get("olp_session")?.value;
-  
+
   let isLoggedIn = false;
   let isEnrolled = false;
   let isInstructor = false;
@@ -176,11 +177,13 @@ export default async function CourseDetailPage({ params }: PageProps) {
                 )}
               </div>
 
-              {course.description && (
-                <p className="mt-4 text-base text-gray-600 dark:text-gray-400 leading-relaxed">
-                  {course.description}
-                </p>
-              )}
+              {
+                course.description && (
+                  <p className="mt-4 text-base text-gray-600 dark:text-gray-400 leading-relaxed">
+                    {course.description}
+                  </p>
+                )
+              }
 
               {/* Meta row */}
               <div className="mt-5 flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
@@ -199,35 +202,37 @@ export default async function CourseDetailPage({ params }: PageProps) {
                   </span>
                 </span>
               </div>
-            </div>
+            </div >
 
             {/* Thumbnail */}
-            <div className="w-full aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-primary/10 to-blue-100 dark:from-primary/20 dark:to-blue-900/30 flex items-center justify-center shadow-md">
-              {course.thumbnailUrl ? (
-                <img
-                  src={getMediaUrl(course.thumbnailUrl)}
-                  alt={course.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <PlayCircle size={64} className="text-primary/40" />
-              )}
-            </div>
+            < div className="w-full aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-primary/10 to-blue-100 dark:from-primary/20 dark:to-blue-900/30 flex items-center justify-center shadow-md" >
+              {
+                course.thumbnailUrl ? (
+                  <img
+                    src={getMediaUrl(course.thumbnailUrl)}
+                    alt={course.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <PlayCircle size={64} className="text-primary/40" />
+                )
+              }
+            </div >
 
             {/* ── Syllabus ── */}
-            <section>
+            < section >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                   <BookOpen size={20} className="text-primary" />
                   Nội dung khóa học
                 </h2>
-              </div>
+              </div >
               <CurriculumView courseId={id} token={token} />
-            </section>
-          </div>
+            </section >
+          </div >
 
           {/* ── Sticky sidebar ── */}
-          <aside className="lg:col-span-1">
+          < aside className="lg:col-span-1" >
             <div className="sticky top-24 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-lg overflow-hidden">
               {/* Card thumbnail */}
               <div className="aspect-video bg-gradient-to-br from-primary/10 to-blue-100 dark:from-primary/20 dark:to-blue-900/30 flex items-center justify-center">
@@ -281,9 +286,9 @@ export default async function CourseDetailPage({ params }: PageProps) {
                 )}
               </div>
             </div>
-          </aside>
-        </div>
-      </div>
-    </div>
+          </aside >
+        </div >
+      </div >
+    </div >
   );
 }

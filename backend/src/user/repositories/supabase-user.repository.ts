@@ -3,7 +3,7 @@ import { User } from '../entities/User';
 import { UserRepository } from './Iuser.repository';
 
 export class SupabaseUserRepository implements UserRepository {
-  constructor(private client: SupabaseClient) {}
+  constructor(private client: SupabaseClient) { }
 
   private async resolveRoleAndPermissions(userId: string): Promise<{ role: string, permissions: string[] }> {
     const { data } = await this.client
@@ -13,7 +13,7 @@ export class SupabaseUserRepository implements UserRepository {
 
     if (data && data.length > 0) {
       const roles = data.map((d: any) => d.role?.urn?.replace('role:user:', '') || 'student');
-      
+
       // Determine highest priority role: admin > operator > student
       let finalRole = 'student';
       if (roles.includes('admin')) {

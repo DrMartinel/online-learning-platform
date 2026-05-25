@@ -9,7 +9,7 @@ export class LessonService {
   constructor(
     @Inject('ILessonRepository')
     private readonly lessonRepo: LessonRepository,
-  ) {}
+  ) { }
 
   async create(dto: CreateLessonDTO): Promise<LessonResponseDTO> {
     const lesson = await this.lessonRepo.create({
@@ -46,7 +46,7 @@ export class LessonService {
       videoUrl: dto.videoUrl !== undefined ? dto.videoUrl : lesson.videoUrl,
       orderIndex: dto.orderIndex !== undefined ? dto.orderIndex : lesson.orderIndex,
     });
-    
+
     if (!updated) throw new NotFoundException('Lesson not found');
     return this.mapToResponse(updated);
   }

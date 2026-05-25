@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { headers } from "next/headers";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import ActiveLessonPlayground from "@/components/learn/ActiveLessonPlayground";
@@ -28,6 +29,23 @@ async function getCourse(courseId: string, bearerToken?: string): Promise<Course
   }
 }
 
+async function getLessons(courseId: string, bearerToken?: string): Promise<Lesson[]> {
+  const backendUrl = process.env.BACKEND_URL;
+  if (!backendUrl) return [];
+  try {
+    const headers: Record<string, string> = {};
+    if (bearerToken) headers['Authorization'] = `Bearer ${bearerToken}`;
+    const res = await fetch(`${backendUrl}/lessons?courseId=${courseId}`, {
+      headers,
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
 async function getLesson(lessonId: string, bearerToken?: string): Promise<Lesson | null> {
   const backendUrl = process.env.BACKEND_URL;
   if (!backendUrl) return null;
@@ -36,6 +54,31 @@ async function getLesson(lessonId: string, bearerToken?: string): Promise<Lesson
     if (bearerToken) headers['Authorization'] = `Bearer ${bearerToken}`;
     const res = await fetch(`${backendUrl}/lessons/${lessonId}`, {
       headers,
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+interface CourseProgressResponse {
+  completedLessonsCount: number;
+  totalLessonsCount: number;
+  percentage: number;
+  progress: Array<{ lessonId: string; completed: boolean }>;
+}
+
+async function getCourseProgress(
+  courseId: string,
+  bearerToken: string
+): Promise<CourseProgressResponse | null> {
+  const backendUrl = process.env.BACKEND_URL;
+  if (!backendUrl) return null;
+  try {
+    const res = await fetch(`${backendUrl}/user-progress/course/${courseId}`, {
+      headers: { authorization: `Bearer ${bearerToken}` },
       cache: "no-store",
     });
     if (!res.ok) return null;
@@ -72,21 +115,43 @@ export default async function LearnPage({ params }: PageProps) {
     redirect(`/login?next=/learn/${courseId}/${lessonId}`);
   }
 
-  // Fetch course and active lesson details
-  const [course, lesson] = await Promise.all([
+  // Parallel fetch: course metadata, all lessons, active lesson, progress
+  const [course, lessons, lesson, progressData] = await Promise.all([
     getCourse(courseId, bearerToken),
+    getLessons(courseId, bearerToken),
     getLesson(lessonId, bearerToken),
+    getCourseProgress(courseId, bearerToken),
   ]);
 
   if (!course || !lesson) {
     notFound();
   }
+  const sortedLessons = [...lessons].sort((a, b) => a.orderIndex - b.orderIndex);
+
+  // IDs the user has already fully completed
+  const completedLessonIds = (progressData?.progress ?? [])
+    .filter((p) => p.completed)
+    .map((p) => p.lessonId);
+
+  const isCurrentCompleted = completedLessonIds.includes(lessonId);
+  const progressPct = progressData?.percentage ?? 0;
+
+  // Adjacent lesson navigation
+  const currentIndex = sortedLessons.findIndex((l) => l.id === lessonId);
+  const prevLesson = currentIndex > 0 ? sortedLessons[currentIndex - 1] : null;
+  const nextLesson =
+    currentIndex < sortedLessons.length - 1
+      ? sortedLessons[currentIndex + 1]
+      : null;
 
   return (
     <ActiveLessonPlayground
       courseId={courseId}
       courseTitle={course.title}
       lesson={lesson}
+      initialCompleted={isCurrentCompleted}
+      nextLesson={nextLesson}
+      prevLesson={prevLesson}
     />
   );
 }

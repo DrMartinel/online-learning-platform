@@ -9,7 +9,7 @@ export const createLessonSchema = z.object({
   videoUrl: z.string().optional(),
   orderIndex: z.number().int().min(0),
 });
-export class CreateLessonDTO extends createZodDto(createLessonSchema) {}
+export class CreateLessonDTO extends createZodDto(createLessonSchema) { }
 
 export const updateLessonSchema = z.object({
   chapterId: z.string().uuid().nullable().optional(),
@@ -19,7 +19,7 @@ export const updateLessonSchema = z.object({
   orderIndex: z.number().int().min(0).optional(),
   isPublished: z.boolean().optional(),
 });
-export class UpdateLessonDTO extends createZodDto(updateLessonSchema) {}
+export class UpdateLessonDTO extends createZodDto(updateLessonSchema) { }
 
 export const lessonMediaSchema = z.object({
   id: z.string().uuid(),
@@ -42,4 +42,4 @@ export const lessonResponseSchema = z.object({
   createdAt: z.date(),
   media: z.array(lessonMediaSchema).optional(),
 });
-export class LessonResponseDTO extends createZodDto(lessonResponseSchema) {}
+export class LessonResponseDTO extends createZodDto(lessonResponseSchema) { }

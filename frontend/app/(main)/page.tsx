@@ -11,7 +11,7 @@ async function getCourses(): Promise<Course[]> {
 
     const cookieStore = await cookies();
     const token = cookieStore.get("olp_session")?.value;
-    
+
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
 

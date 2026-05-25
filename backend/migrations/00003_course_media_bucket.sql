@@ -3,7 +3,7 @@
 
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('course-media', 'course-media', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
+ON CONFLICT (id) DO NOTHING;
 
 -- Policy: Publicly accessible
 CREATE POLICY "Course media is publicly accessible"

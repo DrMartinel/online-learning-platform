@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import VideoPlayer from "./VideoPlayer";
 import { getMediaUrl } from "@/lib/supabase";
+import CompleteButton from "./CompleteButton";
 
 interface MediaItem {
   id: string;
@@ -39,12 +40,18 @@ interface ActiveLessonPlaygroundProps {
   courseId: string;
   courseTitle: string;
   lesson: Lesson;
+  initialCompleted?: boolean;
+  nextLesson?: Lesson | null;
+  prevLesson?: Lesson | null;
 }
 
 export default function ActiveLessonPlayground({
   courseId,
   courseTitle,
   lesson,
+  initialCompleted = false,
+  nextLesson,
+  prevLesson,
 }: ActiveLessonPlaygroundProps) {
   // Combine media items
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
@@ -209,13 +216,31 @@ export default function ActiveLessonPlayground({
               {activeMedia?.title}
             </h1>
           </div>
-          <Link 
-            href={`/courses/${courseId}`} 
-            className="p-1.5 rounded-xl border border-gray-200 dark:border-gray-800 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            title="Đóng trang học"
-          >
-            <X size={16} />
-          </Link>
+          <div className="flex items-center gap-3 shrink-0">
+            <CompleteButton
+              lessonId={lesson.id}
+              courseId={courseId}
+              initialCompleted={initialCompleted}
+            />
+            {nextLesson && (
+              <Link
+                href={`/learn/${courseId}/${nextLesson.id}`}
+                className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors"
+                title="Bài tiếp theo"
+              >
+                Tiếp theo
+                <ChevronRight size={14} />
+              </Link>
+            )}
+            <div className="w-px h-6 bg-gray-200 dark:bg-gray-800 mx-1 hidden sm:block"></div>
+            <Link 
+              href={`/courses/${courseId}`} 
+              className="p-1.5 rounded-xl border border-gray-200 dark:border-gray-800 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              title="Đóng trang học"
+            >
+              <X size={16} />
+            </Link>
+          </div>
         </header>
 
         {/* Viewport content */}

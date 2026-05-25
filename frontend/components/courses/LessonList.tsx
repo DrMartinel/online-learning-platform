@@ -1,7 +1,6 @@
-import { PlayCircle, FileText, Pencil } from "lucide-react";
+import { PlayCircle, FileText, Pencil, Clock } from "lucide-react";
 import Link from "next/link";
 import DeleteLessonButton from "./DeleteLessonButton";
-
 
 export interface Lesson {
   id: string;

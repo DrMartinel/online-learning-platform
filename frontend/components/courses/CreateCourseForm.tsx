@@ -17,7 +17,7 @@ export default function CreateCourseForm({ token }: { token: string }) {
 
     try {
       const formData = new FormData(e.currentTarget);
-      
+
       // Upload thumbnail if provided
       if (file) {
         const supabase = getSupabaseClient(token);
@@ -110,11 +110,11 @@ export default function CreateCourseForm({ token }: { token: string }) {
                 </>
               )}
             </div>
-            <input 
-              id="thumbnail" 
-              type="file" 
-              accept="image/*" 
-              className="hidden" 
+            <input
+              id="thumbnail"
+              type="file"
+              accept="image/*"
+              className="hidden"
               onChange={(e) => {
                 if (e.target.files && e.target.files.length > 0) {
                   setFile(e.target.files[0]);

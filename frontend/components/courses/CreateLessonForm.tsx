@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSupabaseClient } from '@/lib/supabase';
-import { 
-  Loader2, 
-  UploadCloud, 
-  Video, 
-  FileText, 
-  Link as LinkIcon, 
-  Trash2, 
+import {
+  Loader2,
+  UploadCloud,
+  Video,
+  FileText,
+  Link as LinkIcon,
+  Trash2,
   Plus,
   Save,
   ChevronLeft
@@ -268,7 +268,7 @@ export default function CreateLessonForm({ courseId, token }: { courseId: string
             <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">Video & Tài liệu học tập</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Bài giảng này có thể tải lên nhiều video, tài liệu hỗ trợ hoặc đường link hữu ích.</p>
           </div>
-          
+
           <div className="flex gap-2">
             <button
               type="button"
@@ -304,8 +304,8 @@ export default function CreateLessonForm({ courseId, token }: { courseId: string
         ) : (
           <div className="space-y-4">
             {attachments.map((item, idx) => (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 className="p-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/20 dark:bg-gray-900/10 space-y-3 relative group"
               >
                 <button
@@ -399,9 +399,10 @@ export default function CreateLessonForm({ courseId, token }: { courseId: string
               <Save className="w-4 h-4 mr-2" />
               Lưu bài giảng
             </>
-          )}
-        </button>
-      </div>
-    </form>
+          )
+          }
+        </button >
+      </div >
+    </form >
   );
 }
