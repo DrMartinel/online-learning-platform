@@ -13,6 +13,7 @@ import {
   ChevronDown,
   BookOpen,
   User,
+  Bell
 } from "lucide-react";
 import { useTheme } from "@/components/layout/ThemeProvider";
 
@@ -67,7 +68,7 @@ export default function Header() {
       })
       .catch(() => setUser(null))
       .finally(() => setIsLoading(false));
-  }, [pathname]); // Re-fetch or verify on route changes if necessary
+  }, [pathname]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -106,11 +107,10 @@ export default function Header() {
             <Link
               key={item.href}
               href={item.href}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                pathname === item.href
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${pathname === item.href
                   ? "bg-primary/10 text-primary dark:bg-primary/20"
                   : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-              }`}
+                }`}
             >
               {item.label}
             </Link>
@@ -131,6 +131,12 @@ export default function Header() {
             <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
           ) : user ? (
             <>
+              {/* Notification bell */}
+              <button className="hidden sm:flex p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative">
+                <Bell size={18} />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+              </button>
+
               {/* User avatar dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -190,7 +196,7 @@ export default function Header() {
                       className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       <User size={14} />
-                      Hồ sơ
+                      Hồ sơ cá nhân
                     </Link>
                     <button
                       onClick={handleLogout}
@@ -248,7 +254,7 @@ export default function Header() {
             </Link>
           ))}
 
-          {user && (
+          {user ? (
             <div className="pt-2 border-t border-gray-200 dark:border-gray-800 space-y-1">
               {user.role === 'admin' && (
                 <Link
@@ -280,7 +286,7 @@ export default function Header() {
                 onClick={() => setMobileOpen(false)}
                 className="block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
-                Hồ sơ
+                Hồ sơ cá nhân
               </Link>
               <button
                 onClick={handleLogout}
@@ -289,9 +295,7 @@ export default function Header() {
                 Đăng xuất
               </button>
             </div>
-          )}
-
-          {!user && !isLoading && (
+          ) : !isLoading && (
             <div className="pt-2 border-t border-gray-200 dark:border-gray-800 space-y-1">
               <Link
                 href="/login"
