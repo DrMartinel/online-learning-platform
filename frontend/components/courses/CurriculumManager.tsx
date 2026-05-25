@@ -14,7 +14,8 @@ import {
   PlayCircle, 
   Link as LinkIcon,
   Video,
-  GripVertical
+  GripVertical,
+  ExternalLink
 } from 'lucide-react';
 import Link from 'next/link';
 

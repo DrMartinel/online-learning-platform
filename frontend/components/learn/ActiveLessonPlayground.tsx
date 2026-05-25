@@ -8,6 +8,7 @@ import {
   ExternalLink, 
   Download, 
   ChevronLeft, 
+  ChevronRight,
   ZoomIn, 
   ZoomOut, 
   MessageSquare,
