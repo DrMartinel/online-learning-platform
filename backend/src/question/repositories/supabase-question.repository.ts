@@ -15,6 +15,7 @@ export class SupabaseQuestionRepository implements IQuestionRepository {
       row.type,
       row.tags || [],
       new Date(row.created_at),
+      row.serial_number,
       row.updated_at ? new Date(row.updated_at) : undefined,
     );
   }
@@ -69,6 +70,9 @@ export class SupabaseQuestionRepository implements IQuestionRepository {
     }
     if (filter?.tag) {
       query = query.contains('tags', [filter.tag]);
+    }
+    if (filter?.serialNumber) {
+      query = query.eq('serial_number', filter.serialNumber);
     }
 
     query = query.order('created_at', { ascending: false });

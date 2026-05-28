@@ -43,6 +43,9 @@ describe('ExamService', () => {
         title: 'Midterm Exam',
         courseId: 'course-123',
         headerContent: 'Welcome to the exam',
+        questionLabel: 'Câu',
+        tags: [],
+        accessRights: 'private',
         questions: [
           { questionId: 'q-1', orderIndex: 0, points: 5 },
         ],
@@ -58,7 +61,7 @@ describe('ExamService', () => {
 
   describe('findById', () => {
     it('should return exam with questions', async () => {
-      const exam = new Exam('exam-123', 'course-123', 'user-123', 'Midterm', null, new Date());
+      const exam = new Exam('exam-123', 'course-123', 'user-123', 'Midterm', null, new Date(), 'Câu', [], 'private');
       const eq = new ExamQuestion('eq-123', 'exam-123', 'q-123', 0, 2);
       repo.findById.mockResolvedValue(exam);
       repo.findQuestionsByExamId.mockResolvedValue([eq]);
@@ -77,7 +80,7 @@ describe('ExamService', () => {
 
   describe('list', () => {
     it('should list exams with their questions', async () => {
-      const exam = new Exam('exam-123', 'course-123', 'user-123', 'Midterm', null, new Date());
+      const exam = new Exam('exam-123', 'course-123', 'user-123', 'Midterm', null, new Date(), 'Câu', [], 'private');
       repo.findAll.mockResolvedValue([exam]);
       repo.findQuestionsByExamId.mockResolvedValue([]);
 
@@ -89,7 +92,7 @@ describe('ExamService', () => {
 
   describe('update', () => {
     it('should update exam metadata', async () => {
-      const exam = new Exam('exam-123', 'course-123', 'user-123', 'Midterm', null, new Date());
+      const exam = new Exam('exam-123', 'course-123', 'user-123', 'Midterm', null, new Date(), 'Câu', [], 'private');
       repo.findById.mockResolvedValue(exam);
       repo.update.mockImplementation(async (updated: Exam) => updated);
       repo.findQuestionsByExamId.mockResolvedValue([]);
@@ -107,7 +110,7 @@ describe('ExamService', () => {
 
   describe('delete', () => {
     it('should delete an exam', async () => {
-      const exam = new Exam('exam-123', 'course-123', 'user-123', 'Midterm', null, new Date());
+      const exam = new Exam('exam-123', 'course-123', 'user-123', 'Midterm', null, new Date(), 'Câu', [], 'private');
       repo.findById.mockResolvedValue(exam);
       repo.delete.mockResolvedValue(undefined);
 
@@ -123,7 +126,7 @@ describe('ExamService', () => {
 
   describe('exam question links', () => {
     it('should add a question link to an exam', async () => {
-      const exam = new Exam('exam-123', 'course-123', 'user-123', 'Midterm', null, new Date());
+      const exam = new Exam('exam-123', 'course-123', 'user-123', 'Midterm', null, new Date(), 'Câu', [], 'private');
       repo.findById.mockResolvedValue(exam);
       repo.addQuestion.mockImplementation(async (eq: ExamQuestion) => eq);
 
@@ -133,7 +136,7 @@ describe('ExamService', () => {
     });
 
     it('should update a question link', async () => {
-      const exam = new Exam('exam-123', 'course-123', 'user-123', 'Midterm', null, new Date());
+      const exam = new Exam('exam-123', 'course-123', 'user-123', 'Midterm', null, new Date(), 'Câu', [], 'private');
       const eq = new ExamQuestion('eq-123', 'exam-123', 'q-123', 0, 2);
       repo.findById.mockResolvedValue(exam);
       repo.findExamQuestionById.mockResolvedValue(eq);
@@ -145,7 +148,7 @@ describe('ExamService', () => {
     });
 
     it('should remove a question link from an exam', async () => {
-      const exam = new Exam('exam-123', 'course-123', 'user-123', 'Midterm', null, new Date());
+      const exam = new Exam('exam-123', 'course-123', 'user-123', 'Midterm', null, new Date(), 'Câu', [], 'private');
       const eq = new ExamQuestion('eq-123', 'exam-123', 'q-123', 0, 2);
       repo.findById.mockResolvedValue(exam);
       repo.findExamQuestionById.mockResolvedValue(eq);
