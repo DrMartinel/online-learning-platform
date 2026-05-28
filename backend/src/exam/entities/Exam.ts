@@ -6,6 +6,9 @@ export class Exam {
     public title: string,
     public headerContent: string | null,
     public createdAt: Date,
+    public questionLabel: string,
+    public tags: string[],
+    public accessRights: string,
     public updatedAt?: Date,
   ) {}
 }

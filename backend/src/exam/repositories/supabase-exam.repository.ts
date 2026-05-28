@@ -17,6 +17,9 @@ export class SupabaseExamRepository implements IExamRepository {
       row.title,
       row.header_content,
       new Date(row.created_at),
+      row.question_label || 'Câu',
+      row.tags || [],
+      row.access_rights || 'private',
       row.updated_at ? new Date(row.updated_at) : undefined,
     );
   }
@@ -42,6 +45,9 @@ export class SupabaseExamRepository implements IExamRepository {
         created_by: exam.createdBy,
         title: exam.title,
         header_content: exam.headerContent,
+        question_label: exam.questionLabel,
+        tags: exam.tags,
+        access_rights: exam.accessRights,
       })
       .select()
       .single();
@@ -83,6 +89,9 @@ export class SupabaseExamRepository implements IExamRepository {
         title: exam.title,
         header_content: exam.headerContent,
         course_id: exam.courseId,
+        question_label: exam.questionLabel,
+        tags: exam.tags,
+        access_rights: exam.accessRights,
         updated_at: new Date().toISOString(),
       })
       .eq('id', exam.id)
