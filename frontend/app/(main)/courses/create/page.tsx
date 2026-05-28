@@ -2,6 +2,8 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import CreateCourseForm from '@/components/courses/CreateCourseForm';
 
+export const dynamic = 'force-dynamic';
+
 export default async function CreateCoursePage() {
   const cookieStore = await cookies();
   const token = cookieStore.get('olp_session')?.value;

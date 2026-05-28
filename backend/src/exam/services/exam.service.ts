@@ -30,6 +30,9 @@ export class ExamService {
       dto.title,
       dto.headerContent || null,
       new Date(),
+      dto.questionLabel || 'Câu',
+      dto.tags || [],
+      dto.accessRights || 'private',
     );
     await this.examRepo.create(exam);
 
@@ -78,6 +81,10 @@ export class ExamService {
     }
     if (dto.title !== undefined) exam.title = dto.title;
     if (dto.headerContent !== undefined) exam.headerContent = dto.headerContent || null;
+    if (dto.questionLabel !== undefined) exam.questionLabel = dto.questionLabel;
+    if (dto.tags !== undefined) exam.tags = dto.tags;
+    if (dto.accessRights !== undefined) exam.accessRights = dto.accessRights;
+    if (dto.courseId !== undefined) exam.courseId = dto.courseId;
 
     await this.examRepo.update(exam);
     const questions = await this.examRepo.findQuestionsByExamId(id);
@@ -152,6 +159,9 @@ export class ExamService {
       createdBy: exam.createdBy,
       title: exam.title,
       headerContent: exam.headerContent,
+      questionLabel: exam.questionLabel,
+      tags: exam.tags,
+      accessRights: exam.accessRights,
       createdAt: exam.createdAt,
       updatedAt: exam.updatedAt,
       questions: questions.map((eq) => this.mapExamQuestionToResponse(eq)),
