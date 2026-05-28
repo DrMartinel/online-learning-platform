@@ -9,16 +9,33 @@ export class SupabaseUserRepository implements UserRepository {
     const { data } = await this.client
       .from('iam_user_roles')
       .select('role:iam_roles!inner(urn, iam_role_permissions(permission:iam_permissions!inner(urn)))')
-      .eq('user_id', userId)
-      .limit(1);
+      .eq('user_id', userId);
 
     if (data && data.length > 0) {
-      const roleObj = (data[0] as any).role;
-      const urn = roleObj?.urn;
-      const roleStr = urn ? urn.replace('role:user:', '') : 'student';
+      const roles = data.map((d: any) => d.role);
       
-      const permissions = roleObj?.iam_role_permissions?.map((p: any) => p.permission?.urn) || [];
-      return { role: roleStr, permissions };
+      // Determine the highest priority role
+      let finalRole = 'student';
+      const roleUrns = roles.map(r => r?.urn || '');
+      
+      if (roleUrns.includes('role:user:admin')) {
+        finalRole = 'admin';
+      } else if (roleUrns.includes('role:user:operator')) {
+        finalRole = 'operator';
+      } else if (roleUrns.length > 0 && roleUrns[0]) {
+        finalRole = roleUrns[0].replace('role:user:', '');
+      }
+
+      // Collect all unique permissions from all roles
+      const allPermissionsSet = new Set<string>();
+      roles.forEach((roleObj: any) => {
+        const perms = roleObj?.iam_role_permissions?.map((p: any) => p.permission?.urn) || [];
+        perms.forEach((p: string) => {
+          if (p) allPermissionsSet.add(p);
+        });
+      });
+
+      return { role: finalRole, permissions: Array.from(allPermissionsSet) };
     }
     return { role: 'student', permissions: [] };
   }
