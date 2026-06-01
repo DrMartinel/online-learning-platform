@@ -158,6 +158,7 @@ export class QuestionService {
       type: question.type,
       tags: question.tags,
       createdAt: question.createdAt,
+      serialNumber: question.serialNumber,
       updatedAt: question.updatedAt,
       variants: variants.map((v) => this.mapVariantToResponse(v)),
     };
