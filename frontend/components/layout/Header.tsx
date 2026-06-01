@@ -108,8 +108,8 @@ export default function Header() {
               key={item.href}
               href={item.href}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${pathname === item.href
-                  ? "bg-primary/10 text-primary dark:bg-primary/20"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                ? "bg-primary/10 text-primary dark:bg-primary/20"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`}
             >
               {item.label}
@@ -119,8 +119,8 @@ export default function Header() {
             <Link
               href="/admin/exams"
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${pathname.startsWith("/admin")
-                  ? "bg-primary/10 text-primary dark:bg-primary/20"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                ? "bg-primary/10 text-primary dark:bg-primary/20"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`}
             >
               Quản lý đề thi
@@ -255,24 +255,22 @@ export default function Header() {
               key={item.href}
               href={item.href}
               onClick={() => setMobileOpen(false)}
-              className={`block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                pathname === item.href
+              className={`block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === item.href
                   ? "bg-primary/10 text-primary"
                   : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-              }`}
+                }`}
             >
               {item.label}
             </Link>
           ))}
           {user?.role === 'admin' && (
             <Link
-              href="/admin/exams"
+              href="/exams"
               onClick={() => setMobileOpen(false)}
-              className={`block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                pathname.startsWith("/admin")
+              className={`block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname.startsWith("/admin")
                   ? "bg-primary/10 text-primary"
                   : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-              }`}
+                }`}
             >
               Quản lý đề thi
             </Link>
