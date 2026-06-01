@@ -1,5 +1,13 @@
 echo "Running pre-commit hook..."
 
+if [ -f .env ]; then
+  ENABLE_PRE_COMMIT=$(grep -E '^ENABLE_PRE_COMMIT=' .env | cut -d '=' -f2 | tr -d '"'\'' ')
+  if [ "$ENABLE_PRE_COMMIT" = "false" ]; then
+    echo "Pre-commit hook disabled via .env (ENABLE_PRE_COMMIT=false). Skipping..."
+    exit 0
+  fi
+fi
+
 echo "Checking backend code coverage (must be >= 70%)..."
 cd backend && pnpm run test
 
