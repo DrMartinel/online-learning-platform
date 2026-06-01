@@ -115,6 +115,17 @@ export default function Header() {
               {item.label}
             </Link>
           ))}
+          {user?.role === 'admin' && (
+            <Link
+              href="/admin/exams"
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${pathname.startsWith("/admin")
+                  ? "bg-primary/10 text-primary dark:bg-primary/20"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+            >
+              Quản lý đề thi
+            </Link>
+          )}
         </nav>
 
         {/* Right actions */}
@@ -253,6 +264,19 @@ export default function Header() {
               {item.label}
             </Link>
           ))}
+          {user?.role === 'admin' && (
+            <Link
+              href="/admin/exams"
+              onClick={() => setMobileOpen(false)}
+              className={`block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                pathname.startsWith("/admin")
+                  ? "bg-primary/10 text-primary"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+              }`}
+            >
+              Quản lý đề thi
+            </Link>
+          )}
 
           {user ? (
             <div className="pt-2 border-t border-gray-200 dark:border-gray-800 space-y-1">

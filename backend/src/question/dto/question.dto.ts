@@ -14,7 +14,7 @@ const questionTypeSchema = z.enum(['essay', 'single_choice', 'multiple_choice'])
 
 export const createVariantSchema = z.object({
   content: z.string().min(1),
-  options: z.array(mcqOptionSchema).optional(),
+  options: z.array(mcqOptionSchema).nullable().optional(),
   correctAnswer: z.any().optional(),
   explanation: z.string().optional(),
 });
@@ -22,7 +22,7 @@ export class CreateVariantDTO extends createZodDto(createVariantSchema) {}
 
 export const updateVariantSchema = z.object({
   content: z.string().min(1).optional(),
-  options: z.array(mcqOptionSchema).optional(),
+  options: z.array(mcqOptionSchema).nullable().optional(),
   correctAnswer: z.any().optional(),
   explanation: z.string().optional(),
 });
@@ -62,6 +62,7 @@ export const questionResponseSchema = z.object({
   type: questionTypeSchema,
   tags: z.array(z.string()),
   createdAt: z.date(),
+  serialNumber: z.number().optional(),
   updatedAt: z.date().optional(),
   variants: z.array(variantResponseSchema),
 });
@@ -72,5 +73,6 @@ export class QuestionResponseDTO extends createZodDto(questionResponseSchema) {}
 export const listQuestionsFilterSchema = z.object({
   type: questionTypeSchema.optional(),
   tag: z.string().optional(),
+  serialNumber: z.coerce.number().optional(),
 });
 export class ListQuestionsFilterDTO extends createZodDto(listQuestionsFilterSchema) {}
