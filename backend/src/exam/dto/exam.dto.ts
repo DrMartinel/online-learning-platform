@@ -23,12 +23,19 @@ export const createExamSchema = z.object({
   title: z.string().min(1),
   headerContent: z.string().optional(),
   questions: z.array(addExamQuestionSchema).optional(),
+  questionLabel: z.string().optional().default('Câu'),
+  tags: z.array(z.string()).optional().default([]),
+  accessRights: z.string().optional().default('private'),
 });
 export class CreateExamDTO extends createZodDto(createExamSchema) {}
 
 export const updateExamSchema = z.object({
   title: z.string().min(1).optional(),
   headerContent: z.string().optional(),
+  questionLabel: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  accessRights: z.string().optional(),
+  courseId: z.string().uuid().nullable().optional(),
 });
 export class UpdateExamDTO extends createZodDto(updateExamSchema) {}
 
@@ -49,6 +56,9 @@ export const examResponseSchema = z.object({
   createdBy: z.string().uuid().nullable(),
   title: z.string(),
   headerContent: z.string().nullable(),
+  questionLabel: z.string(),
+  tags: z.array(z.string()),
+  accessRights: z.string(),
   createdAt: z.date(),
   updatedAt: z.date().optional(),
   questions: z.array(examQuestionResponseSchema),
