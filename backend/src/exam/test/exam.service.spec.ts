@@ -57,6 +57,34 @@ describe('ExamService', () => {
       expect(result.questions.length).toBe(1);
       expect(result.questions[0].questionId).toBe('q-1');
     });
+
+    it('should assign the next available order when creating exam questions with duplicates', async () => {
+      repo.create.mockImplementation(async (e: Exam) => e);
+      repo.addQuestion.mockImplementation(async (eq: ExamQuestion) => eq);
+
+      const result = await service.create('user-123', {
+        title: 'Midterm Exam',
+        courseId: 'course-123',
+        headerContent: 'Welcome to the exam',
+        questionLabel: 'Câu',
+        tags: [],
+        accessRights: 'private',
+        questions: [
+          { questionId: 'q-1', orderIndex: 0, points: 5 },
+          { questionId: 'q-2', orderIndex: 0, points: 5 },
+        ],
+      });
+
+      expect(result.questions.map((question) => question.orderIndex)).toEqual([0, 1]);
+      expect(repo.addQuestion).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ questionId: 'q-1', orderIndex: 0 }),
+      );
+      expect(repo.addQuestion).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ questionId: 'q-2', orderIndex: 1 }),
+      );
+    });
   });
 
   describe('findById', () => {
@@ -128,11 +156,30 @@ describe('ExamService', () => {
     it('should add a question link to an exam', async () => {
       const exam = new Exam('exam-123', 'course-123', 'user-123', 'Midterm', null, new Date(), 'Câu', [], 'private');
       repo.findById.mockResolvedValue(exam);
+      repo.findQuestionsByExamId.mockResolvedValue([]);
       repo.addQuestion.mockImplementation(async (eq: ExamQuestion) => eq);
 
       const result = await service.addQuestion('exam-123', { questionId: 'q-456', orderIndex: 2, points: 3 });
       expect(result.questionId).toBe('q-456');
       expect(result.points).toBe(3);
+      expect(result.orderIndex).toBe(2);
+    });
+
+    it('should assign the next available order when adding a question link with a duplicate order', async () => {
+      const exam = new Exam('exam-123', 'course-123', 'user-123', 'Midterm', null, new Date(), 'Câu', [], 'private');
+      repo.findById.mockResolvedValue(exam);
+      repo.findQuestionsByExamId.mockResolvedValue([
+        new ExamQuestion('eq-1', 'exam-123', 'q-1', 0, 1),
+        new ExamQuestion('eq-2', 'exam-123', 'q-2', 1, 1),
+      ]);
+      repo.addQuestion.mockImplementation(async (eq: ExamQuestion) => eq);
+
+      const result = await service.addQuestion('exam-123', { questionId: 'q-456', orderIndex: 1, points: 3 });
+      expect(result.questionId).toBe('q-456');
+      expect(result.orderIndex).toBe(2);
+      expect(repo.addQuestion).toHaveBeenCalledWith(
+        expect.objectContaining({ examId: 'exam-123', questionId: 'q-456', orderIndex: 2 }),
+      );
     });
 
     it('should update a question link', async () => {
