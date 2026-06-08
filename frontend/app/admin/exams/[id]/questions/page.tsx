@@ -217,6 +217,27 @@ export default function ExamQuestionsEditor() {
     }
   }, [loading, exam, questionLinks]);
 
+  // Auto-load questions from the question bank when showBankModal is opened
+  useEffect(() => {
+    if (showBankModal) {
+      const loadInitialQuestions = async () => {
+        try {
+          setSearchingBank(true);
+          const res = await fetch('/api/admin/questions');
+          if (res.ok) {
+            const data = await res.json();
+            setBankQuestions(data);
+          }
+        } catch (error) {
+          console.error('Failed to load initial questions from bank:', error);
+        } finally {
+          setSearchingBank(false);
+        }
+      };
+      loadInitialQuestions();
+    }
+  }, [showBankModal]);
+
   const fetchExamAndQuestions = async () => {
     try {
       setLoading(true);
@@ -1067,6 +1088,7 @@ export default function ExamQuestionsEditor() {
     let idx = 0;
     for (const part of examConfig.parts) {
       for (const lid of part.questionLinkIds) {
+        if (!questionLinkMap[lid]) continue;
         idx++;
         if (lid === linkId) return idx;
       }
@@ -1223,13 +1245,15 @@ export default function ExamQuestionsEditor() {
 
   // Question bank search & selection
   const handleSearchBank = async () => {
-    if (!bankSearchQuery.trim()) return;
     try {
       setSearchingBank(true);
-      const isNumber = /^\d+$/.test(bankSearchQuery.trim());
-      const url = isNumber
-        ? `/api/admin/questions?serialNumber=${encodeURIComponent(bankSearchQuery.trim())}`
-        : `/api/admin/questions?tag=${encodeURIComponent(bankSearchQuery.trim())}`;
+      let url = '/api/admin/questions';
+      if (bankSearchQuery.trim()) {
+        const isNumber = /^\d+$/.test(bankSearchQuery.trim());
+        url = isNumber
+          ? `/api/admin/questions?serialNumber=${encodeURIComponent(bankSearchQuery.trim())}`
+          : `/api/admin/questions?tag=${encodeURIComponent(bankSearchQuery.trim())}`;
+      }
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
@@ -2266,16 +2290,32 @@ A. Đáp án A
               .fixed-print-modal-container, .fixed-print-modal-container * {
                 visibility: visible !important;
               }
+              html, body, main, 
+              .min-h-screen, 
+              .flex-1,
+              .overflow-hidden,
+              .overflow-auto,
               .print-sheet-wrapper {
                 overflow: visible !important;
                 height: auto !important;
+                max-height: none !important;
                 position: static !important;
-                padding: 0 !important;
-                margin: 0 !important;
+                display: block !important;
+                background: white !important;
+                color: black !important;
+              }
+              .fixed-print-modal-container {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                height: auto !important;
                 background: white !important;
               }
+              .print-control-bar {
+                display: none !important;
+              }
               .print-preview-sheet {
-                position: static !important;
                 width: 100% !important;
                 max-width: 100% !important;
                 margin: 0 !important;
@@ -2287,6 +2327,10 @@ A. Đáp án A
               }
               .print-preview-sheet .print-q-label {
                 font-weight: 700 !important;
+              }
+              .break-inside-avoid {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
               }
             }
           `}} />
@@ -2323,7 +2367,7 @@ A. Đáp án A
           </div>
 
           {/* Scrollable sheet container */}
-          <div className="print-sheet-wrapper flex-1 overflow-y-auto p-4 md:p-8 bg-gray-950/20 flex justify-center print:bg-white print:p-0 print:overflow-visible">
+          <div className="print-sheet-wrapper flex-1 overflow-y-auto p-4 md:p-8 bg-gray-950/20 flex justify-center items-start print:bg-white print:p-0 print:overflow-visible">
             <div className="print-preview-sheet w-full max-w-[210mm] bg-white text-gray-900 shadow-2xl rounded-lg p-8 md:p-12 space-y-6 print:shadow-none print:border-none print:p-0 print:m-0 print:rounded-none print:w-full print:max-w-full" style={{ fontFamily: "'Times New Roman', 'Noto Serif', serif" }}>
               
               {/* Exam Header */}
@@ -2387,15 +2431,15 @@ A. Đáp án A
 
                         return (
                           <div key={link.id} className="break-inside-avoid" style={{ fontSize: '11pt', lineHeight: '1.6' }}>
-                            <div className="flex items-start gap-1">
-                              <span className="font-bold shrink-0 print-q-label" style={{ fontFamily: "'Times New Roman', 'Noto Serif', serif" }}>
+                            <div className="text-left" style={{ fontSize: '11pt', lineHeight: '1.6' }}>
+                              <span className="font-bold print-q-label mr-1 inline" style={{ fontFamily: "'Times New Roman', 'Noto Serif', serif" }}>
                                 {exam.questionLabel} {globalIdx}
                                 {examConfig.showIds && q.serialNumber && <span className="font-bold"> [ID:{q.serialNumber}]</span>}
-                                {examConfig.showPoints && <span className="font-normal">({link.points} điểm)</span>}
+                                {examConfig.showPoints && <span className="font-normal"> ({link.points} điểm)</span>}
                                 .
                               </span>
-                              <div 
-                                className="render-math flex-1 text-left"
+                              <span 
+                                className="render-math inline text-justify"
                                 dangerouslySetInnerHTML={{ __html: renderLaTeX(parsedContent) }}
                               />
                             </div>
