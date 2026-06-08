@@ -287,17 +287,20 @@ export default function PublicExamViewer() {
 
   // Get sequential question number
   const getGlobalQuestionIndex = (linkId: string): number => {
-    let idx = 0;
-    for (const part of examConfig.parts) {
-      for (const lid of part.questionLinkIds) {
-        idx++;
-        if (lid === linkId) return idx;
-      }
-    }
+    const validLinkIds = examConfig.parts
+      .flatMap(p => p.questionLinkIds)
+      .filter(lid => {
+        const qLink = questionLinkMap[lid];
+        return qLink && qLink.question && qLink.question.variants?.[0];
+      });
+    const idx = validLinkIds.indexOf(linkId);
+    if (idx >= 0) return idx + 1;
+    
     // Fallback
     const allLinks = exam?.questions || [];
-    const fallbackIdx = allLinks.findIndex(l => l.id === linkId);
-    return fallbackIdx >= 0 ? fallbackIdx + 1 : idx;
+    const validLinks = allLinks.filter(l => l.question && l.question.variants?.[0]);
+    const fallbackIdx = validLinks.findIndex(l => l.id === linkId);
+    return fallbackIdx >= 0 ? fallbackIdx + 1 : validLinkIds.length + 1;
   };
 
   const handleUpdateExplanationDraft = (qId: string, value: string) => {
@@ -564,7 +567,7 @@ export default function PublicExamViewer() {
         </div>
 
         {/* === PDF PREVIEW LINK === */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-5 py-4 flex items-center justify-between shadow-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-5 py-4 flex items-center justify-between shadow-sm flex-wrap gap-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500">
               <FileText size={18} />
@@ -573,12 +576,27 @@ export default function PublicExamViewer() {
               PDF của {exam.title}
             </span>
           </div>
-          <button
-            onClick={() => setShowPrintPreview(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs transition-all cursor-pointer"
-          >
-            <Play size={14} /> Xem ngay
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                const url = window.location.href;
+                navigator.clipboard.writeText(url).then(() => {
+                  showToast('Đã sao chép link đề thi!', 'success');
+                }).catch(() => {
+                  showToast('Không thể sao chép link.', 'error');
+                });
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs transition-all cursor-pointer"
+            >
+              <LinkIcon size={14} /> Sao chép link
+            </button>
+            <button
+              onClick={() => setShowPrintPreview(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs transition-all cursor-pointer"
+            >
+              <Play size={14} /> Xem ngay
+            </button>
+          </div>
         </div>
 
         {/* === SEARCH & TOGGLE NAV PALETTE === */}
@@ -1193,23 +1211,45 @@ export default function PublicExamViewer() {
 
         {/* ===== PRINT PREVIEW MODAL ===== */}
         {showPrintPreview && (
-          <div className="fixed inset-0 z-50 flex flex-col bg-gray-900/90 backdrop-blur-md animate-in fade-in duration-200 print:bg-white print:p-0 print:m-0">
+          <div className="fixed-print-modal-container fixed inset-0 z-50 flex flex-col bg-gray-900/90 backdrop-blur-md animate-in fade-in duration-200 print:bg-white print:p-0 print:m-0">
             <style dangerouslySetInnerHTML={{ __html: `
               @media print {
                 body * {
                   visibility: hidden !important;
                 }
-                .print-preview-sheet, .print-preview-sheet * {
+                .fixed-print-modal-container, .fixed-print-modal-container * {
                   visibility: visible !important;
                 }
-                .print-preview-sheet {
+                html, body, main, 
+                .min-h-screen, 
+                .flex-1,
+                .overflow-hidden,
+                .overflow-auto,
+                .print-sheet-wrapper {
+                  overflow: visible !important;
+                  height: auto !important;
+                  max-height: none !important;
+                  position: static !important;
+                  display: block !important;
+                  background: white !important;
+                  color: black !important;
+                }
+                .fixed-print-modal-container {
                   position: absolute !important;
                   left: 0 !important;
                   top: 0 !important;
                   width: 100% !important;
+                  height: auto !important;
+                  background: white !important;
+                }
+                .print-control-bar {
+                  display: none !important;
+                }
+                .print-preview-sheet {
+                  width: 100% !important;
                   max-width: 100% !important;
                   margin: 0 !important;
-                  padding: 20mm 15mm !important;
+                  padding: 15mm 15mm !important;
                   box-shadow: none !important;
                   border: none !important;
                   background: white !important;
@@ -1218,11 +1258,15 @@ export default function PublicExamViewer() {
                 .print-preview-sheet .print-q-label {
                   font-weight: 700 !important;
                 }
+                .break-inside-avoid {
+                  page-break-inside: avoid !important;
+                  break-inside: avoid !important;
+                }
               }
             `}} />
 
             {/* Top Banner Control Panel (Hidden on Print) */}
-            <div className="h-16 flex items-center justify-between px-6 bg-white/10 border-b border-white/10 z-10 shrink-0 print:hidden text-white">
+            <div className="print-control-bar h-16 flex items-center justify-between px-6 bg-white/10 border-b border-white/10 z-10 shrink-0 print:hidden text-white">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
                   <Printer size={16} />
@@ -1249,7 +1293,7 @@ export default function PublicExamViewer() {
             </div>
 
             {/* Scrollable sheet container */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-950/20 flex justify-center print:bg-white print:p-0 print:overflow-visible">
+            <div className="print-sheet-wrapper flex-1 overflow-y-auto p-4 md:p-8 bg-gray-950/20 flex justify-center items-start print:bg-white print:p-0 print:overflow-visible">
               <div className="print-preview-sheet w-full max-w-[210mm] bg-white text-gray-900 shadow-2xl rounded-lg p-8 md:p-12 space-y-6 print:shadow-none print:border-none print:p-0 print:m-0 print:rounded-none print:w-full print:max-w-full" style={{ fontFamily: "'Times New Roman', 'Noto Serif', serif" }}>
                 
                 {/* Exam Header */}
@@ -1290,15 +1334,15 @@ export default function PublicExamViewer() {
 
                           return (
                             <div key={link.id} className="break-inside-avoid" style={{ fontSize: '11pt', lineHeight: '1.6' }}>
-                              <div className="flex items-start gap-1">
-                                <span className="font-bold shrink-0 print-q-label" style={{ fontFamily: "'Times New Roman', 'Noto Serif', serif" }}>
+                              <div className="text-left" style={{ fontSize: '11pt', lineHeight: '1.6' }}>
+                                <span className="font-bold print-q-label mr-1 inline" style={{ fontFamily: "'Times New Roman', 'Noto Serif', serif" }}>
                                   {exam.questionLabel} {globalIdx}
                                   {examConfig.showIds && q.serialNumber && <span className="font-bold"> [ID:{q.serialNumber}]</span>}
-                                  {examConfig.showPoints && <span className="font-normal">({link.points} điểm)</span>}
+                                  {examConfig.showPoints && <span className="font-normal"> ({link.points} điểm)</span>}
                                   .
                                 </span>
-                                <div 
-                                  className="render-math flex-1 text-left"
+                                <span 
+                                  className="render-math inline text-justify"
                                   dangerouslySetInnerHTML={{ __html: renderLaTeX(firstVar.content) }}
                                 />
                               </div>
@@ -1326,11 +1370,6 @@ export default function PublicExamViewer() {
                                     );
                                   })}
                                 </div>
-                              )}
-
-                              {/* Essay blank space */}
-                              {q.type === 'essay' && (
-                                <div className="h-20 border-b border-dashed border-gray-300 mt-2"></div>
                               )}
                             </div>
                           );

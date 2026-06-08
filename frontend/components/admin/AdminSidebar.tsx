@@ -9,6 +9,7 @@ const navItems = [
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Roles & Permissions', href: '/admin/iam', icon: Shield },
   { name: 'Exams & Questions', href: '/admin/exams', icon: FileText },
+  { name: 'Exam Sessions', href: '/admin/exam-sessions', icon: BookOpen },
 ];
 
 export default function AdminSidebar() {
