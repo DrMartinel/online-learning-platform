@@ -369,8 +369,6 @@ services:
         "--config",
         "/etc/vector/vector.yml"
       ]
-    security_opt:
-      - "label=disable"
 
 volumes:
   db-config:
