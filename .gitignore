@@ -2,6 +2,7 @@ volumes/db/data
 volumes/storage
 volumes/snippets/
 .env
+.env.old
 test.http
 docker-compose.override.yml
 node_modules
@@ -24,3 +25,4 @@ frontend/.turbo
 *.d.ts.map
 coverage
 .pnpm-store
+.env.old
