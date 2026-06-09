@@ -13,26 +13,20 @@ import {
   ChevronDown,
   BookOpen,
   User,
-  Bell
 } from "lucide-react";
 import { useTheme } from "@/components/layout/ThemeProvider";
+import { createClient } from "@/lib/supabase/client";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const navItems = [
   { href: "/", label: "Trang chủ" },
   { href: "/courses", label: "Khóa học" },
 ];
 
-interface UserProfile {
-  id: string;
-  email: string;
-  fullName: string;
-  role: string;
-  permissions?: string[];
-}
-
-function getInitials(user: UserProfile): string {
-  if (user.fullName) {
-    return user.fullName
+function getInitials(user: SupabaseUser): string {
+  const meta = user.user_metadata;
+  if (meta?.full_name) {
+    return meta.full_name
       .split(" ")
       .map((w: string) => w[0])
       .join("")
@@ -50,25 +44,27 @@ export default function Header() {
   const { darkMode, toggleTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.user) {
-          setUser(data.user);
-        } else {
-          setUser(null);
-        }
-      })
-      .catch(() => setUser(null))
-      .finally(() => setIsLoading(false));
-  }, [pathname]);
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      setIsLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -85,6 +81,8 @@ export default function Header() {
   const handleLogout = async () => {
     setDropdownOpen(false);
     await fetch("/api/auth/logout", { method: "POST" });
+    const supabase = createClient();
+    await supabase.auth.signOut();
     window.location.href = "/login";
   };
 
@@ -107,25 +105,15 @@ export default function Header() {
             <Link
               key={item.href}
               href={item.href}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${pathname === item.href
-                ? "bg-primary/10 text-primary dark:bg-primary/20"
-                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                pathname === item.href
+                  ? "bg-primary/10 text-primary dark:bg-primary/20"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+              }`}
             >
               {item.label}
             </Link>
           ))}
-          {user?.role === 'admin' && (
-            <Link
-              href="/admin/exams"
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${pathname.startsWith("/admin")
-                ? "bg-primary/10 text-primary dark:bg-primary/20"
-                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
-            >
-              Quản lý đề thi
-            </Link>
-          )}
         </nav>
 
         {/* Right actions */}
@@ -142,12 +130,6 @@ export default function Header() {
             <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
           ) : user ? (
             <>
-              {/* Notification bell */}
-              <button className="hidden sm:flex p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative">
-                <Bell size={18} />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-              </button>
-
               {/* User avatar dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -167,32 +149,12 @@ export default function Header() {
                   <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg py-1 z-50">
                     <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                       <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                        {user.fullName || user.email}
+                        {user.user_metadata?.full_name || user.email}
                       </p>
                       <p className="text-xs text-gray-400 truncate">
                         {user.email}
                       </p>
                     </div>
-                    {user.role === 'admin' && (
-                      <Link
-                        href="/admin"
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-primary dark:text-primary hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        <User size={14} />
-                        Admin Dashboard
-                      </Link>
-                    )}
-                    {user.permissions?.includes('action:course:create') && (
-                      <Link
-                        href="/courses/create"
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        <BookOpen size={14} />
-                        Tạo khóa học
-                      </Link>
-                    )}
                     <Link
                       href="/my-courses"
                       onClick={() => setDropdownOpen(false)}
@@ -207,7 +169,7 @@ export default function Header() {
                       className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       <User size={14} />
-                      Hồ sơ cá nhân
+                      Hồ sơ
                     </Link>
                     <button
                       onClick={handleLogout}
@@ -255,47 +217,18 @@ export default function Header() {
               key={item.href}
               href={item.href}
               onClick={() => setMobileOpen(false)}
-              className={`block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === item.href
+              className={`block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                pathname === item.href
                   ? "bg-primary/10 text-primary"
                   : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
+              }`}
             >
               {item.label}
             </Link>
           ))}
-          {user?.role === 'admin' && (
-            <Link
-              href="/exams"
-              onClick={() => setMobileOpen(false)}
-              className={`block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname.startsWith("/admin")
-                  ? "bg-primary/10 text-primary"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
-            >
-              Quản lý đề thi
-            </Link>
-          )}
 
-          {user ? (
+          {user && (
             <div className="pt-2 border-t border-gray-200 dark:border-gray-800 space-y-1">
-              {user.role === 'admin' && (
-                <Link
-                  href="/admin"
-                  onClick={() => setMobileOpen(false)}
-                  className="block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-primary hover:bg-gray-100 dark:hover:bg-gray-800"
-                >
-                  Admin Dashboard
-                </Link>
-              )}
-              {user.permissions?.includes('action:course:create') && (
-                <Link
-                  href="/courses/create"
-                  onClick={() => setMobileOpen(false)}
-                  className="block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                >
-                  Tạo khóa học
-                </Link>
-              )}
               <Link
                 href="/my-courses"
                 onClick={() => setMobileOpen(false)}
@@ -308,7 +241,7 @@ export default function Header() {
                 onClick={() => setMobileOpen(false)}
                 className="block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
-                Hồ sơ cá nhân
+                Hồ sơ
               </Link>
               <button
                 onClick={handleLogout}
@@ -317,7 +250,9 @@ export default function Header() {
                 Đăng xuất
               </button>
             </div>
-          ) : !isLoading && (
+          )}
+
+          {!user && !isLoading && (
             <div className="pt-2 border-t border-gray-200 dark:border-gray-800 space-y-1">
               <Link
                 href="/login"

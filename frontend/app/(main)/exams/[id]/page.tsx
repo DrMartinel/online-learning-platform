@@ -180,7 +180,7 @@ export default function PublicExamViewer() {
   const fetchExamData = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/admin/exams/${examId}`);
+      const res = await fetch(`/api/exams/public/${examId}`);
       if (!res.ok) {
         showToast('Không tìm thấy tài liệu đề thi.', 'error');
         return;

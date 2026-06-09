@@ -18,7 +18,7 @@ export class LessonController {
   }
 
   @Get()
-  @Auth('action:lesson:list')
+  @Auth()
   @ApiOperation({ summary: 'List lessons for a course' })
   @ApiQuery({ name: 'courseId', required: true })
   @ApiQuery({ name: 'publishedOnly', required: false, type: Boolean })
@@ -30,9 +30,25 @@ export class LessonController {
     return this.lessonService.findByCourseId(courseId, publishedOnly);
   }
 
+  @Get('course/:courseId')
+  @Auth()
+  @ApiOperation({ summary: 'List lessons for a course (student view)' })
+  @ApiResponse({ status: 200, description: 'List of lessons for the course', type: [LessonResponseDTO] })
+  async getCourseLessons(@Param('courseId') courseId: string): Promise<LessonResponseDTO[]> {
+    return this.lessonService.findByCourseId(courseId, false);
+  }
+
+  @Get('detail/:id')
+  @Auth()
+  @ApiOperation({ summary: 'Get lesson by ID (student view)' })
+  @ApiResponse({ status: 200, description: 'The lesson', type: LessonResponseDTO })
+  async getLessonDetail(@Param('id') id: string): Promise<LessonResponseDTO> {
+    return this.lessonService.findById(id);
+  }
+
   @Get(':id')
   @Auth('action:lesson:read')
-  @ApiOperation({ summary: 'Get lesson by ID' })
+  @ApiOperation({ summary: 'Get lesson by ID (admin view)' })
   @ApiResponse({ status: 200, description: 'The lesson', type: LessonResponseDTO })
   async getLesson(@Param('id') id: string): Promise<LessonResponseDTO> {
     return this.lessonService.findById(id);

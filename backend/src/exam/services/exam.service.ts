@@ -65,6 +65,21 @@ export class ExamService {
     return this.mapToResponse(exam, questions);
   }
 
+  async findPublicExamById(id: string): Promise<ExamResponseDTO> {
+    const exam = await this.examRepo.findById(id);
+    if (!exam) {
+      throw new ExamNotFoundError(id);
+    }
+    
+    // Only return the exam if it's marked as public
+    if (exam.accessRights !== 'public') {
+      throw new ExamNotFoundError(id);
+    }
+    
+    const questions = await this.examRepo.findQuestionsByExamId(id);
+    return this.mapToResponse(exam, questions);
+  }
+
   async list(filter: ListExamsFilterDTO): Promise<ExamResponseDTO[]> {
     const exams = await this.examRepo.findAll(filter);
     const result: ExamResponseDTO[] = [];

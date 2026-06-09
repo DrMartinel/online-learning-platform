@@ -24,26 +24,15 @@ export const getMediaUrl = (pathOrUrl: string | null | undefined) => {
   return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/course-media/${pathOrUrl}`;
 };
 
-export const getSignedMediaUrl = async (pathOrUrl: string | null | undefined) => {
+export const getSignedMediaUrl = async (pathOrUrl: string | null | undefined): Promise<string> => {
   if (!pathOrUrl) return '';
   if (pathOrUrl.startsWith('http')) return pathOrUrl;
-  
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  const { data, error } = await supabase.storage.from('course-media').createSignedUrl(pathOrUrl, 86400); // 24 hours
-  
-  if (error || !data?.signedUrl) {
-    console.error("Failed to generate signed URL:", error);
-    return '';
-  }
-  
-  // If the signed URL was generated on the server using the internal URL,
-  // we must rewrite it to the public URL so the browser can reach it.
-  if (isServer && process.env.SUPABASE_INTERNAL_URL) {
-    return data.signedUrl.replace(
-      process.env.SUPABASE_INTERNAL_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_URL!
-    );
-  }
-  
-  return data.signedUrl;
+
+  // course-media is a PUBLIC bucket — use the direct public URL instead of a
+  // signed URL. Signed URLs require a session token that the anon key alone
+  // cannot provide, causing a silent empty string and "Bài học là tài liệu đọc".
+  // On the server we use SUPABASE_INTERNAL_URL to reach Kong, but the browser
+  // needs the public-facing URL, so we always return NEXT_PUBLIC_SUPABASE_URL.
+  const publicBase = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  return `${publicBase}/storage/v1/object/public/course-media/${pathOrUrl}`;
 };

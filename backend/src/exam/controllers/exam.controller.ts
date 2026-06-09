@@ -35,6 +35,15 @@ export class ExamController {
     return this.examService.list(filter);
   }
 
+  @Get('public/:id')
+  @Auth()
+  @ApiOperation({ summary: 'Get public exam by ID (student view)' })
+  @ApiResponse({ status: 200, description: 'The public exam', type: ExamResponseDTO })
+  @ApiResponse({ status: 404, description: 'Exam not found or not public' })
+  async getPublicExam(@Param('id') id: string): Promise<ExamResponseDTO> {
+    return this.examService.findPublicExamById(id);
+  }
+
   @Get(':id')
   @Auth('action:exam:read')
   @ApiOperation({ summary: 'Get exam by ID with all questions' })
