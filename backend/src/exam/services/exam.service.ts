@@ -40,11 +40,12 @@ export class ExamService {
     const examQuestions: ExamQuestion[] = [];
     if (dto.questions && dto.questions.length > 0) {
       for (const q of dto.questions) {
+        const resolvedOrderIndex = this.resolveOrderIndex(examQuestions, q.orderIndex);
         const eq = new ExamQuestion(
           randomUUID(),
           examId,
           q.questionId,
-          q.orderIndex,
+          resolvedOrderIndex,
           q.points ?? 1,
         );
         const created = await this.examRepo.addQuestion(eq);
@@ -107,11 +108,14 @@ export class ExamService {
       throw new ExamNotFoundError(examId);
     }
 
+    const existingQuestions = await this.examRepo.findQuestionsByExamId(examId);
+    const resolvedOrderIndex = this.resolveOrderIndex(existingQuestions, dto.orderIndex);
+
     const eq = new ExamQuestion(
       randomUUID(),
       examId,
       dto.questionId,
-      dto.orderIndex,
+      resolvedOrderIndex,
       dto.points ?? 1,
     );
     const created = await this.examRepo.addQuestion(eq);
@@ -148,6 +152,21 @@ export class ExamService {
     }
 
     await this.examRepo.removeQuestion(eqId);
+  }
+
+  private resolveOrderIndex(existingQuestions: ExamQuestion[], requestedOrderIndex: number): number {
+    const occupiedOrderIndexes = new Set(existingQuestions.map((existingQuestion) => existingQuestion.orderIndex));
+
+    if (!occupiedOrderIndexes.has(requestedOrderIndex)) {
+      return requestedOrderIndex;
+    }
+
+    let nextOrderIndex = Math.max(...existingQuestions.map((existingQuestion) => existingQuestion.orderIndex), -1) + 1;
+    while (occupiedOrderIndexes.has(nextOrderIndex)) {
+      nextOrderIndex += 1;
+    }
+
+    return nextOrderIndex;
   }
 
   // --- Mappers ---
