@@ -10,6 +10,7 @@ import { SystemAnalyticsModule } from './system-analytics/system-analytics.modul
 import { RagModule } from './rag/rag.module';
 import { QuestionModule } from './question/question.module';
 import { ExamModule } from './exam/exam.module';
+import { ExamSessionModule } from './exam-session/exam-session.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ExamModule } from './exam/exam.module';
     RagModule,
     QuestionModule,
     ExamModule,
+    ExamSessionModule,
   ],
 })
 export class AppModule {}
