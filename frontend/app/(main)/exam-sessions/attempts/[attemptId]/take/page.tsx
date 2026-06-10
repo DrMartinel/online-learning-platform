@@ -19,8 +19,31 @@ export default function ExamAttemptTakePage({ params }: { params: Promise<{ atte
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [katexLoaded, setKatexLoaded] = useState(false);
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    // Check if katex is already on page
+    if ((window as any).katex) {
+      setKatexLoaded(true);
+      return;
+    }
+
+    // Add KaTeX CSS
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css';
+    document.head.appendChild(link);
+
+    // Add KaTeX Script
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js';
+    script.onload = () => {
+      setKatexLoaded(true);
+    };
+    document.head.appendChild(script);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -65,11 +88,6 @@ export default function ExamAttemptTakePage({ params }: { params: Promise<{ atte
         const now = Date.now();
         const remaining = Math.max(0, Math.floor((finalEndTime - now) / 1000));
         setTimeLeft(remaining);
-        
-        if (remaining <= 0) {
-          // Auto submit if time's up
-          handleSubmit(true);
-        }
       };
       
       updateTimer();
@@ -82,6 +100,12 @@ export default function ExamAttemptTakePage({ params }: { params: Promise<{ atte
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (timeLeft !== null && timeLeft <= 0 && !submitting) {
+      handleSubmit(true);
+    }
+  }, [timeLeft, submitting]);
 
   const handleAnswerChange = (questionId: string, value: any) => {
     const newAnswers = { ...answers, [questionId]: value };
@@ -110,6 +134,8 @@ export default function ExamAttemptTakePage({ params }: { params: Promise<{ atte
   };
 
   const handleSubmit = async (autoSubmit = false) => {
+    if (submitting) return;
+
     if (!autoSubmit && !window.confirm('Bạn có chắc chắn muốn nộp bài? Sau khi nộp sẽ không thể sửa lại.')) {
       return;
     }
@@ -142,6 +168,36 @@ export default function ExamAttemptTakePage({ params }: { params: Promise<{ atte
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const renderLaTeX = (text: string) => {
+    if (!katexLoaded || !(window as any).katex || !text) {
+      return text;
+    }
+    const katex = (window as any).katex;
+    
+    // Replace block math $$...$$
+    let parsedText = text.replace(/\$\$([\s\S]*?)\$\$/g, (match: string, math: string) => {
+      try {
+        return katex.renderToString(math.trim(), { displayMode: true, throwOnError: false });
+      } catch (e) {
+        return match;
+      }
+    });
+
+    // Replace inline math $...$
+    parsedText = parsedText.replace(/\$([\s\S]*?)\$/g, (match: string, math: string) => {
+      try {
+        return katex.renderToString(math.trim(), { displayMode: false, throwOnError: false });
+      } catch (e) {
+        return match;
+      }
+    });
+
+    // Convert newlines to <br/>
+    parsedText = parsedText.replace(/\n/g, '<br/>');
+
+    return parsedText;
   };
 
   if (loading) {
@@ -209,7 +265,7 @@ export default function ExamAttemptTakePage({ params }: { params: Promise<{ atte
             {examData?.exam?.headerContent && (
               <div 
                 className="prose dark:prose-invert max-w-none bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700"
-                dangerouslySetInnerHTML={{ __html: examData.exam.headerContent }}
+                dangerouslySetInnerHTML={{ __html: renderLaTeX(examData.exam.headerContent) }}
               />
             )}
 
@@ -238,7 +294,7 @@ export default function ExamAttemptTakePage({ params }: { params: Promise<{ atte
                   </div>
                   <div 
                     className="prose dark:prose-invert max-w-none text-gray-900 dark:text-gray-100"
-                    dangerouslySetInnerHTML={{ __html: variant.content }}
+                    dangerouslySetInnerHTML={{ __html: renderLaTeX(variant.content) }}
                   />
                 </div>
               </div>
@@ -252,7 +308,7 @@ export default function ExamAttemptTakePage({ params }: { params: Promise<{ atte
                         <div key={oIndex} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                           <div className="text-gray-800 dark:text-gray-200 flex gap-2 flex-1">
                             <span className="font-bold">{opt.label}.</span>
-                            <span dangerouslySetInnerHTML={{ __html: opt.text }} />
+                            <span dangerouslySetInnerHTML={{ __html: renderLaTeX(opt.text) }} />
                           </div>
                           <div className="flex items-center gap-4 shrink-0">
                             <label className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer border transition-colors ${currentAnswer === 'true' ? 'bg-green-50 dark:bg-green-900/20 border-green-500 text-green-700 dark:text-green-400' : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700'}`}>
@@ -313,7 +369,7 @@ export default function ExamAttemptTakePage({ params }: { params: Promise<{ atte
                           />
                           <div className="text-gray-800 dark:text-gray-200 flex gap-2">
                             <span className="font-bold">{opt.label}.</span>
-                            <span dangerouslySetInnerHTML={{ __html: opt.text }} />
+                            <span dangerouslySetInnerHTML={{ __html: renderLaTeX(opt.text) }} />
                           </div>
                         </label>
                       );
@@ -344,7 +400,7 @@ export default function ExamAttemptTakePage({ params }: { params: Promise<{ atte
                           />
                           <div className="text-gray-800 dark:text-gray-200 flex gap-2">
                             <span className="font-bold">{opt.label}.</span>
-                            <span dangerouslySetInnerHTML={{ __html: opt.text }} />
+                            <span dangerouslySetInnerHTML={{ __html: renderLaTeX(opt.text) }} />
                           </div>
                         </label>
                       );
