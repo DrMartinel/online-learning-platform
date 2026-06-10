@@ -7,6 +7,16 @@ export interface IRagRepository {
   upsertChunks(chunks: DocumentChunk[]): Promise<void>;
 
   /**
+   * Insert or update knowledge base chunks (deletes existing chunks with the same title first).
+   */
+  upsertKnowledgeBaseChunks(chunks: DocumentChunk[], title: string): Promise<void>;
+
+  /**
+   * Delete all knowledge base chunks with a specific title.
+   */
+  deleteKnowledgeBaseChunks(title: string): Promise<void>;
+
+  /**
    * Delete all chunks for a specific lesson.
    */
   deleteChunksByLesson(lessonId: string): Promise<void>;

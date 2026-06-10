@@ -21,9 +21,9 @@ export class IngestCourseDto extends createZodDto(IngestCourseSchema) {}
 
 export const RAGSourceSchema = z.object({
   lessonId: z.string().uuid().nullable(),
-  courseId: z.string().uuid(),
+  courseId: z.string().uuid().nullable(),
   content: z.string(),
-  sourceType: z.enum(['text', 'video_transcript']),
+  sourceType: z.enum(['text', 'video_transcript', 'knowledge_base']),
   similarity: z.number(),
   timestamp: z.string().optional(), // e.g. "00:03:42" for video sources
 });
@@ -31,6 +31,7 @@ export const RAGSourceSchema = z.object({
 export const RAGResponseSchema = z.object({
   answer: z.string(),
   sources: z.array(RAGSourceSchema),
+  usedGeneralKnowledge: z.boolean().optional(),
 });
 
 export class RAGResponseDto extends createZodDto(RAGResponseSchema) {}
@@ -45,8 +46,19 @@ export const IngestStatusSchema = z.object({
 
 export class IngestStatusDto extends createZodDto(IngestStatusSchema) {}
 
+// --- Knowledge Base Ingestion DTO ---
+
+export const IngestKnowledgeBaseSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(500),
+  content: z.string().min(1, 'Content is required').max(100000),
+  category: z.string().optional().default('general'),
+});
+
+export class IngestKnowledgeBaseDto extends createZodDto(IngestKnowledgeBaseSchema) {}
+
 // Inferred types for service use
 export type QueryRAGInput = z.infer<typeof QueryRAGSchema>;
 export type RAGResponse = z.infer<typeof RAGResponseSchema>;
 export type RAGSource = z.infer<typeof RAGSourceSchema>;
 export type IngestStatus = z.infer<typeof IngestStatusSchema>;
+export type IngestKnowledgeBaseInput = z.infer<typeof IngestKnowledgeBaseSchema>;
