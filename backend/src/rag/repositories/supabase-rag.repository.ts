@@ -56,6 +56,47 @@ export class SupabaseRagRepository implements IRagRepository {
     }
   }
 
+  async upsertKnowledgeBaseChunks(chunks: DocumentChunk[], title: string): Promise<void> {
+    if (chunks.length === 0) return;
+
+    // Delete existing knowledge base chunks with this title
+    await this.deleteKnowledgeBaseChunks(title);
+
+    // Insert new chunks
+    const rows = chunks.map((chunk) => ({
+      id: chunk.id,
+      course_id: chunk.courseId,
+      lesson_id: chunk.lessonId,
+      source_type: chunk.sourceType,
+      chunk_index: chunk.chunkIndex,
+      content: chunk.content,
+      metadata: chunk.metadata,
+      embedding: chunk.embedding
+        ? `[${chunk.embedding.join(',')}]`
+        : null,
+    }));
+
+    const { error: insertError } = await this.supabase
+      .from('document_chunks')
+      .insert(rows);
+
+    if (insertError) {
+      throw new Error(`Failed to insert knowledge base chunks: ${insertError.message}`);
+    }
+  }
+
+  async deleteKnowledgeBaseChunks(title: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('document_chunks')
+      .delete()
+      .eq('source_type', 'knowledge_base')
+      .contains('metadata', { title });
+
+    if (error) {
+      throw new Error(`Failed to delete knowledge base chunks for "${title}": ${error.message}`);
+    }
+  }
+
   async deleteChunksByLesson(lessonId: string): Promise<void> {
     const { error } = await this.supabase
       .from('document_chunks')

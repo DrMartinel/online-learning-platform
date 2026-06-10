@@ -8,6 +8,9 @@ import { DocumentChunk } from '../entities/DocumentChunk';
 import { RAGResponse, IngestStatus } from '../dto/rag.dto';
 import { randomUUID } from 'crypto';
 
+/** Minimum similarity score to consider a match relevant */
+const SIMILARITY_THRESHOLD = 0.35;
+
 @Injectable()
 export class RagService {
   private readonly logger = new Logger(RagService.name);
@@ -24,6 +27,10 @@ export class RagService {
   /**
    * Query the RAG system: embed the question, search for relevant chunks,
    * and generate an answer using the LLM.
+   *
+   * When courseId is provided, searches within that course's content.
+   * When courseId is omitted, searches across ALL content including knowledge base entries.
+   * Falls back to general LLM knowledge when no sufficiently relevant context is found.
    */
   async query(
     question: string,
@@ -35,33 +42,90 @@ export class RagService {
     // Step 1: Generate embedding for the question
     const queryEmbedding = await this.embeddingService.generateEmbedding(question);
 
-    // Step 2: Similarity search
+    // Step 2: Similarity search (scoped to course if provided, otherwise global)
     const matches = await this.ragRepo.matchDocuments(
       queryEmbedding,
       maxResults,
       courseId,
     );
 
-    // Step 3: Generate answer using LLM with matched context
-    const contextChunks = matches.map((match) => ({
-      content: match.content,
-      sourceType: match.sourceType,
-      metadata: match.metadata,
-    }));
+    // Step 3: Filter out low-similarity matches
+    const relevantMatches = matches.filter(
+      (match) => match.similarity >= SIMILARITY_THRESHOLD,
+    );
 
-    const answer = await this.llmService.generateAnswer(question, contextChunks);
+    // Step 4: Generate answer
+    let answer: string;
+    let usedGeneralKnowledge = false;
 
-    // Step 4: Build response with sources
-    const sources = matches.map((match) => ({
+    if (relevantMatches.length === 0) {
+      // No relevant context found — fall back to general LLM knowledge
+      this.logger.log('No relevant context found, falling back to general knowledge');
+      answer = await this.llmService.generateGeneralAnswer(question);
+      usedGeneralKnowledge = true;
+    } else {
+      // Build context from relevant matches
+      const contextChunks = relevantMatches.map((match) => ({
+        content: match.content,
+        sourceType: match.sourceType,
+        metadata: match.metadata,
+      }));
+
+      answer = await this.llmService.generateAnswer(question, contextChunks);
+    }
+
+    // Step 5: Build response with sources (only include relevant matches)
+    const sources = relevantMatches.map((match) => ({
       lessonId: match.lessonId,
       courseId: match.courseId,
       content: match.content.substring(0, 200) + (match.content.length > 200 ? '...' : ''),
-      sourceType: match.sourceType as 'text' | 'video_transcript',
+      sourceType: match.sourceType as 'text' | 'video_transcript' | 'knowledge_base',
       similarity: match.similarity,
       timestamp: match.metadata?.timestamp_start || undefined,
     }));
 
-    return { answer, sources };
+    return { answer, sources, usedGeneralKnowledge };
+  }
+
+  /**
+   * Ingest arbitrary knowledge base content (project docs, FAQs, platform info, etc.).
+   * This content is NOT tied to any specific course or lesson and is searchable globally.
+   */
+  async ingestKnowledgeBase(
+    title: string,
+    content: string,
+    category: string = 'general',
+  ): Promise<void> {
+    this.logger.log(`Ingesting knowledge base entry: "${title}" [${category}]`);
+
+    const fullText = `${title}\n\n${content}`;
+    const chunks = this.embeddingService.chunkText(fullText);
+    if (chunks.length === 0) return;
+
+    this.logger.log(`Embedding ${chunks.length} knowledge base chunks for "${title}"`);
+
+    const embeddings = await this.embeddingService.generateEmbeddings(chunks);
+
+    const documentChunks: DocumentChunk[] = chunks.map((chunkContent, index) => ({
+      id: randomUUID(),
+      courseId: null as any, // Knowledge base entries are not tied to a specific course
+      lessonId: null,
+      sourceType: 'knowledge_base' as const,
+      chunkIndex: index,
+      content: chunkContent,
+      metadata: {
+        source: 'knowledge_base',
+        title,
+        category,
+        chunk_index: index,
+        total_chunks: chunks.length,
+      },
+      embedding: embeddings[index],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }));
+
+    await this.ragRepo.upsertKnowledgeBaseChunks(documentChunks, title);
   }
 
   /**

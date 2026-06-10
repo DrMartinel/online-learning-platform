@@ -2,7 +2,7 @@ export interface DocumentChunk {
   id: string;
   courseId: string;
   lessonId: string | null;
-  sourceType: 'text' | 'video_transcript';
+  sourceType: 'text' | 'video_transcript' | 'knowledge_base';
   chunkIndex: number;
   content: string;
   metadata: Record<string, any>;
@@ -16,7 +16,7 @@ export interface MatchResult {
   courseId: string;
   lessonId: string | null;
   content: string;
-  sourceType: 'text' | 'video_transcript';
+  sourceType: 'text' | 'video_transcript' | 'knowledge_base';
   metadata: Record<string, any>;
   similarity: number;
 }
