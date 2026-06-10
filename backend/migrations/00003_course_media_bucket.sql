@@ -5,6 +5,7 @@ INSERT INTO storage.buckets (id, name)
 VALUES ('course-media', 'course-media')
 ON CONFLICT (id) DO NOTHING;
 
-CREATE POLICY "Allow public full access on course-media"
+CREATE POLICY "Authenticated access on course-media"
   ON storage.objects FOR ALL
-  USING ( bucket_id = 'course-media' ) WITH CHECK ( bucket_id = 'course-media' );
+  USING ( bucket_id = 'course-media' AND auth.role() = 'authenticated' )
+  WITH CHECK ( bucket_id = 'course-media' AND auth.role() = 'authenticated' );
