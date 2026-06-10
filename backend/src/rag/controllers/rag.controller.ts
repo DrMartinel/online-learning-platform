@@ -12,7 +12,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { ConfigService } from '@nestjs/config';
 import { Auth } from '../../iam/decorators/auth.decorator';
 import { RagService } from '../services/rag.service';
-import { QueryRAGDto, RAGResponseDto, IngestStatusDto } from '../dto/rag.dto';
+import { QueryRAGDto, RAGResponseDto, IngestStatusDto, IngestKnowledgeBaseDto } from '../dto/rag.dto';
 
 @ApiTags('rag')
 @Controller('rag')
@@ -39,7 +39,7 @@ export class RagController {
   @ApiBearerAuth()
   @Auth('action:rag:query')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Ask a question about course content using RAG' })
+  @ApiOperation({ summary: 'Ask a question — searches course content, knowledge base, or uses general AI knowledge' })
   @ApiResponse({ status: 200, description: 'AI-generated answer with sources', type: RAGResponseDto })
   async query(@Body() dto: QueryRAGDto): Promise<RAGResponseDto> {
     this.ensureApiKeyConfigured();
@@ -68,6 +68,18 @@ export class RagController {
     this.ensureApiKeyConfigured();
     await this.ragService.ingestLesson(lessonId);
     return { message: `Ingestion complete for lesson ${lessonId}` };
+  }
+
+  @Post('ingest/knowledge-base')
+  @ApiBearerAuth()
+  @Auth('action:admin:rag:ingest')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Admin: Ingest knowledge base content (project docs, FAQs, platform info)' })
+  @ApiResponse({ status: 200, description: 'Knowledge base ingestion complete' })
+  async ingestKnowledgeBase(@Body() dto: IngestKnowledgeBaseDto): Promise<{ message: string }> {
+    this.ensureApiKeyConfigured();
+    await this.ragService.ingestKnowledgeBase(dto.title, dto.content, dto.category);
+    return { message: `Knowledge base ingestion complete for "${dto.title}"` };
   }
 
   @Get('status/course/:id')

@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Loader2, ExternalLink, Video } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, ExternalLink, Video, BookOpen, Sparkles } from 'lucide-react';
 
 interface RAGSource {
   lessonId: string | null;
-  courseId: string;
+  courseId: string | null;
   content: string;
-  sourceType: 'text' | 'video_transcript';
+  sourceType: 'text' | 'video_transcript' | 'knowledge_base';
   similarity: number;
   timestamp?: string;
 }
@@ -16,10 +16,11 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   sources?: RAGSource[];
+  usedGeneralKnowledge?: boolean;
 }
 
 interface ChatWidgetProps {
-  courseId: string;
+  courseId?: string;
   courseName?: string;
 }
 
@@ -30,6 +31,8 @@ export default function ChatWidget({ courseId, courseName }: ChatWidgetProps) {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const isGlobal = !courseId;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -51,10 +54,15 @@ export default function ChatWidget({ courseId, courseName }: ChatWidgetProps) {
     setIsLoading(true);
 
     try {
+      const body: Record<string, any> = { question };
+      if (courseId) {
+        body.courseId = courseId;
+      }
+
       const res = await fetch('/api/rag/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, courseId }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -69,6 +77,7 @@ export default function ChatWidget({ courseId, courseName }: ChatWidgetProps) {
           role: 'assistant',
           content: data.answer,
           sources: data.sources,
+          usedGeneralKnowledge: data.usedGeneralKnowledge,
         },
       ]);
     } catch (error) {
@@ -87,6 +96,29 @@ export default function ChatWidget({ courseId, courseName }: ChatWidgetProps) {
     }
   };
 
+  const getSourceIcon = (sourceType: string) => {
+    switch (sourceType) {
+      case 'video_transcript':
+        return <Video size={10} className="text-red-400 flex-shrink-0" />;
+      case 'knowledge_base':
+        return <BookOpen size={10} className="text-emerald-400 flex-shrink-0" />;
+      default:
+        return <ExternalLink size={10} className="flex-shrink-0" />;
+    }
+  };
+
+  const getSourceLabel = (source: RAGSource) => {
+    if (source.sourceType === 'video_transcript') {
+      return source.timestamp
+        ? `Jump to ${source.timestamp} in video`
+        : 'Video transcript';
+    }
+    if (source.sourceType === 'knowledge_base') {
+      return `Knowledge base`;
+    }
+    return source.content.substring(0, 60) + '...';
+  };
+
   return (
     <>
       {/* Floating Button */}
@@ -95,7 +127,7 @@ export default function ChatWidget({ courseId, courseName }: ChatWidgetProps) {
           id="rag-chat-toggle"
           onClick={() => setIsOpen(true)}
           className="fixed bottom-6 right-6 z-50 bg-primary hover:bg-primary-dark text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
-          aria-label="Ask AI about this course"
+          aria-label={isGlobal ? 'Ask AI Assistant' : 'Ask AI about this course'}
         >
           <MessageCircle size={24} className="group-hover:rotate-12 transition-transform" />
         </button>
@@ -105,15 +137,19 @@ export default function ChatWidget({ courseId, courseName }: ChatWidgetProps) {
       {isOpen && (
         <div className="fixed bottom-6 right-6 z-50 w-[400px] max-h-[600px] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
           {/* Header */}
-          <div className="bg-gradient-to-r from-primary to-blue-600 text-white px-5 py-4 flex items-center justify-between flex-shrink-0">
+          <div className={`${isGlobal ? 'bg-gradient-to-r from-violet-600 to-indigo-600' : 'bg-gradient-to-r from-primary to-blue-600'} text-white px-5 py-4 flex items-center justify-between flex-shrink-0`}>
             <div className="flex items-center gap-3">
               <div className="bg-white/20 rounded-lg p-1.5">
-                <MessageCircle size={18} />
+                {isGlobal ? <Sparkles size={18} /> : <MessageCircle size={18} />}
               </div>
               <div>
-                <h3 className="font-semibold text-sm">Course AI Assistant</h3>
+                <h3 className="font-semibold text-sm">
+                  {isGlobal ? 'AI Assistant' : 'Course AI Assistant'}
+                </h3>
                 <p className="text-[11px] text-white/70 truncate max-w-[220px]">
-                  {courseName || 'Ask anything about this course'}
+                  {isGlobal
+                    ? 'Ask anything — courses, platform, or general topics'
+                    : courseName || 'Ask anything about this course'}
                 </p>
               </div>
             </div>
@@ -131,14 +167,20 @@ export default function ChatWidget({ courseId, courseName }: ChatWidgetProps) {
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 min-h-[300px] max-h-[400px]">
             {messages.length === 0 && (
               <div className="text-center py-10">
-                <div className="bg-primary/5 dark:bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                  <MessageCircle size={28} className="text-primary/50" />
+                <div className={`${isGlobal ? 'bg-violet-500/5 dark:bg-violet-500/10' : 'bg-primary/5 dark:bg-primary/10'} rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4`}>
+                  {isGlobal
+                    ? <Sparkles size={28} className="text-violet-500/50" />
+                    : <MessageCircle size={28} className="text-primary/50" />}
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                  Ask me anything about this course!
+                  {isGlobal
+                    ? 'Ask me anything!'
+                    : 'Ask me anything about this course!'}
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                  I can answer questions from lessons and video content.
+                  {isGlobal
+                    ? 'I can answer questions about courses, the platform, or general topics.'
+                    : 'I can answer questions from lessons and video content.'}
                 </p>
               </div>
             )}
@@ -151,11 +193,21 @@ export default function ChatWidget({ courseId, courseName }: ChatWidgetProps) {
                 <div
                   className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                     msg.role === 'user'
-                      ? 'bg-primary text-white rounded-br-md'
+                      ? `${isGlobal ? 'bg-violet-600' : 'bg-primary'} text-white rounded-br-md`
                       : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-md'
                   }`}
                 >
                   <div className="whitespace-pre-wrap">{msg.content}</div>
+
+                  {/* General knowledge indicator */}
+                  {msg.usedGeneralKnowledge && (
+                    <div className="mt-2 pt-2 border-t border-gray-200/50 dark:border-gray-700/50">
+                      <div className="flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
+                        <Sparkles size={10} className="flex-shrink-0" />
+                        <span>Answered from general knowledge</span>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Sources */}
                   {msg.sources && msg.sources.length > 0 && (
@@ -169,25 +221,10 @@ export default function ChatWidget({ courseId, courseName }: ChatWidgetProps) {
                             key={j}
                             className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400"
                           >
-                            {source.sourceType === 'video_transcript' ? (
-                              <>
-                                <Video size={10} className="text-red-400 flex-shrink-0" />
-                                {source.timestamp ? (
-                                  <span className="hover:text-primary cursor-pointer">
-                                    Jump to {source.timestamp} in video
-                                  </span>
-                                ) : (
-                                  <span>Video transcript</span>
-                                )}
-                              </>
-                            ) : (
-                              <>
-                                <ExternalLink size={10} className="flex-shrink-0" />
-                                <span className="truncate">
-                                  {source.content.substring(0, 60)}...
-                                </span>
-                              </>
-                            )}
+                            {getSourceIcon(source.sourceType)}
+                            <span className="truncate">
+                              {getSourceLabel(source)}
+                            </span>
                             <span className="ml-auto text-[9px] bg-gray-200 dark:bg-gray-700 rounded px-1 py-0.5 flex-shrink-0">
                               {Math.round(source.similarity * 100)}%
                             </span>
@@ -223,7 +260,7 @@ export default function ChatWidget({ courseId, courseName }: ChatWidgetProps) {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a question..."
+              placeholder={isGlobal ? 'Ask anything...' : 'Ask a question...'}
               disabled={isLoading}
               className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary disabled:opacity-50 transition-colors"
             />
@@ -231,7 +268,7 @@ export default function ChatWidget({ courseId, courseName }: ChatWidgetProps) {
               id="rag-chat-send"
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="bg-primary hover:bg-primary-dark disabled:opacity-40 disabled:hover:bg-primary text-white rounded-xl p-2.5 transition-colors flex-shrink-0"
+              className={`${isGlobal ? 'bg-violet-600 hover:bg-violet-700' : 'bg-primary hover:bg-primary-dark'} disabled:opacity-40 disabled:hover:bg-primary text-white rounded-xl p-2.5 transition-colors flex-shrink-0`}
               aria-label="Send message"
             >
               <Send size={16} />
