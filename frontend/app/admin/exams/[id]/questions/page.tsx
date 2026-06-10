@@ -884,45 +884,7 @@ export default function ExamQuestionsEditor() {
     }
   };
 
-  // Helper to select/toggle correct options directly from the Compiled Preview panel
-  const handleSelectOptionInPreview = (linkId: string, oIdx: number) => {
-    const draftText = variantsDraft[linkId] || '';
-    const parsed = parseTextToQuestion(draftText);
-    if (!parsed.options) return;
 
-    const lines = draftText.split('\n');
-    const optionRegex = /^(\*?)([A-Za-z])([\.\\)])\s*(.*)$/;
-    
-    let optionCounter = 0;
-    const updatedLines = lines.map((line) => {
-      const match = line.trim().match(optionRegex);
-      if (match) {
-        const isCurrentLineOpt = optionCounter === oIdx;
-        optionCounter++;
-        
-        const label = match[2];
-        const separator = match[3];
-        const text = match[4];
-        
-        let prefix = '';
-        if (parsed.isTrueFalse || parsed.type === 'multiple_choice') {
-          // Toggle * for the clicked index, preserve for others
-          const wasCorrect = !!match[1];
-          const isCorrectNow = isCurrentLineOpt ? !wasCorrect : wasCorrect;
-          prefix = isCorrectNow ? '*' : '';
-        } else {
-          // Single choice behavior: only the clicked index gets *
-          prefix = isCurrentLineOpt ? '*' : '';
-        }
-        
-        return `${prefix}${label}${separator} ${text}`;
-      }
-      return line;
-    });
-
-    const newDraftText = updatedLines.join('\n');
-    handleUpdateQuestionDraft(linkId, newDraftText);
-  };
 
   // Helper to add a new Exam-wide Topic (Topic lớn) directly inside questions editor
   const handleAddExamTagDirectly = async (questionId: string) => {
@@ -1521,13 +1483,13 @@ export default function ExamQuestionsEditor() {
             </button>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-5 min-h-[140px] print:flex-col print:p-0 print:min-h-0">
-            {/* Left WYSIWYG Source Code Editor */}
+          <div className="min-h-[140px] print:min-h-0">
+            {/* WYSIWYG Source Code Editor */}
             {activeHeaderEdit && (
-              <div className="flex-1 flex flex-col gap-2 print-hide">
+              <div className="flex flex-col gap-2 print-hide">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Trình soạn thảo WYSIWYG</span>
                 
-                <div className="flex-1 flex flex-col border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-primary transition-all">
+                <div className="flex flex-col border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-primary transition-all">
                   {/* Editor Toolbar */}
                   <div className="flex flex-wrap items-center gap-1 px-3 py-1.5 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800">
                     <button
@@ -1649,15 +1611,6 @@ export default function ExamQuestionsEditor() {
                 </div>
               </div>
             )}
-
-            {/* Right Compiled Preview */}
-            <div className="flex-1 p-5 rounded-2xl bg-gray-50/30 dark:bg-gray-800/10 border border-gray-100 dark:border-gray-800 print:p-0 print:border-none print:bg-transparent">
-              <div className="text-xs text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider mb-2 print-hide">Compiled Preview</div>
-              <div 
-                className="render-math text-gray-900 dark:text-white prose dark:prose-invert max-w-none text-left font-normal"
-                dangerouslySetInnerHTML={{ __html: renderLaTeX(headerDraft) || '<span class="text-gray-400">ĐỀ THI MẪU CHƯA THIẾT LẬP HEADER</span>' }}
-              />
-            </div>
           </div>
         </div>
 
@@ -1945,210 +1898,136 @@ export default function ExamQuestionsEditor() {
                             </div>
                           )}
 
-                          {/* Side-by-Side Editor & KaTeX Preview */}
-                          <div className="flex flex-col md:flex-row gap-5">
-                            
-                            {/* Left Edit */}
-                            {isExpanded && (
-                              <div className="flex-1 flex flex-col gap-2">
-                                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Soạn thảo nguồn LaTeX & Định dạng</span>
-                                
-                                <div className="flex-1 flex flex-col border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-primary transition-all">
-                                  {/* Question Editor Toolbar */}
-                                  <div className="flex flex-wrap items-center gap-1 px-3 py-1.5 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800">
-                                    <button
-                                      type="button"
-                                      onClick={() => insertFormatting(link.id, 'bold')}
-                                      title="Bôi đậm (Bold)"
-                                      className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer"
-                                    >
-                                      <Bold size={15} />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => insertFormatting(link.id, 'italic')}
-                                      title="Nghiêng (Italic)"
-                                      className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer"
-                                    >
-                                      <Italic size={15} />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => insertFormatting(link.id, 'underline')}
-                                      title="Gạch chân (Underline)"
-                                      className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer"
-                                    >
-                                      <Underline size={15} />
-                                    </button>
-                                    
-                                    <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
-                                    
-                                    <select
-                                      onChange={(e) => {
-                                        if (e.target.value) {
-                                          insertFormatting(link.id, e.target.value);
-                                          e.target.value = '';
-                                        }
-                                      }}
-                                      className="px-2 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-300 text-[11px] font-bold focus:outline-none cursor-pointer hover:border-primary dark:hover:border-primary transition-all mr-1"
-                                      title="Thay đổi Cỡ chữ"
-                                      defaultValue=""
-                                    >
-                                      <option value="" disabled hidden>Cỡ chữ</option>
-                                      <option value="size-small">Nhỏ</option>
-                                      <option value="size-normal">Thường</option>
-                                      <option value="size-large">Lớn</option>
-                                      <option value="size-huge">Rất lớn</option>
-                                    </select>
+                          {/* Question Editor */}
+                          {isExpanded && (
+                            <div className="flex flex-col gap-2">
+                              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Soạn thảo nguồn LaTeX & Định dạng</span>
+                              
+                              <div className="flex flex-col border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-primary transition-all">
+                                {/* Question Editor Toolbar */}
+                                <div className="flex flex-wrap items-center gap-1 px-3 py-1.5 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800">
+                                  <button
+                                    type="button"
+                                    onClick={() => insertFormatting(link.id, 'bold')}
+                                    title="Bôi đậm (Bold)"
+                                    className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer"
+                                  >
+                                    <Bold size={15} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => insertFormatting(link.id, 'italic')}
+                                    title="Nghiêng (Italic)"
+                                    className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer"
+                                  >
+                                    <Italic size={15} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => insertFormatting(link.id, 'underline')}
+                                    title="Gạch chân (Underline)"
+                                    className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer"
+                                  >
+                                    <Underline size={15} />
+                                  </button>
+                                  
+                                  <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
+                                  
+                                  <select
+                                    onChange={(e) => {
+                                      if (e.target.value) {
+                                        insertFormatting(link.id, e.target.value);
+                                        e.target.value = '';
+                                      }
+                                    }}
+                                    className="px-2 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-300 text-[11px] font-bold focus:outline-none cursor-pointer hover:border-primary dark:hover:border-primary transition-all mr-1"
+                                    title="Thay đổi Cỡ chữ"
+                                    defaultValue=""
+                                  >
+                                    <option value="" disabled hidden>Cỡ chữ</option>
+                                    <option value="size-small">Nhỏ</option>
+                                    <option value="size-normal">Thường</option>
+                                    <option value="size-large">Lớn</option>
+                                    <option value="size-huge">Rất lớn</option>
+                                  </select>
 
-                                    <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
+                                  <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
 
+                                  <button
+                                    type="button"
+                                    onClick={() => insertFormatting(link.id, 'math')}
+                                    title="Công thức Toán dòng (Inline Math)"
+                                    className="p-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer text-[11px] font-bold"
+                                  >
+                                    $f(x)$
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => insertFormatting(link.id, 'block-math')}
+                                    title="Khối công thức toán độc lập (Block Math)"
+                                    className="p-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer text-[11px] font-bold"
+                                  >
+                                    $$F$$
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => insertFormatting(link.id, 'list')}
+                                    title="Danh sách dấu chấm (List)"
+                                    className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer"
+                                  >
+                                    <List size={15} />
+                                  </button>
+
+                                  <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
+
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) handleUploadImageForTarget(link.id, file);
+                                    }}
+                                    id={`image-upload-${link.id}`}
+                                    className="hidden"
+                                  />
+                                  <label
+                                    htmlFor={`image-upload-${link.id}`}
+                                    title="Thêm ảnh từ máy"
+                                    className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer flex items-center justify-center animate-none"
+                                  >
+                                    {uploadingTarget === link.id ? (
+                                      <Loader2 size={15} className="animate-spin text-primary" />
+                                    ) : (
+                                      <ImageIcon size={15} />
+                                    )}
+                                  </label>
+
+                                  <div className="ml-auto flex items-center gap-1.5">
                                     <button
                                       type="button"
-                                      onClick={() => insertFormatting(link.id, 'math')}
-                                      title="Công thức Toán dòng (Inline Math)"
-                                      className="p-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer text-[11px] font-bold"
+                                      onClick={() => setShowGuideModal(true)}
+                                      className="p-1.5 rounded-lg text-gray-400 hover:text-primary transition-all cursor-pointer flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 px-2 py-1"
                                     >
-                                      $f(x)$
+                                      <HelpCircle size={12} /> Hướng dẫn
                                     </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => insertFormatting(link.id, 'block-math')}
-                                      title="Khối công thức toán độc lập (Block Math)"
-                                      className="p-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer text-[11px] font-bold"
-                                    >
-                                      $$F$$
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => insertFormatting(link.id, 'list')}
-                                      title="Danh sách dấu chấm (List)"
-                                      className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer"
-                                    >
-                                      <List size={15} />
-                                    </button>
-
-                                    <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
-
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) handleUploadImageForTarget(link.id, file);
-                                      }}
-                                      id={`image-upload-${link.id}`}
-                                      className="hidden"
-                                    />
-                                    <label
-                                      htmlFor={`image-upload-${link.id}`}
-                                      title="Thêm ảnh từ máy"
-                                      className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all cursor-pointer flex items-center justify-center animate-none"
-                                    >
-                                      {uploadingTarget === link.id ? (
-                                        <Loader2 size={15} className="animate-spin text-primary" />
-                                      ) : (
-                                        <ImageIcon size={15} />
-                                      )}
-                                    </label>
-
-                                    <div className="ml-auto flex items-center gap-1.5">
-                                      <button
-                                        type="button"
-                                        onClick={() => setShowGuideModal(true)}
-                                        className="p-1.5 rounded-lg text-gray-400 hover:text-primary transition-all cursor-pointer flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 px-2 py-1"
-                                      >
-                                        <HelpCircle size={12} /> Hướng dẫn
-                                      </button>
-                                    </div>
                                   </div>
+                                </div>
 
-                                  <textarea
-                                    id={`textarea-${link.id}`}
-                                    rows={6}
-                                    value={draftText}
-                                    onChange={(e) => handleUpdateQuestionDraft(link.id, e.target.value)}
-                                    placeholder="Nhập nội dung câu hỏi...
+                                <textarea
+                                  id={`textarea-${link.id}`}
+                                  rows={6}
+                                  value={draftText}
+                                  onChange={(e) => handleUpdateQuestionDraft(link.id, e.target.value)}
+                                  placeholder="Nhập nội dung câu hỏi...
 Ví dụ trắc nghiệm:
 Đáp án đúng bắt đầu bằng dấu *
 A. Đáp án A
 *B. Đáp án B"
-                                    className="w-full p-4 bg-transparent text-gray-900 dark:text-white font-mono text-sm focus:outline-none transition-all resize-y border-none"
-                                  />
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Right LaTeX Render Output */}
-                            <div className="flex-1 p-5 rounded-2xl bg-gray-50/30 dark:bg-gray-800/10 border border-gray-100 dark:border-gray-800">
-                              <div className="text-xs text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider mb-2">Bản In / Preview</div>
-                              
-                              <div className="space-y-4">
-                                {/* Question Content */}
-                                <div 
-                                  className="render-math text-gray-900 dark:text-white leading-relaxed font-semibold text-sm"
-                                  dangerouslySetInnerHTML={{ __html: renderLaTeX(parsed.content || 'Nhập câu hỏi...') }}
+                                  className="w-full p-4 bg-transparent text-gray-900 dark:text-white font-mono text-sm focus:outline-none transition-all resize-y border-none"
                                 />
-
-                                {/* Options Render (For MCQs) */}
-                                {parsed.options && parsed.options.length > 0 && (
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-4">
-                                    {parsed.options.map((opt, oIdx) => {
-                                      const isCorrect = parsed.isTrueFalse
-                                        ? parsed.correctAnswer?.trueIndices?.includes(oIdx)
-                                        : parsed.type === 'single_choice'
-                                          ? parsed.correctAnswer?.index === oIdx
-                                          : parsed.correctAnswer?.indices?.includes(oIdx);
-
-                                      return (
-                                        <div 
-                                          key={oIdx} 
-                                          onClick={() => handleSelectOptionInPreview(link.id, oIdx)}
-                                          className={`flex items-start justify-between gap-2 text-sm p-2 rounded-xl transition-all cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 border ${
-                                            isCorrect 
-                                              ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-bold' 
-                                              : parsed.isTrueFalse
-                                                ? 'bg-rose-500/5 border-rose-500/20 text-rose-700 dark:text-rose-400 font-bold'
-                                                : 'border-transparent text-gray-700 dark:text-gray-300'
-                                          }`}
-                                        >
-                                          <div className="flex items-start gap-2">
-                                            <span className={`font-bold shrink-0 ${isCorrect ? 'text-emerald-500 underline' : 'text-gray-900 dark:text-white'}`}>
-                                              {opt.label}{parsed.isTrueFalse ? ')' : '.'}
-                                            </span>
-                                            <div 
-                                              className="render-math font-medium flex-1 text-left"
-                                              dangerouslySetInnerHTML={{ __html: renderLaTeX(opt.text) }}
-                                            />
-                                          </div>
-                                          {parsed.isTrueFalse && (
-                                            <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase shrink-0 ${
-                                              isCorrect 
-                                                ? 'bg-emerald-500/10 text-emerald-600' 
-                                                : 'bg-rose-500/10 text-rose-600'
-                                            }`}>
-                                              {isCorrect ? 'Đúng' : 'Sai'}
-                                            </span>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-
-                                {/* Short Answer/Essay Answer Preview (For Essay questions) */}
-                                {parsed.type === 'essay' && (
-                                  <div className="pl-4 mt-2">
-                                    <div className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-bold font-mono shadow-sm">
-                                      <span className="uppercase tracking-wider opacity-75">Đáp số:</span>
-                                      <span className="underline decoration-wavy decoration-amber-500 font-extrabold text-[13px]">{parsed.correctAnswer?.essayAnswer || 'Chưa khai báo'}</span>
-                                    </div>
-                                  </div>
-                                )}
                               </div>
                             </div>
-
-                          </div>
+                          )}
                         </div>
                       </React.Fragment>
                     );
