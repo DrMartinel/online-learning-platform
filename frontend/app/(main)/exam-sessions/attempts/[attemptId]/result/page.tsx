@@ -13,6 +13,29 @@ export default function ExamAttemptResultPage({ params }: { params: Promise<{ at
   const [examData, setExamData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [katexLoaded, setKatexLoaded] = useState(false);
+
+  useEffect(() => {
+    // Check if katex is already on page
+    if ((window as any).katex) {
+      setKatexLoaded(true);
+      return;
+    }
+
+    // Add KaTeX CSS
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css';
+    document.head.appendChild(link);
+
+    // Add KaTeX Script
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js';
+    script.onload = () => {
+      setKatexLoaded(true);
+    };
+    document.head.appendChild(script);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -46,6 +69,36 @@ export default function ExamAttemptResultPage({ params }: { params: Promise<{ at
     const m = Math.floor(diff / 60);
     const s = diff % 60;
     return `${m} phút ${s} giây`;
+  };
+
+  const renderLaTeX = (text: string) => {
+    if (!katexLoaded || !(window as any).katex || !text) {
+      return text;
+    }
+    const katex = (window as any).katex;
+    
+    // Replace block math $$...$$
+    let parsedText = text.replace(/\$\$([\s\S]*?)\$\$/g, (match: string, math: string) => {
+      try {
+        return katex.renderToString(math.trim(), { displayMode: true, throwOnError: false });
+      } catch (e) {
+        return match;
+      }
+    });
+
+    // Replace inline math $...$
+    parsedText = parsedText.replace(/\$([\s\S]*?)\$/g, (match: string, math: string) => {
+      try {
+        return katex.renderToString(math.trim(), { displayMode: false, throwOnError: false });
+      } catch (e) {
+        return match;
+      }
+    });
+
+    // Convert newlines to <br/>
+    parsedText = parsedText.replace(/\n/g, '<br/>');
+
+    return parsedText;
   };
 
   if (loading) {
@@ -212,7 +265,7 @@ export default function ExamAttemptResultPage({ params }: { params: Promise<{ at
                       </div>
                       <div 
                         className="prose dark:prose-invert max-w-none text-gray-900 dark:text-gray-100"
-                        dangerouslySetInnerHTML={{ __html: variant.content }}
+                        dangerouslySetInnerHTML={{ __html: renderLaTeX(variant.content) }}
                       />
                     </div>
                   </div>
@@ -248,7 +301,7 @@ export default function ExamAttemptResultPage({ params }: { params: Promise<{ at
                                 <div className="mt-0.5">{icon || <div className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600"></div>}</div>
                                 <div className="flex gap-2">
                                   <span className="font-bold">{opt.label}.</span>
-                                  <span dangerouslySetInnerHTML={{ __html: opt.text }} />
+                                  <span dangerouslySetInnerHTML={{ __html: renderLaTeX(opt.text) }} />
                                 </div>
                               </div>
                             );
@@ -288,7 +341,7 @@ export default function ExamAttemptResultPage({ params }: { params: Promise<{ at
                                 <div className="mt-0.5">{icon || <div className="w-4 h-4 rounded border border-gray-300 dark:border-gray-600"></div>}</div>
                                 <div className="flex gap-2">
                                   <span className="font-bold">{opt.label}.</span>
-                                  <span dangerouslySetInnerHTML={{ __html: opt.text }} />
+                                  <span dangerouslySetInnerHTML={{ __html: renderLaTeX(opt.text) }} />
                                 </div>
                               </div>
                             );
@@ -312,7 +365,7 @@ export default function ExamAttemptResultPage({ params }: { params: Promise<{ at
                               <div key={oIndex} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                                 <div className="text-gray-800 dark:text-gray-200 flex gap-2 flex-1">
                                   <span className="font-bold">{opt.label}.</span>
-                                  <span dangerouslySetInnerHTML={{ __html: opt.text }} />
+                                  <span dangerouslySetInnerHTML={{ __html: renderLaTeX(opt.text) }} />
                                 </div>
                                 <div className="flex items-center gap-4 shrink-0 text-sm">
                                   {isGraded ? (
@@ -373,7 +426,7 @@ export default function ExamAttemptResultPage({ params }: { params: Promise<{ at
                         </p>
                         <div 
                           className="prose prose-sm dark:prose-invert text-blue-900 dark:text-blue-200"
-                          dangerouslySetInnerHTML={{ __html: variant.explanation }}
+                          dangerouslySetInnerHTML={{ __html: renderLaTeX(variant.explanation) }}
                         />
                       </div>
                     )}
