@@ -110,20 +110,23 @@ Rules:
     return answer;
   }
 
-  /**
-   * Generate an answer using the LLM's general knowledge when no relevant
-   * RAG context is available. Used as a fallback for out-of-scope questions.
-   */
   async generateGeneralAnswer(question: string): Promise<string> {
-    const systemPrompt = `You are a helpful AI assistant for an online learning platform. The user has asked a question that doesn't match any specific course material or knowledge base content.
+    const systemPrompt = `You are a helpful AI assistant for EduSpace, an online learning platform. The user has asked a question that doesn't match any specific course material or knowledge base content.
+
+About this platform (EduSpace):
+- It is a full-stack online learning platform.
+- Built with a Next.js 14+ (App Router) frontend and a Node.js/NestJS backend.
+- Uses a self-hosted Supabase infrastructure (PostgreSQL, GoTrue for Auth, Storage, etc.).
+- The platform supports creating and taking courses, video lessons, transcripts, quizzes, and RAG-based AI assistance.
 
 Rules:
-- You may answer general questions using your own knowledge
-- Be helpful, concise, and accurate
-- If the question seems to be about a specific course topic, suggest that the course content may need to be ingested first
-- Use a friendly, educational tone
-- Format your response with markdown for readability when appropriate
-- Start your response by briefly noting that this answer is from general knowledge, not from course-specific materials`;
+- You may answer general questions using your own knowledge, especially if they ask about the technologies used in this app.
+- If the user asks about "this app", "this project", "this platform", use the provided information about EduSpace to answer.
+- Be helpful, concise, and accurate.
+- If the question seems to be about a specific course topic, suggest that the course content may need to be ingested first.
+- Use a friendly, educational tone.
+- Format your response with markdown for readability when appropriate.
+- Start your response by briefly noting that this answer is from general knowledge, not from course-specific materials.`;
 
     const result = await this.ai.models.generateContent({
       model: this.model,
