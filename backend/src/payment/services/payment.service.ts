@@ -4,6 +4,7 @@ import { SupabasePaymentRepository } from '../repositories/supabase-payment.repo
 import { CreatePaymentRequestDto, VNPayIPNDto } from '../dto/payment.dto';
 import * as crypto from 'crypto';
 import * as qs from 'qs';
+import { GetTransactionsQueryDto } from '../dto/payment.dto';
 
 @Injectable()
 export class PaymentService {
@@ -81,7 +82,7 @@ export class PaymentService {
     return { paymentUrl };
   }
 
-async processIPN(query: VNPayIPNDto) {
+  async processIPN(query: VNPayIPNDto) {
     let vnp_Params: Record<string, any> = { ...query };
     const secureHash = vnp_Params['vnp_SecureHash'];
 
@@ -147,5 +148,27 @@ async processIPN(query: VNPayIPNDto) {
       sorted[str[key]] = encodeURIComponent(obj[str[key]]).replace(/%20/g, '+');
     }
     return sorted;
+  }
+
+  async getTransactions(queryDto: GetTransactionsQueryDto) {
+    const { page, limit, status, search } = queryDto;
+    
+    const { data, count } = await this.paymentRepository.getTransactions(
+      page, 
+      limit, 
+      status, 
+      search
+    );
+
+    // Chuẩn hóa dữ liệu trả về cho Frontend hiển thị bảng và phân trang
+    return {
+      data: data || [],
+      meta: {
+        total: count || 0,
+        page,
+        limit,
+        totalPages: Math.ceil((count || 0) / limit),
+      }
+    };
   }
 }
