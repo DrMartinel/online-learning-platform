@@ -15,6 +15,7 @@ export class SupabaseCourseRepository implements ICourseRepository {
       row.thumbnail_url,
       row.is_published,
       new Date(row.created_at),
+      row.price ? Number(row.price) : 0,                    
       row.updated_at ? new Date(row.updated_at) : undefined
     );
   }
@@ -29,6 +30,7 @@ export class SupabaseCourseRepository implements ICourseRepository {
         description: course.description,
         thumbnail_url: course.thumbnailUrl,
         is_published: course.isPublished,
+        price: course.price,
       })
       .select()
       .single();
@@ -73,6 +75,7 @@ export class SupabaseCourseRepository implements ICourseRepository {
         description: course.description,
         thumbnail_url: course.thumbnailUrl,
         is_published: course.isPublished,
+        price: course.price,
       })
       .eq('id', course.id)
       .select()

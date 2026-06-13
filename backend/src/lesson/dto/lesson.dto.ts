@@ -28,5 +28,6 @@ export const lessonResponseSchema = z.object({
   orderIndex: z.number().int(),
   isPublished: z.boolean(),
   createdAt: z.date(),
+  isLocked: z.boolean().optional(),
 });
 export class LessonResponseDTO extends createZodDto(lessonResponseSchema) {}

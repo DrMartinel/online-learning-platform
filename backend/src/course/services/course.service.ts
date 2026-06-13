@@ -27,6 +27,7 @@ export class CourseService {
       dto.thumbnailUrl || null,
       false,
       new Date(),
+      dto.price ?? 0, // <--- BỔ SUNG: Truyền giá tiền vào khởi tạo (mặc định 0đ)
     );
     await this.courseRepo.create(course);
     return this.mapToResponse(course);
@@ -59,6 +60,7 @@ export class CourseService {
     if (dto.title) course.title = dto.title;
     if (dto.description !== undefined) course.description = dto.description || null;
     if (dto.thumbnailUrl !== undefined) course.thumbnailUrl = dto.thumbnailUrl || null;
+    if (dto.price !== undefined) course.price = dto.price; // <--- BỔ SUNG: Cho phép update giá
     
     if (dto.isPublished !== undefined) {
       if (dto.isPublished && !course.isPublished) {
@@ -93,6 +95,7 @@ export class CourseService {
       dto.thumbnailUrl || null,
       false,
       new Date(),
+      dto.price ?? 0, // <--- BỔ SUNG
     );
     await this.courseRepo.create(course);
     return this.mapToResponse(course);
@@ -107,6 +110,7 @@ export class CourseService {
     if (dto.description !== undefined) course.description = dto.description || null;
     if (dto.thumbnailUrl !== undefined) course.thumbnailUrl = dto.thumbnailUrl || null;
     if (dto.instructorId) course.instructorId = dto.instructorId;
+    if (dto.price !== undefined) course.price = dto.price; // <--- BỔ SUNG
     
     if (dto.isPublished !== undefined) {
       if (dto.isPublished && !course.isPublished) {
@@ -136,6 +140,7 @@ export class CourseService {
       thumbnailUrl: course.thumbnailUrl || undefined,
       isPublished: course.isPublished,
       createdAt: course.createdAt,
+      price: course.price, // <--- BỔ SUNG DÒNG NÀY ĐỂ FIX LỖI
     };
   }
 }
