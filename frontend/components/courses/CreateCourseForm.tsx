@@ -80,6 +80,27 @@ export default function CreateCourseForm({ token }: { token: string }) {
       </div>
 
       <div>
+        <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Giá tiền (VNĐ) <span className="text-gray-400 font-normal text-xs ml-1">(Nhập 0 nếu miễn phí)</span>
+        </label>
+        <div className="relative">
+          <input
+            type="number"
+            name="price"
+            id="price"
+            min="0"
+            step="1000"
+            defaultValue="0"
+            className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2.5 pr-16 text-gray-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+            placeholder="Ví dụ: 500000"
+          />
+          <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-sm text-gray-500 font-medium">
+            VNĐ
+          </div>
+        </div>
+      </div>
+
+      <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Ảnh bìa khóa học
         </label>

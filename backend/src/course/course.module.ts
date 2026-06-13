@@ -6,6 +6,7 @@ import { SupabaseCourseRepository } from './repositories/supabase-course.reposit
 import { SupabaseClient } from '@supabase/supabase-js';
 
 @Module({
+  imports: [],
   controllers: [CourseController, CourseAdminController],
   providers: [
     CourseService,
@@ -16,6 +17,10 @@ import { SupabaseClient } from '@supabase/supabase-js';
       },
       inject: [SupabaseClient],
     },
+  ],
+  exports: [
+    CourseService, 
+    'ICourseRepository' // Export thêm cái này nếu cần
   ],
 })
 export class CourseModule {}
