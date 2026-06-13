@@ -48,7 +48,7 @@ constructor(
     return data;
   }
 
-async enrollUserAfterPayment(vnpTxnRef: string, userId: string, courseId: string, vnpTransactionNo: string) {
+  async enrollUserAfterPayment(vnpTxnRef: string, userId: string, courseId: string, vnpTransactionNo: string) {
     // 1. Cập nhật trạng thái thanh toán thành SUCCESS
     const { error: paymentError } = await this.supabase
       .from('payments')
@@ -94,5 +94,36 @@ async enrollUserAfterPayment(vnpTxnRef: string, userId: string, courseId: string
     if (error) {
          throw new InternalServerErrorException(`Lỗi khi cập nhật thanh toán thất bại: ${error.message}`);
     }
+  }
+
+  async getTransactions(page: number, limit: number, status?: string, search?: string) {
+    // 1. Khởi tạo query lấy data và đếm tổng số bản ghi
+    let query = this.supabase
+      .from('payments')
+      .select('*', { count: 'exact' });
+
+    // 2. Áp dụng bộ lọc (nếu có)
+    if (status) {
+      query = query.eq('status', status);
+    }
+    if (search) {
+      // Tìm kiếm tương đối theo mã giao dịch
+      query = query.ilike('vnp_txn_ref', `%${search}%`);
+    }
+
+    // 3. Tính toán offset cho phân trang (Pagination)
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    // 4. Lấy dữ liệu sắp xếp theo ngày tạo mới nhất
+    const { data, count, error } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      throw new InternalServerErrorException(`Lỗi khi lấy danh sách giao dịch: ${error.message}`);
+    }
+
+    return { data, count };
   }
 }
