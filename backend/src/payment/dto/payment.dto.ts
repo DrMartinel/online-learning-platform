@@ -26,3 +26,13 @@ export const VNPayIPNSchema = z.object({
 }).catchall(z.string().optional());
 
 export class VNPayIPNDto extends createZodDto(VNPayIPNSchema) {}
+
+// Định nghĩa schema cho query tham số
+export const GetTransactionsQuerySchema = z.object({
+  page: z.coerce.number().min(1).default(1),
+  limit: z.coerce.number().min(1).max(100).default(10),
+  status: z.enum(['PENDING', 'SUCCESS', 'FAILED']).optional(),
+  search: z.string().optional(),
+});
+
+export class GetTransactionsQueryDto extends createZodDto(GetTransactionsQuerySchema) {}
