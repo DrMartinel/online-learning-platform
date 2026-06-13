@@ -106,29 +106,31 @@ export default async function CourseDetailPage({ params }: PageProps) {
         isLoggedIn = userRes.ok;
 
         // Check enrollment and instructor status
-        if (isLoggedIn) {
+if (isLoggedIn) {
           const user = await userRes.json();
           const hasLessonPermission = user.permissions?.includes('action:lesson:create');
           
           // 1. Kiểm tra xem có phải là Giảng viên không
           isInstructor = user.id === course.instructorId && hasLessonPermission;
 
-          // 2. Query TRỰC TIẾP vào bảng enrollments của Supabase để kiểm tra quyền sở hữu
-          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-          const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-          
-          const enrollRes = await fetch(`${supabaseUrl}/rest/v1/enrollments?user_id=eq.${user.id}&course_id=eq.${id}&select=id`, {
-            headers: { 
-              'apikey': supabaseAnonKey,
-              'Authorization': `Bearer ${token}`
-            },
-            cache: 'no-store'
-          });
-          
-          const enrollments = await enrollRes.json();
-          
-          // Học viên được coi là "Đã sở hữu" nếu họ là Giảng viên, HOẶC có tên trong bảng enrollments
-          isEnrolled = isInstructor || (Array.isArray(enrollments) && enrollments.length > 0);
+          // 2. Kiểm tra quyền sở hữu khóa học thông qua backend (gọi thử bài học đầu tiên để check cờ isLocked)
+          if (lessons.length > 0) {
+            const firstLessonRes = await fetch(`${backendUrl}/lessons/${lessons[0].id}`, {
+              headers: { 'Authorization': `Bearer ${token}` },
+              cache: 'no-store'
+            });
+            
+            if (firstLessonRes.ok) {
+              const firstLessonData = await firstLessonRes.json();
+              // Học viên "Đã sở hữu" nếu họ là Giảng viên, HOẶC bài học từ backend không bị khóa
+              isEnrolled = isInstructor || !firstLessonData.isLocked;
+            } else {
+              isEnrolled = isInstructor;
+            }
+          } else {
+            // Nếu khóa học chưa có bài học nào, mặc định dựa vào trạng thái Giảng viên hoặc cho phép xem trước nút Enroll
+            isEnrolled = isInstructor;
+          }
         }
       } catch (e) {
         console.error(e);
@@ -139,7 +141,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
   const sortedLessons = [...lessons].sort((a, b) => a.orderIndex - b.orderIndex);
   const lessonCount = sortedLessons.length;
   
-  const thumbnailSignedUrl = await getSignedMediaUrl(course.thumbnailUrl);
+const thumbnailSignedUrl = await getSignedMediaUrl(course.thumbnailUrl, token);
 
   return (
     <div className="min-h-full bg-white dark:bg-gray-950">
