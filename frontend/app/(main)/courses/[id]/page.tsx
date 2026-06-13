@@ -10,6 +10,7 @@ import ChatWidget from "@/components/rag/ChatWidget";
 import CourseActionMenu from "@/components/admin/CourseActionMenu";
 import type { Course } from "@/components/courses/CourseCard";
 import type { Metadata } from "next";
+import PaymentButton from '@/components/courses/PaymentButton';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -108,13 +109,26 @@ export default async function CourseDetailPage({ params }: PageProps) {
         if (isLoggedIn) {
           const user = await userRes.json();
           const hasLessonPermission = user.permissions?.includes('action:lesson:create');
+          
+          // 1. Kiểm tra xem có phải là Giảng viên không
           isInstructor = user.id === course.instructorId && hasLessonPermission;
 
-          const progressRes = await fetch(`${backendUrl}/user-progress/course/${id}`, {
-            headers: { 'Authorization': `Bearer ${token}` },
+          // 2. Query TRỰC TIẾP vào bảng enrollments của Supabase để kiểm tra quyền sở hữu
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+          const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+          
+          const enrollRes = await fetch(`${supabaseUrl}/rest/v1/enrollments?user_id=eq.${user.id}&course_id=eq.${id}&select=id`, {
+            headers: { 
+              'apikey': supabaseAnonKey,
+              'Authorization': `Bearer ${token}`
+            },
             cache: 'no-store'
           });
-          isEnrolled = progressRes.ok;
+          
+          const enrollments = await enrollRes.json();
+          
+          // Học viên được coi là "Đã sở hữu" nếu họ là Giảng viên, HOẶC có tên trong bảng enrollments
+          isEnrolled = isInstructor || (Array.isArray(enrollments) && enrollments.length > 0);
         }
       } catch (e) {
         console.error(e);
@@ -227,7 +241,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
             </section>
           </div>
 
-          {/* ── Sticky sidebar ── */}
+{/* ── Sticky sidebar ── */}
           <aside className="lg:col-span-1">
             <div className="sticky top-24 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-lg overflow-hidden">
               {/* Card thumbnail */}
@@ -264,22 +278,48 @@ export default async function CourseDetailPage({ params }: PageProps) {
                   </li>
                 </ul>
 
+                {/* BỔ SUNG ĐOẠN ĐỘNG HIỂN THỊ GIÁ TIỀN DƯỚI ĐÂY */}
                 <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
-                  <EnrollButton courseId={course.id} isLoggedIn={isLoggedIn} isEnrolled={isEnrolled} />
+                  <div className="flex items-baseline justify-between mb-2">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Giá khóa học:</span>
+                    <span className="text-2xl font-black text-primary">
+                      {course.price > 0 
+                        ? `${course.price.toLocaleString("vi-VN")} VNĐ` 
+                        : "Miễn phí"}
+                    </span>
+                  </div>
                 </div>
 
-                {!isLoggedIn && (
-                  <p className="text-xs text-center text-gray-400 dark:text-gray-500">
-                    Bạn cần{" "}
-                    <Link
-                      href={`/login?next=/courses/${course.id}`}
-                      className="text-primary hover:underline"
-                    >
-                      đăng nhập
-                    </Link>{" "}
-                    để đăng ký khóa học.
-                  </p>
-                )}
+                {/* KHU VỰC CÁC NÚT HÀNH ĐỘNG CẬP NHẬT PAYWALL */}
+                <div className="border-t border-gray-100 dark:border-gray-800 pt-4 space-y-3">
+                  {!isLoggedIn ? (
+                    // Nếu CHƯA ĐĂNG NHẬP
+                    <p className="text-xs text-center text-gray-400 dark:text-gray-500">
+                      Bạn cần{" "}
+                      <Link
+                        href={`/login?next=/courses/${course.id}`}
+                        className="text-primary hover:underline"
+                      >
+                        đăng nhập
+                      </Link>{" "}
+                      để học khóa này.
+                    </p>
+                  ) : isEnrolled ? (
+                    // Nếu ĐÃ MUA / ĐÃ ENROLL
+                    <div className="space-y-3">
+                      <div className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 p-3 rounded-lg text-sm text-center font-medium border border-emerald-200 dark:border-emerald-800">
+                        Bạn đã sở hữu khóa học này
+                      </div>
+                      <EnrollButton courseId={course.id} isLoggedIn={isLoggedIn} isEnrolled={isEnrolled} />
+                    </div>
+                  ) : course.price > 0 ? (
+                    // Nếu TRẢ PHÍ (giá > 0) và CHƯA MUA
+                    <PaymentButton courseId={course.id} amount={course.price} />
+                  ) : (
+                    // Nếu MIỄN PHÍ (giá = 0) và CHƯA ENROLL
+                    <EnrollButton courseId={course.id} isLoggedIn={isLoggedIn} isEnrolled={isEnrolled} />
+                  )}
+                </div>
               </div>
             </div>
           </aside>

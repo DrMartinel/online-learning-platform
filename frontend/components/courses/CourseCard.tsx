@@ -10,6 +10,7 @@ export interface Course {
   thumbnailUrl?: string;
   isPublished: boolean;
   createdAt: string;
+  price: number;
 }
 
 interface CourseCardProps {

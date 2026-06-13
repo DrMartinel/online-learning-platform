@@ -3,12 +3,17 @@ import { LessonRepository } from '../repositories/Ilesson.repository';
 import { Lesson } from '../entities/Lesson';
 import { CreateLessonDTO, UpdateLessonDTO, LessonResponseDTO } from '../dto/lesson.dto';
 import { randomUUID } from 'crypto';
+import { CourseService } from '../../course/services/course.service'; 
+import { SupabaseClient } from '@supabase/supabase-js';
+import { CurrentUser } from '../../iam/decorators/current-user.decorator';
 
 @Injectable()
 export class LessonService {
   constructor(
     @Inject('ILessonRepository')
     private readonly lessonRepo: LessonRepository,
+    private readonly courseService: CourseService,
+    private readonly supabase: SupabaseClient
   ) {}
 
   async create(dto: CreateLessonDTO): Promise<LessonResponseDTO> {
@@ -53,6 +58,51 @@ export class LessonService {
     const lesson = await this.lessonRepo.findById(id);
     if (!lesson) throw new NotFoundException('Lesson not found');
     await this.lessonRepo.delete(id);
+  }
+
+  async getLessonDetail(id: string, userId: string): Promise<LessonResponseDTO> {
+    // 1. Lấy thông tin bài học cơ bản
+    const lesson = await this.lessonRepo.findById(id);
+    if (!lesson) throw new NotFoundException('Lesson not found');
+
+    const response = this.mapToResponse(lesson);
+    let isLocked = false;
+
+    // 2. Lấy thông tin khóa học để kiểm tra giá tiền
+    const course = await this.courseService.findById(lesson.courseId);
+
+    // 3. LOGIC PAYWALL: Nếu khóa học có giá > 0 (Phải trả phí)
+    if (course && course.price > 0) {
+      const isInstructor = course.instructorId === userId;
+      
+      // Nếu không phải là giảng viên thì phải kiểm tra xem đã mua chưa
+      if (!isInstructor) {
+        // Query bảng enrollments xem user này đã sở hữu khóa học chưa
+        const { data: enrollment, error } = await this.supabase
+          .from('enrollments')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('course_id', course.id)
+          .maybeSingle(); // Dùng maybeSingle để tránh báo lỗi 500 nếu ko tìm thấy
+
+        // 4. Nếu lỗi hoặc chưa ghi danh -> Khóa bài học
+        if (error || !enrollment) {
+          isLocked = true;
+        }
+      }
+    }
+
+    // 5. Nếu bài học bị khóa, XÓA sạch URL Video và Nội dung trước khi gửi về cho Client
+    if (isLocked) {
+      response.videoUrl = undefined;
+      response.content = undefined;
+      // Trả cờ isLocked = true để Frontend vẽ ổ khóa
+      (response as any).isLocked = true; 
+    } else {
+      (response as any).isLocked = false;
+    }
+
+    return response;
   }
 
   private mapToResponse(lesson: Lesson): LessonResponseDTO {
