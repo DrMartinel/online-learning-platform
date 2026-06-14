@@ -8,4 +8,7 @@ export interface ICourseRepository {
   update(course: Course): Promise<Course>;
   delete(id: string): Promise<void>;
   save(course: Course): Promise<Course>; // Added save to make course service happy
+  enrollUser(courseId: string, userId: string): Promise<void>;
+  checkEnrollment(courseId: string, userId: string): Promise<boolean>;
+  getEnrolledCourses(userId: string): Promise<Course[]>;
 }

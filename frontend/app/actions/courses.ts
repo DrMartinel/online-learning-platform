@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/dist/server/web/spec-extension/revalidate';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
@@ -52,4 +53,36 @@ export async function createCourseAction(formData: FormData) {
 
   const course = await res.json();
   redirect(`/courses/${course.id}`);
+}
+
+export async function enrollFreeCourseAction(courseId: string) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('olp_session')?.value;
+    
+    if (!token) throw new Error('Vui lòng đăng nhập để đăng ký khóa học.');
+
+    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    
+    const res = await fetch(`${backendUrl}/courses/${courseId}/enroll`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || 'Lỗi khi đăng ký khóa học');
+    }
+
+    // Cập nhật lại cache để giao diện nhận diện user đã sở hữu khóa học ngay lập tức
+    revalidatePath(`/courses/${courseId}`);
+    revalidatePath('/my-courses');
+    
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
 }

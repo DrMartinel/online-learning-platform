@@ -131,6 +131,31 @@ export class CourseService {
     await this.courseRepo.delete(id);
   }
 
+  async enrollFreeCourse(courseId: string, userId: string): Promise<void> {
+    // 1. Kiểm tra khóa học có tồn tại không
+    const course = await this.courseRepo.findById(courseId);
+    if (!course) {
+      throw new CourseError(`Course not found: ${courseId}`);
+    }
+
+    // 2. BẢO MẬT: Nếu khóa học có giá > 0, từ chối việc đăng ký miễn phí
+    if (course.price > 0) {
+      throw new CourseError('Khóa học này yêu cầu thanh toán. Không thể đăng ký miễn phí.');
+    }
+
+    // 3. Tiến hành ghi nhận vào bảng enrollments
+    await this.courseRepo.enrollUser(courseId, userId);
+  }
+
+  async checkEnrollment(courseId: string, userId: string): Promise<boolean> {
+    return this.courseRepo.checkEnrollment(courseId, userId);
+  }
+
+  async getEnrolledCourses(userId: string): Promise<CourseResponseDTO[]> {
+    const courses = await this.courseRepo.getEnrolledCourses(userId);
+    return courses.map(course => this.mapToResponse(course));
+  }
+
   private mapToResponse(course: Course): CourseResponseDTO {
     return {
       id: course.id,
