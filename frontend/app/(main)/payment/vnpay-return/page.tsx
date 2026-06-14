@@ -10,6 +10,17 @@ export default async function VNPayReturnPage({ searchParams }: ReturnPageProps)
   // Lưu ý: Đối với Next.js 15+, searchParams là một Promise nên cần await
   const params = await searchParams;
   
+  // Chuyển đổi toàn bộ tham số nhận được thành chuỗi query string
+  const queryString = new URLSearchParams(params as Record<string, string>).toString();
+
+  // [TỰ ĐỘNG GỌI IPN] Giả lập Server VNPay gọi xuống Backend
+  // Lưu ý: KHÔNG dùng await ở lệnh fetch này để giao diện không bị treo chờ xử lý
+  const backendUrl = process.env.BACKEND_URL || 'http://backend:3001';
+  fetch(`${backendUrl}/payment/vnpay/ipn?${queryString}`, { 
+    method: 'GET',
+    cache: 'no-store' 
+  }).catch(e => console.error("Lỗi Auto IPN:", e));
+
   const responseCode = params['vnp_ResponseCode'] as string;
   const orderInfo = params['vnp_OrderInfo'] as string;
   const transactionNo = params['vnp_TransactionNo'] as string;
