@@ -28,6 +28,14 @@ export class CourseController {
     return this.courseService.list(filter);
   }
 
+  @Get('enrolled/me') 
+  @Auth()
+  @ApiOperation({ summary: 'Lấy danh sách các khóa học user đã đăng ký/mua' })
+  @ApiResponse({ status: 200, description: 'Danh sách khóa học' })
+  async getMyEnrolledCourses(@CurrentUser() user: any): Promise<CourseResponseDTO[]> {
+    return this.courseService.getEnrolledCourses(user.id);
+  }
+
   @Get(':id')
   @Auth('action:course:read')
   @ApiOperation({ summary: 'Get course by ID' })
@@ -51,5 +59,23 @@ export class CourseController {
   @ApiResponse({ status: 204, description: 'Course successfully deleted' })
   async deleteCourse(@Param('id') id: string, @CurrentUser() user: any): Promise<void> {
     return this.courseService.delete(id, user.id);
+  }
+
+  @Post(':id/enroll')
+  @Auth() //Bắt buộc user phải đăng nhập mới được gọi API này
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Đăng ký khóa học miễn phí' })
+  @ApiResponse({ status: 200, description: 'Đăng ký thành công' })
+  async enrollFreeCourse(@Param('id') id: string, @CurrentUser() user: any): Promise<{ message: string }> {
+    await this.courseService.enrollFreeCourse(id, user.id);
+    return { message: 'Đăng ký khóa học thành công' };
+  }
+
+  @Get(':id/check-enrollment')
+  @Auth()
+  @ApiOperation({ summary: 'Kiểm tra quyền sở hữu khóa học' })
+  async checkEnrollment(@Param('id') id: string, @CurrentUser() user: any): Promise<{ isEnrolled: boolean }> {
+    const isEnrolled = await this.courseService.checkEnrollment(id, user.id);
+    return { isEnrolled };
   }
 }

@@ -11,6 +11,7 @@ import CourseActionMenu from "@/components/admin/CourseActionMenu";
 import type { Course } from "@/components/courses/CourseCard";
 import type { Metadata } from "next";
 import PaymentButton from '@/components/courses/PaymentButton';
+import EnrollFreeButton from "@/components/courses/EnrollFreeButton";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -113,23 +114,23 @@ if (isLoggedIn) {
           // 1. Kiểm tra xem có phải là Giảng viên không
           isInstructor = user.id === course.instructorId && hasLessonPermission;
 
-          // 2. Kiểm tra quyền sở hữu khóa học thông qua backend (gọi thử bài học đầu tiên để check cờ isLocked)
-          if (lessons.length > 0) {
-            const firstLessonRes = await fetch(`${backendUrl}/lessons/${lessons[0].id}`, {
+// 2. Gọi API check-enrollment để kiểm tra chính xác quyền sở hữu từ Database
+          try {
+            const enrollRes = await fetch(`${backendUrl}/courses/${course.id}/check-enrollment`, {
               headers: { 'Authorization': `Bearer ${token}` },
               cache: 'no-store'
             });
-            
-            if (firstLessonRes.ok) {
-              const firstLessonData = await firstLessonRes.json();
-              // Học viên "Đã sở hữu" nếu họ là Giảng viên, HOẶC bài học từ backend không bị khóa
-              isEnrolled = isInstructor || !firstLessonData.isLocked;
+
+            if (enrollRes.ok) {
+              const enrollData = await enrollRes.json();
+              // Gán trực tiếp giá trị trả về từ DB (Kể cả Giảng viên cũng cần phải enroll)
+              isEnrolled = enrollData.isEnrolled;
             } else {
-              isEnrolled = isInstructor;
+              isEnrolled = false;
             }
-          } else {
-            // Nếu khóa học chưa có bài học nào, mặc định dựa vào trạng thái Giảng viên hoặc cho phép xem trước nút Enroll
-            isEnrolled = isInstructor;
+          } catch (error) {
+            console.error("Lỗi khi kiểm tra quyền sở hữu khóa học:", error);
+            isEnrolled = false;
           }
         }
       } catch (e) {
@@ -319,7 +320,7 @@ const thumbnailSignedUrl = await getSignedMediaUrl(course.thumbnailUrl, token);
                     <PaymentButton courseId={course.id} amount={course.price} />
                   ) : (
                     // Nếu MIỄN PHÍ (giá = 0) và CHƯA ENROLL
-                    <EnrollButton courseId={course.id} isLoggedIn={isLoggedIn} isEnrolled={isEnrolled} />
+                    <EnrollFreeButton courseId={course.id} />
                   )}
                 </div>
               </div>
