@@ -97,4 +97,49 @@ export class SupabaseCourseRepository implements ICourseRepository {
   async save(course: Course): Promise<Course> {
     return this.update(course);
   }
+
+  async enrollUser(courseId: string, userId: string): Promise<void> {
+    const { error } = await this.client
+      .from('enrollments')
+      .insert({ course_id: courseId, user_id: userId });
+
+    if (error) {
+      // Mã lỗi 23505 là Unique Violation (Người dùng đã đăng ký khóa này rồi)
+      if (error.code === '23505') return; 
+      throw error;
+    }
+  }
+
+  async checkEnrollment(courseId: string, userId: string): Promise<boolean> {
+    const supabase = (this as any).adminClient || this.client;
+    const { data, error } = await supabase
+      .from('enrollments')
+      .select('id')
+      .eq('course_id', courseId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) return false;
+    return !!data;
+  }
+
+  async getEnrolledCourses(userId: string): Promise<Course[]> {
+    // Dùng adminClient để vượt qua RLS
+    const supabase = (this as any).adminClient || this.client;
+    
+    // JOIN bảng enrollments với bảng courses
+    const { data, error } = await supabase
+      .from('enrollments')
+      .select('courses(*)')
+      .eq('user_id', userId);
+
+    if (error) throw error;
+    if (!data) return [];
+    
+    // Bóc tách dữ liệu và map sang dạng Course Model
+    return data
+      .map((row: any) => row.courses)
+      .filter((course: any) => course !== null)
+      .map((course: any) => this.mapToCourse(course));
+  }
 }
