@@ -28,7 +28,7 @@ async function getCourses(token: string | undefined): Promise<Course[]> {
     const coursesWithSignedUrls = await Promise.all(
       courses.map(async (course) => ({
         ...course,
-        thumbnailUrl: course.thumbnailUrl ? await getSignedMediaUrl(course.thumbnailUrl) : course.thumbnailUrl
+        thumbnailUrl: course.thumbnailUrl ? await getSignedMediaUrl(course.thumbnailUrl, token) : course.thumbnailUrl
       }))
     );
     
@@ -38,33 +38,79 @@ async function getCourses(token: string | undefined): Promise<Course[]> {
   }
 }
 
-async function getMyCourses(token: string | undefined): Promise<EnrolledCourse[]> {
-  if (!token) return [];
+// Đổi kiểu trả về để chứa cả tổng số khóa học thực tế
+async function getMyCoursesData(token: string | undefined): Promise<{ total: number, courses: EnrolledCourse[] }> {
+  if (!token) return { total: 0, courses: [] };
   try {
     const backendUrl = process.env.BACKEND_URL;
-    if (!backendUrl) return [];
+    if (!backendUrl) return { total: 0, courses: [] };
 
-    const res = await fetch(`${backendUrl}/user-progress/my-courses`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
+    const coursesRes = await fetch(`${backendUrl}/courses/enrolled/me`, {
+      headers: { 'Authorization': `Bearer ${token}` },
       cache: "no-store",
     });
 
-    if (!res.ok) return [];
-    const courses: EnrolledCourse[] = await res.json();
+    if (!coursesRes.ok) return { total: 0, courses: [] };
+    const coursesRaw = await coursesRes.json();
     
-    // Resolve signed URLs for all thumbnails
-    const coursesWithSignedUrls = await Promise.all(
-      courses.map(async (course) => ({
+    // Lấy tổng số lượng khóa học thực tế ĐÃ SỞ HỮU
+    const total = coursesRaw.length;
+    
+    // Cắt 3 khóa học để tối ưu hiển thị trang chủ
+    const recentCourses = coursesRaw.slice(0, 3);
+    const enrolledCourses: EnrolledCourse[] = [];
+
+    for (const course of recentCourses) {
+      let completedLessons = 0;
+      let totalLessons = 0;
+      let percentage = 0;
+
+      // 1. CHỦ ĐỘNG FETCH TỔNG SỐ BÀI HỌC CỦA KHÓA NÀY (Đảm bảo totalLessons luôn đúng kể cả khi chưa học)
+      const lessonsRes = await fetch(`${backendUrl}/lessons?courseId=${course.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        cache: 'no-store'
+      });
+      if (lessonsRes.ok) {
+        const lessons = await lessonsRes.json();
+        totalLessons = lessons.length || 0;
+      }
+
+      // 2. FETCH TIẾN ĐỘ HỌC (Số bài đã hoàn thành)
+      const progressRes = await fetch(`${backendUrl}/user-progress/course/${course.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        cache: 'no-store'
+      });
+
+      if (progressRes.ok) {
+        const progress = await progressRes.json();
+        if (progress && progress.completedLessons) {
+          completedLessons = progress.completedLessons;
+        }
+      }
+
+      // 3. TÍNH TOÁN PERCENTAGE CHÍNH XÁC
+      if (totalLessons > 0) {
+        percentage = Math.round((completedLessons / totalLessons) * 100);
+      }
+
+      const thumbnailUrl = course.thumbnailUrl 
+        ? await getSignedMediaUrl(course.thumbnailUrl, token) 
+        : course.thumbnailUrl;
+
+      enrolledCourses.push({
         ...course,
-        thumbnailUrl: course.thumbnailUrl ? await getSignedMediaUrl(course.thumbnailUrl) : course.thumbnailUrl
-      }))
-    );
+        thumbnailUrl,
+        completedLessons,
+        totalLessons,
+        percentage,
+        lastActivityAt: null,
+      });
+    }
     
-    return coursesWithSignedUrls;
-  } catch {
-    return [];
+    return { total, courses: enrolledCourses };
+  } catch (error) {
+    console.error("Lỗi khi fetch Khóa học của tôi tại trang chủ:", error);
+    return { total: 0, courses: [] };
   }
 }
 
@@ -93,14 +139,15 @@ export default async function DashboardPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get("olp_session")?.value;
 
-  const [user, courses, myCourses] = await Promise.all([
+  const [user, courses, myCoursesData] = await Promise.all([
     getCurrentUser(token),
     getCourses(token),
-    getMyCourses(token)
+    getMyCoursesData(token) // Đổi tên biến nhận dữ liệu mới
   ]);
 
+  const { total: enrolledTotal, courses: myCourses } = myCoursesData;
+
   if (!user) {
-    // Fallback if token is somehow invalid but present
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
         <p className="text-red-500 mb-4 font-semibold">Không thể xác thực thông tin người dùng.</p>
@@ -124,7 +171,7 @@ export default async function DashboardPage() {
           }}
         />
         
-        <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+        <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
               <span className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-indigo-200/60 bg-indigo-50 px-3 py-1 text-xs font-semibold tracking-wide text-indigo-800 dark:border-indigo-500/20 dark:bg-indigo-950/40 dark:text-indigo-200">
@@ -248,8 +295,8 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      {/* Section: Khóa học của tôi đang tham gia */}
-      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 flex-1">
+      {/* Section: Khóa học của tôi đang tham gia*/}
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 flex-1 w-full">
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-6 gap-2">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
@@ -257,10 +304,10 @@ export default async function DashboardPage() {
               Khóa học của bạn
             </h2>
             <p className="text-xs sm:text-sm text-zinc-400 dark:text-zinc-500">
-              {myCourses.length === 0 ? "Bạn chưa đăng ký khóa học nào." : `Bạn đang tham gia ${myCourses.length} khóa học`}
+              {enrolledTotal === 0 ? "Bạn chưa đăng ký khóa học nào." : `Bạn đang tham gia ${enrolledTotal} khóa học`}
             </p>
           </div>
-          {myCourses.length > 0 && (
+          {enrolledTotal > 0 && (
             <Link 
               href="/my-courses" 
               className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
@@ -270,7 +317,7 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {myCourses.length === 0 ? (
+        {enrolledTotal === 0 ? (
           <div className="bg-white dark:bg-zinc-900/50 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-12 text-center max-w-2xl mx-auto">
             <div className="w-16 h-16 rounded-2xl bg-indigo-50 px-4 py-4 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-4">
               <GraduationCap size={32} />
@@ -287,8 +334,8 @@ export default async function DashboardPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {myCourses.slice(0, 3).map((course) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {myCourses.map((course) => (
               <MyCourseCard key={course.id} course={course} />
             ))}
           </div>
@@ -296,7 +343,7 @@ export default async function DashboardPage() {
       </section>
 
       {/* Section: Tất cả khóa học nổi bật khác */}
-      <div className="border-t border-zinc-200/50 dark:border-zinc-850 py-4 bg-zinc-50/50 dark:bg-zinc-950/20">
+      <div className="border-t border-zinc-200/50 dark:border-zinc-800/50 py-12 bg-zinc-50/50 dark:bg-zinc-950/20">
         <CourseCatalog initialCourses={courses} />
       </div>
     </div>
