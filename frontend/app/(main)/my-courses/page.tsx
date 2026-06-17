@@ -23,25 +23,70 @@ async function fetchMyCourses(): Promise<EnrolledCourse[]> {
     
     if (!token) return [];
 
-    const res = await fetch(`${backendUrl}/user-progress/my-courses`, {
+    // 1. Gọi API lấy danh sách khóa học
+    const res = await fetch(`${backendUrl}/courses/enrolled/me`, {
       headers: { 'Authorization': `Bearer ${token}` },
       cache: 'no-store'
     });
 
     if (!res.ok) return [];
     
-    const courses: EnrolledCourse[] = await res.json();
-    
-    // Resolve signed URLs for all thumbnails
-    const coursesWithSignedUrls = await Promise.all(
-      courses.map(async (course) => ({
+    const courses = await res.json();
+    const enrolledCourses: EnrolledCourse[] = [];
+
+    // 2. Vòng lặp xử lý dữ liệu động cho từng khóa học
+    for (const course of courses) {
+      let completedLessons = 0;
+      let totalLessons = 0;
+      let percentage = 0;
+
+      // [FIX TẠI ĐÂY] 2.1: Chủ động fetch TỔNG SỐ BÀI HỌC thực tế hiện có (Không xài data cũ)
+      const lessonsRes = await fetch(`${backendUrl}/lessons?courseId=${course.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        cache: 'no-store'
+      });
+      if (lessonsRes.ok) {
+        const lessons = await lessonsRes.json();
+        totalLessons = lessons.length || 0;
+      }
+
+      // 2.2: Chỉ lấy số bài ĐÃ HOÀN THÀNH từ API progress
+      const progressRes = await fetch(`${backendUrl}/user-progress/course/${course.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        cache: 'no-store'
+      });
+
+      if (progressRes.ok) {
+        const progress = await progressRes.json();
+        if (progress && progress.completedLessons) {
+          completedLessons = progress.completedLessons;
+        }
+      }
+
+      if (totalLessons > 0) {
+        percentage = Math.round((completedLessons / totalLessons) * 100);
+        // Đề phòng trường hợp Admin xóa bớt bài học khiến completed > total
+        if (percentage > 100) percentage = 100;
+      }
+
+      // Xử lý link ảnh
+      const thumbnailUrl = course.thumbnailUrl 
+        ? await getSignedMediaUrl(course.thumbnailUrl, token) 
+        : course.thumbnailUrl;
+
+      enrolledCourses.push({
         ...course,
-        thumbnailUrl: course.thumbnailUrl ? await getSignedMediaUrl(course.thumbnailUrl) : course.thumbnailUrl
-      }))
-    );
+        thumbnailUrl,
+        completedLessons,
+        totalLessons,
+        percentage,
+        lastActivityAt: null,
+      });
+    }
     
-    return coursesWithSignedUrls;
-  } catch {
+    return enrolledCourses;
+  } catch (error) {
+    console.error("Lỗi khi tải Khóa học của tôi:", error);
     return [];
   }
 }

@@ -24,11 +24,15 @@ export const getMediaUrl = (pathOrUrl: string | null | undefined) => {
   return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/course-media/${pathOrUrl}`;
 };
 
-export const getSignedMediaUrl = async (pathOrUrl: string | null | undefined) => {
+export const getSignedMediaUrl = async (pathOrUrl: string | null | undefined, sessionToken?: string) => {
   if (!pathOrUrl) return '';
   if (pathOrUrl.startsWith('http')) return pathOrUrl;
   
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  // Dùng client đã xác thực nếu có token, ngược lại dùng client ẩn danh
+  const supabase = sessionToken 
+    ? getSupabaseClient(sessionToken)
+    : createClient(supabaseUrl, supabaseKey);
+
   const { data, error } = await supabase.storage.from('course-media').createSignedUrl(pathOrUrl, 86400); // 24 hours
   
   if (error || !data?.signedUrl) {
@@ -36,8 +40,6 @@ export const getSignedMediaUrl = async (pathOrUrl: string | null | undefined) =>
     return '';
   }
   
-  // If the signed URL was generated on the server using the internal URL,
-  // we must rewrite it to the public URL so the browser can reach it.
   if (isServer && process.env.SUPABASE_INTERNAL_URL) {
     return data.signedUrl.replace(
       process.env.SUPABASE_INTERNAL_URL,
