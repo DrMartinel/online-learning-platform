@@ -4,8 +4,11 @@ import { LessonController } from './controllers/lesson.controller';
 import { LessonAdminController } from './controllers/admin/lesson.admin.controller';
 import { SupabaseLessonRepository } from './repositories/supabase-lesson.repository';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { CourseModule } from '../course/course.module'; 
+import { DatabaseModule } from '../database/database.module'; 
 
 @Module({
+  imports: [CourseModule, DatabaseModule],
   controllers: [LessonController, LessonAdminController],
   providers: [
     LessonService,
@@ -17,5 +20,6 @@ import { SupabaseClient } from '@supabase/supabase-js';
       inject: [SupabaseClient],
     },
   ],
+  exports: [LessonService],
 })
 export class LessonModule {}

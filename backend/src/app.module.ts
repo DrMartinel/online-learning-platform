@@ -7,6 +7,11 @@ import { LessonModule } from './lesson/lesson.module';
 import { UserModule } from './user/user.module';
 import { IamModule } from './iam/iam.module';
 import { SystemAnalyticsModule } from './system-analytics/system-analytics.module';
+import { RagModule } from './rag/rag.module';
+import { QuestionModule } from './question/question.module';
+import { ExamModule } from './exam/exam.module';
+import { ExamSessionModule } from './exam-session/exam-session.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -21,6 +26,12 @@ import { SystemAnalyticsModule } from './system-analytics/system-analytics.modul
     UserModule,
     IamModule,
     SystemAnalyticsModule,
+    RagModule,
+    QuestionModule,
+    ExamModule,
+    ExamSessionModule,
+    PaymentModule,
   ],
 })
 export class AppModule {}
+

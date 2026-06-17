@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 
+export const dynamic = 'force-dynamic';
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -32,9 +34,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-100 transition-colors duration-300">
         <ThemeProvider>
-          {children}
-        </ThemeProvider>
-      </body>
+          <main className="flex-1">{children}</main>
+        </ThemeProvider >
+      </body >
     </html>
   );
 }
