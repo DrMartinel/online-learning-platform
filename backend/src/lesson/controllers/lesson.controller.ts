@@ -3,6 +3,7 @@ import { LessonService } from '../services/lesson.service';
 import { CreateLessonDTO, UpdateLessonDTO, LessonResponseDTO } from '../dto/lesson.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { Auth } from '../../iam/decorators/auth.decorator';
+import { CurrentUser } from '../../iam/decorators/current-user.decorator';
 
 @ApiTags('lessons')
 @Controller('lessons')
@@ -31,11 +32,15 @@ export class LessonController {
   }
 
   @Get(':id')
-  @Auth('action:lesson:read')
-  @ApiOperation({ summary: 'Get lesson by ID' })
+  @Auth('action:lesson:read') // Bắt buộc user phải có token
+  @ApiOperation({ summary: 'Get lesson by ID (With Paywall)' })
   @ApiResponse({ status: 200, description: 'The lesson', type: LessonResponseDTO })
-  async getLesson(@Param('id') id: string): Promise<LessonResponseDTO> {
-    return this.lessonService.findById(id);
+  async getLesson(
+    @CurrentUser() user: any, // Lấy thông tin user từ JWT Token
+    @Param('id') id: string
+  ): Promise<LessonResponseDTO> {
+    // Gọi hàm mới getLessonDetail và truyền cả user.id vào
+    return this.lessonService.getLessonDetail(id, user.id);
   }
 
   @Put(':id')
