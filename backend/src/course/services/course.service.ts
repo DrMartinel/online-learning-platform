@@ -27,6 +27,7 @@ export class CourseService {
       dto.thumbnailUrl || null,
       false,
       new Date(),
+      dto.price ?? 0, // <--- BỔ SUNG: Truyền giá tiền vào khởi tạo (mặc định 0đ)
     );
     await this.courseRepo.create(course);
     return this.mapToResponse(course);
@@ -59,6 +60,7 @@ export class CourseService {
     if (dto.title) course.title = dto.title;
     if (dto.description !== undefined) course.description = dto.description || null;
     if (dto.thumbnailUrl !== undefined) course.thumbnailUrl = dto.thumbnailUrl || null;
+    if (dto.price !== undefined) course.price = dto.price; // <--- BỔ SUNG: Cho phép update giá
     
     if (dto.isPublished !== undefined) {
       if (dto.isPublished && !course.isPublished) {
@@ -93,6 +95,7 @@ export class CourseService {
       dto.thumbnailUrl || null,
       false,
       new Date(),
+      dto.price ?? 0, // <--- BỔ SUNG
     );
     await this.courseRepo.create(course);
     return this.mapToResponse(course);
@@ -107,6 +110,7 @@ export class CourseService {
     if (dto.description !== undefined) course.description = dto.description || null;
     if (dto.thumbnailUrl !== undefined) course.thumbnailUrl = dto.thumbnailUrl || null;
     if (dto.instructorId) course.instructorId = dto.instructorId;
+    if (dto.price !== undefined) course.price = dto.price; // <--- BỔ SUNG
     
     if (dto.isPublished !== undefined) {
       if (dto.isPublished && !course.isPublished) {
@@ -127,6 +131,31 @@ export class CourseService {
     await this.courseRepo.delete(id);
   }
 
+  async enrollFreeCourse(courseId: string, userId: string): Promise<void> {
+    // 1. Kiểm tra khóa học có tồn tại không
+    const course = await this.courseRepo.findById(courseId);
+    if (!course) {
+      throw new CourseError(`Course not found: ${courseId}`);
+    }
+
+    // 2. BẢO MẬT: Nếu khóa học có giá > 0, từ chối việc đăng ký miễn phí
+    if (course.price > 0) {
+      throw new CourseError('Khóa học này yêu cầu thanh toán. Không thể đăng ký miễn phí.');
+    }
+
+    // 3. Tiến hành ghi nhận vào bảng enrollments
+    await this.courseRepo.enrollUser(courseId, userId);
+  }
+
+  async checkEnrollment(courseId: string, userId: string): Promise<boolean> {
+    return this.courseRepo.checkEnrollment(courseId, userId);
+  }
+
+  async getEnrolledCourses(userId: string): Promise<CourseResponseDTO[]> {
+    const courses = await this.courseRepo.getEnrolledCourses(userId);
+    return courses.map(course => this.mapToResponse(course));
+  }
+
   private mapToResponse(course: Course): CourseResponseDTO {
     return {
       id: course.id,
@@ -136,6 +165,7 @@ export class CourseService {
       thumbnailUrl: course.thumbnailUrl || undefined,
       isPublished: course.isPublished,
       createdAt: course.createdAt,
+      price: course.price, // <--- BỔ SUNG DÒNG NÀY ĐỂ FIX LỖI
     };
   }
 }
