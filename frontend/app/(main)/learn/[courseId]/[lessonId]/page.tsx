@@ -6,14 +6,17 @@ import {
   FileText,
   BookOpen,
   StickyNote,
+  Lock,
 } from "lucide-react";
 import Link from "next/link";
-import { getMediaUrl } from "@/lib/supabase";
+import { getSignedMediaUrl } from "@/lib/supabase";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import LearnShell from "@/components/learn/LearnShell";
 import VideoPlayer from "@/components/learn/VideoPlayer";
 import CompleteButton from "@/components/learn/CompleteButton";
+import LessonActionMenu from "@/components/admin/LessonActionMenu";
+import ChatWidget from "@/components/rag/ChatWidget";
 import type { Lesson } from "@/components/courses/LessonList";
 import type { Course } from "@/components/courses/CourseCard";
 
@@ -99,6 +102,21 @@ async function getCourseProgress(
   }
 }
 
+async function getUser(bearerToken: string) {
+  const backendUrl = process.env.BACKEND_URL;
+  if (!backendUrl) return null;
+  try {
+    const res = await fetch(`${backendUrl}/users/me`, {
+      headers: { authorization: `Bearer ${bearerToken}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
 // ── Metadata ───────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -126,17 +144,21 @@ export default async function LearnPage({ params }: PageProps) {
     redirect(`/login?next=/learn/${courseId}/${lessonId}`);
   }
 
-  // Parallel fetch: course metadata, all lessons, active lesson, progress
-  const [course, lessons, lesson, progressData] = await Promise.all([
+  // Parallel fetch: course metadata, all lessons, active lesson, progress, user
+  const [course, lessons, lesson, progressData, user] = await Promise.all([
     getCourse(courseId, bearerToken),
     getLessons(courseId, bearerToken),
     getLesson(lessonId, bearerToken),
     getCourseProgress(courseId, bearerToken),
+    getUser(bearerToken),
   ]);
 
   if (!course || !lesson) {
     notFound();
   }
+
+  const hasLessonPermission = user?.permissions?.includes('action:lesson:create');
+  const isInstructor = user?.id === course.instructorId && hasLessonPermission;
 
   const sortedLessons = [...lessons].sort((a, b) => a.orderIndex - b.orderIndex);
 
@@ -156,6 +178,10 @@ export default async function LearnPage({ params }: PageProps) {
       ? sortedLessons[currentIndex + 1]
       : null;
 
+const videoSignedUrl = await getSignedMediaUrl(lesson.videoUrl, bearerToken);
+
+  const isLocked = (lesson as any).isLocked === true;
+
   return (
     <LearnShell
       courseId={courseId}
@@ -167,15 +193,20 @@ export default async function LearnPage({ params }: PageProps) {
     >
       <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-5">
         {/* Title bar */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs text-primary font-semibold mb-0.5 flex items-center gap-1">
               <BookOpen size={12} />
               {course.title}
             </p>
-            <h2 className="text-lg md:text-xl font-bold text-gray-800 dark:text-white truncate">
-              {lesson.title}
-            </h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg md:text-xl font-bold text-gray-800 dark:text-white truncate">
+                {lesson.title}
+              </h2>
+              {isInstructor && (
+                <LessonActionMenu lessonId={lesson.id} />
+              )}
+            </div>
           </div>
 
           {/* Prev / Next navigation */}
@@ -211,8 +242,24 @@ export default async function LearnPage({ params }: PageProps) {
         </div>
 
         {/* Video player or document icon */}
-        {lesson.videoUrl ? (
-          <VideoPlayer src={getMediaUrl(lesson.videoUrl)} title={lesson.title} />
+        {isLocked ? (
+          <div className="aspect-video rounded-2xl bg-gray-900 flex flex-col items-center justify-center border border-gray-800 text-white p-6 text-center shadow-lg">
+            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-4">
+              <Lock size={32} className="text-white" />
+            </div>
+            <h3 className="text-xl md:text-2xl font-bold mb-2">Nội dung đã bị khóa</h3>
+            <p className="text-gray-400 mb-6 max-w-md text-sm md:text-base">
+              Khóa học này yêu cầu trả phí. Bạn cần thanh toán để sở hữu và xem toàn bộ nội dung bài học.
+            </p>
+            <Link 
+              href={`/courses/${courseId}`}
+              className="bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-primary/25 shadow-lg"
+            >
+              Đi đến trang thanh toán
+            </Link>
+          </div>
+        ) : videoSignedUrl ? (
+          <VideoPlayer src={videoSignedUrl} title={lesson.title} />
         ) : (
           <div className="aspect-video rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center border border-gray-200 dark:border-gray-700">
             <div className="text-center">
@@ -246,43 +293,54 @@ export default async function LearnPage({ params }: PageProps) {
             ))}
           </div>
 
-          {/* Overview pane — lesson description / content */}
-          <div className="p-5 space-y-4">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-              {lesson.title}
-            </h3>
-
-            {lesson.content ? (
-              <div className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
-                {lesson.content}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-400 dark:text-gray-500 italic">
-                Bài học này chưa có mô tả.
-              </p>
-            )}
-
-            {/* Complete button */}
-            <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between flex-wrap gap-3">
-              <CompleteButton
-                lessonId={lessonId}
-                courseId={courseId}
-                initialCompleted={isCurrentCompleted}
-              />
-
-              {nextLesson && (
-                <Link
-                  href={`/learn/${courseId}/${nextLesson.id}`}
-                  className="flex items-center gap-1.5 text-sm text-primary font-medium hover:underline"
-                >
-                  Bài tiếp theo
-                  <ChevronRight size={15} />
-                </Link>
-              )}
+        {/* Overview pane — lesson description / content */}
+          {isLocked ? (
+            <div className="p-8 md:p-12 text-center text-gray-500 dark:text-gray-400 flex flex-col items-center justify-center">
+              <Lock size={48} className="mb-4 text-gray-300 dark:text-gray-600" />
+              <p className="text-base font-medium">Nội dung chi tiết đã bị khóa.</p>
+              <p className="text-sm mt-1">Vui lòng quay lại trang tổng quan khóa học để đăng ký.</p>
             </div>
-          </div>
+          ) : (
+            <div className="p-5 space-y-4">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                {lesson.title}
+              </h3>
+
+              {lesson.content ? (
+                <div className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
+                  {lesson.content}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 dark:text-gray-500 italic">
+                  Bài học này chưa có mô tả.
+                </p>
+              )}
+
+              {/* Complete button */}
+              <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between flex-wrap gap-3">
+                <CompleteButton
+                  lessonId={lessonId}
+                  courseId={courseId}
+                  initialCompleted={isCurrentCompleted}
+                />
+
+                {nextLesson && (
+                  <Link
+                    href={`/learn/${courseId}/${nextLesson.id}`}
+                    className="flex items-center gap-1.5 text-sm text-primary font-medium hover:underline"
+                  >
+                    Bài tiếp theo
+                    <ChevronRight size={15} />
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
+      
+      {/* RAG Chat Widget */}
+      <ChatWidget courseId={course.id} courseName={course.title} />
     </LearnShell>
   );
 }

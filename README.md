@@ -2,12 +2,12 @@
 
 Full-stack learning platform with a **Next.js (App Router)** frontend, a **NestJS** backend, and **self-hosted Supabase** (Postgres, Auth, Kong, Studio, Analytics, and related services), orchestrated with **Docker Compose**.
 
-## Architecture
-
+## Architecture       
+       
 - **Frontend** (`frontend/`): Next.js 16. Route handlers under `app/api/` act as a thin BFF: they **proxy HTTP requests** to the backend service using `BACKEND_URL`. The frontend does **not** import the backend package as a library.
 - **Backend API** (`backend/`): A **NestJS** application structured using Feature-Based Modular Architecture (e.g., `auth`, `user`, `course`, `lesson`, `iam`, `system-analytics`). Each module is divided into layered directories (`controllers/`, `services/`, `repositories/`, `dto/`, and `test/`). Request and response shapes are defined with **Zod** using `nestjs-zod`, enabling seamless validation and OpenAPI/Swagger documentation generation. **Swagger UI** is available at `/docs` (e.g., port **3003** on the host when using Compose). Security is strictly enforced using a custom **IAM/RBAC module** with `@Auth()` decorators and URN-based permissions.
 - **Supabase stack**: Postgres, GoTrue (auth), Kong (API gateway), PostgREST, Realtime, Storage, Studio, Logflare Analytics, Vector, Edge Functions, Supavisor pooler, etc., defined in the Compose files below.
-
+          
 ```
 Browser → Next.js (e.g. /api/auth/signup) → Backend HTTP API → Supabase (Kong)
 ```
@@ -15,7 +15,7 @@ Browser → Next.js (e.g. /api/auth/signup) → Backend HTTP API → Supabase (K
 ## Quick Start
 
 Follow these steps to get the full stack running locally from scratch.
-
+         
 ### 1. Prerequisites
 
 - **Docker** and **Docker Compose** (v2+)
@@ -23,23 +23,23 @@ Follow these steps to get the full stack running locally from scratch.
 - **Git**
 
 ### 2. Clone the Repository
-
+       
 ```bash
 git clone https://github.com/DrMartinel/online-learning-platform.git
 cd online-learning-platform
 ```
-
+       
 ### 3. Configure Environment Variables
 
 ```bash
 cp .env.example .env
-```
+```       
 
 Generate the required secret keys:
-
+     
 ```bash
-sh ./utils/generate-keys.sh
-sh ./utils/add-new-auth-keys.sh
+sh ./utils/generate-keys.sh       
+sh ./utils/add-new-auth-keys.sh   
 ```
 
 Open `.env` and set `POSTGRES_PASSWORD` to a strong, unique password.
@@ -111,7 +111,7 @@ Run these from the project root using `pnpm`:
 | `pnpm run build`            | Build **production Docker images** via `docker compose -f docker-compose.yml build`.                           |
 | `pnpm run start`            | Run **production** stack in the background.                                                                    |
 | `pnpm run stop`             | Stop production stack.                                                                                         |
-
+-------------------------------
 ## Typical URLs and Ports
 
 Defaults depend on `.env` (for example `KONG_HTTP_PORT`). Commonly:
@@ -268,3 +268,7 @@ These metrics are visualized on the admin dashboard using interactive **Recharts
 ## Legacy Compose Note
 
 Older docs referred to `docker compose -f docker-compose.yml -f ./dev/docker-compose.dev.yml`. Dev overrides now live in **`docker-compose.dev.yml`** at the repo root; use `pnpm run dev` or `docker compose -f docker-compose.dev.yml up` instead.
+
+
+## Online Learning Platform
+
