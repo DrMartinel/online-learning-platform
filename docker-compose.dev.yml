@@ -304,6 +304,11 @@ services:
       - RAG_LLM_MODEL=${RAG_LLM_MODEL:-gemini-2.5-flash}
       - RAG_CHUNK_SIZE=${RAG_CHUNK_SIZE:-500}
       - RAG_CHUNK_OVERLAP=${RAG_CHUNK_OVERLAP:-50}
+      - VNP_TMN_CODE=${VNP_TMN_CODE}
+      - VNP_HASH_SECRET=${VNP_HASH_SECRET}
+      - VNP_URL=${VNP_URL}
+      - VNP_API_URL=${VNP_API_URL}
+      - VNP_RETURN_URL=${VNP_RETURN_URL}
     depends_on:
       - kong
       - db
