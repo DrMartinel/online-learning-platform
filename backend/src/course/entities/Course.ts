@@ -7,6 +7,7 @@ export class Course {
     public thumbnailUrl: string | null,
     public isPublished: boolean,
     public createdAt: Date,
+    public price: number, //
     public updatedAt?: Date
   ) {}
 
@@ -23,5 +24,12 @@ export class Course {
       throw new Error('Title cannot be empty');
     }
     this.title = title;
+  }
+
+  public updatePrice(price: number): void {
+    if (price < 0) {
+      throw new Error('Price cannot be negative');
+    }
+    this.price = price;
   }
 }
