@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { IUserProgressRepository } from '../repositories/IUserProgressRepository';
 import { CreateUserProgressDTO, UpdateUserProgressDTO, UserProgressResponseDTO, CourseProgressResponseDTO } from '../dto/user-progress.dto';
 
@@ -15,7 +15,6 @@ export class UserProgressService {
       courseId: dto.courseId,
       lessonId: dto.lessonId,
       isCompleted: false,
-      lastPosition: 0,
     });
     return progress as unknown as UserProgressResponseDTO;
   }
@@ -26,32 +25,39 @@ export class UserProgressService {
   }
 
   async getCourseProgress(userId: string, courseId: string): Promise<CourseProgressResponseDTO> {
-    const progressList = await this.progressRepo.findByCourse(userId, courseId);
-    
-    // Naive implementation assuming total lessons is known or passed, here we just return progress based on entries.
-    // In a real app we would query the course/lessons table for the true total.
-    const totalLessons = progressList.length; // Placeholder
-    const completedLessons = progressList.filter(p => p.isCompleted).length;
-    const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+    const [progressList, totalLessonsCount] = await Promise.all([
+      this.progressRepo.findByCourse(userId, courseId),
+      this.progressRepo.countCourseLessons(courseId),
+    ]);
+
+    const completedLessonsCount = progressList.filter(p => p.isCompleted).length;
+    const percentage = totalLessonsCount > 0
+      ? Math.round((completedLessonsCount / totalLessonsCount) * 100)
+      : 0;
+
+    const progress = progressList.map(p => ({
+      lessonId: p.lessonId,
+      completed: p.isCompleted,
+    }));
 
     return {
-      courseId,
-      totalLessons,
-      completedLessons,
-      progressPercentage,
+      completedLessonsCount,
+      totalLessonsCount,
+      percentage,
+      progress,
     };
   }
 
   async updateProgress(userId: string, lessonId: string, dto: UpdateUserProgressDTO): Promise<UserProgressResponseDTO> {
+    // Use upsert — create the record if it doesn't exist yet.
+    // We need the courseId for the upsert; fetch it from the existing record if present.
     const existing = await this.progressRepo.findByLesson(userId, lessonId);
-    if (!existing) throw new NotFoundException('Progress not found');
 
     const progress = await this.progressRepo.createOrUpdate({
       userId,
-      courseId: existing.courseId,
+      courseId: existing?.courseId,
       lessonId,
-      isCompleted: dto.isCompleted !== undefined ? dto.isCompleted : existing.isCompleted,
-      lastPosition: dto.lastPosition !== undefined ? dto.lastPosition : existing.lastPosition,
+      isCompleted: dto.isCompleted !== undefined ? dto.isCompleted : (existing?.isCompleted ?? false),
     });
     return progress as unknown as UserProgressResponseDTO;
   }

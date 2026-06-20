@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CheckCircle2, Loader2, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useLearnShell } from "@/components/learn/LearnShell";
 
 interface CompleteButtonProps {
   lessonId: string;
@@ -18,12 +19,13 @@ export default function CompleteButton({
   onCompleted,
 }: CompleteButtonProps) {
   const router = useRouter();
+  const { markLessonCompleted } = useLearnShell();
   const [done, setDone] = useState(initialCompleted);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const markComplete = async () => {
-    if (done) return;
+    if (done || loading) return;
     setLoading(true);
     setError("");
 
@@ -38,7 +40,10 @@ export default function CompleteButton({
 
       if (res.ok) {
         setDone(true);
+        // Immediately update the sidebar checkmark via context
+        markLessonCompleted(lessonId);
         onCompleted?.();
+        // Background refresh to sync server state (progress bar etc.)
         router.refresh();
       } else {
         const data = await res.json().catch(() => ({}));
@@ -59,7 +64,9 @@ export default function CompleteButton({
         className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
           done
             ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 cursor-default"
-            : "bg-primary hover:bg-primary-dark text-white shadow-sm shadow-primary/25 disabled:opacity-60"
+            : loading
+            ? "bg-primary/70 text-white cursor-not-allowed"
+            : "bg-primary hover:bg-primary/90 text-white shadow-sm shadow-primary/25 cursor-pointer"
         }`}
       >
         {loading ? (

@@ -813,32 +813,20 @@ export default function PublicExamViewer() {
                             if (firstVar?.options && firstVar.options.length > 0) {
                               return (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pl-2">
-                                  {firstVar.options.map((opt, oIdx) => {
-                                    const isDraftCorrect = q.type === 'single_choice'
-                                      ? currentAnswer?.index === oIdx
-                                      : currentAnswer?.indices?.includes(oIdx);
-
-                                    return (
+                                  {firstVar.options.map((opt, oIdx) => (
+                                    <div 
+                                      key={oIdx} 
+                                      className="flex items-start gap-2 text-sm p-3 rounded-2xl border transition-all bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 text-gray-700 dark:text-gray-300"
+                                    >
+                                      <span className="font-bold shrink-0 text-gray-900 dark:text-white">
+                                        {opt.label}.
+                                      </span>
                                       <div 
-                                        key={oIdx} 
-                                        className={`flex items-start gap-2 text-sm p-3 rounded-2xl border transition-all ${
-                                          isDraftCorrect 
-                                            ? 'bg-emerald-500/5 border-emerald-500/30 text-emerald-700 dark:text-emerald-400' 
-                                            : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 text-gray-700 dark:text-gray-300'
-                                        }`}
-                                      >
-                                        <span className={`font-bold shrink-0 ${
-                                          isDraftCorrect ? 'text-emerald-500 underline' : 'text-gray-900 dark:text-white'
-                                        }`}>
-                                          {opt.label}.
-                                        </span>
-                                        <div 
-                                          className="render-math font-medium flex-1 text-left"
-                                          dangerouslySetInnerHTML={{ __html: renderLaTeX(opt.text) }}
-                                        />
-                                      </div>
-                                    );
-                                  })}
+                                        className="render-math font-medium flex-1 text-left"
+                                        dangerouslySetInnerHTML={{ __html: renderLaTeX(opt.text) }}
+                                      />
+                                    </div>
+                                  ))}
                                 </div>
                               );
                             }
@@ -1128,14 +1116,47 @@ export default function PublicExamViewer() {
                               </div>
                             );
                           } else {
+                            // Show full option list with correct answers highlighted
+                            const correctIndices: number[] = activeSolutionQuestion.type === 'single_choice'
+                              ? (var0.correctAnswer?.index !== undefined ? [var0.correctAnswer.index] : [])
+                              : (var0.correctAnswer?.indices || []);
                             return (
-                              <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                                <span>Đáp án đúng:</span>
-                                <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-extrabold uppercase border border-emerald-500/20">
-                                  {activeSolutionQuestion.type === 'single_choice'
-                                    ? var0.options?.[var0.correctAnswer.index]?.label
-                                    : var0.correctAnswer.indices?.map((idx: number) => var0.options?.[idx]?.label).join(', ')}
+                              <div className="space-y-2.5">
+                                <span className="text-sm font-bold text-gray-800 dark:text-gray-200 block">
+                                  {activeSolutionQuestion.type === 'single_choice' ? 'Đáp án đúng:' : 'Các đáp án đúng:'}
                                 </span>
+                                <div className="grid grid-cols-1 gap-2 pl-0">
+                                  {var0.options?.map((opt, oIdx) => {
+                                    const isCorrect = correctIndices.includes(oIdx);
+                                    return (
+                                      <div
+                                        key={oIdx}
+                                        className={`flex items-start gap-2.5 text-sm p-3 rounded-2xl border transition-all ${
+                                          isCorrect
+                                            ? 'bg-emerald-500/8 border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
+                                            : 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400'
+                                        }`}
+                                      >
+                                        <span className={`font-extrabold shrink-0 text-xs mt-0.5 w-5 h-5 rounded-full flex items-center justify-center ${
+                                          isCorrect
+                                            ? 'bg-emerald-500 text-white'
+                                            : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                                        }`}>
+                                          {opt.label}
+                                        </span>
+                                        <div
+                                          className="render-math font-medium flex-1 text-left leading-relaxed"
+                                          dangerouslySetInnerHTML={{ __html: renderLaTeX(opt.text) }}
+                                        />
+                                        {isCorrect && (
+                                          <span className="shrink-0 text-emerald-500">
+                                            <Check size={16} strokeWidth={2.5} />
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
                               </div>
                             );
                           }

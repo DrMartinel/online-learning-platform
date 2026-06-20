@@ -15,19 +15,23 @@ export class UpdateUserProgressDTO extends createZodDto(updateUserProgressSchema
 
 export const userProgressResponseSchema = z.object({
   userId: z.string().uuid(),
-  courseId: z.string().uuid(),
+  courseId: z.string().uuid().optional(),
   lessonId: z.string().uuid(),
   isCompleted: z.boolean(),
-  lastPosition: z.number().int().min(0),
-  completedAt: z.date().optional(),
-  updatedAt: z.date(),
+  completedAt: z.date().optional().nullable(),
 });
 export class UserProgressResponseDTO extends createZodDto(userProgressResponseSchema) {}
 
+// Matches the CourseProgressResponse interface expected by the frontend
 export const courseProgressResponseSchema = z.object({
-  courseId: z.string().uuid(),
-  totalLessons: z.number().int().min(0),
-  completedLessons: z.number().int().min(0),
-  progressPercentage: z.number().min(0).max(100),
+  completedLessonsCount: z.number().int().min(0),
+  totalLessonsCount: z.number().int().min(0),
+  percentage: z.number().min(0).max(100),
+  progress: z.array(
+    z.object({
+      lessonId: z.string().uuid(),
+      completed: z.boolean(),
+    }),
+  ),
 });
 export class CourseProgressResponseDTO extends createZodDto(courseProgressResponseSchema) {}

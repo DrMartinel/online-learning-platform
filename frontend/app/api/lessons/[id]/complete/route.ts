@@ -6,7 +6,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const { completed, courseId } = await request.json();
+    const { completed } = await request.json();
 
     const token = request.cookies.get('olp_session')?.value;
     if (!token) {
@@ -16,7 +16,8 @@ export async function POST(
     const backendUrl = process.env.BACKEND_URL;
     if (!backendUrl) throw new Error('Missing BACKEND_URL');
 
-    let res = await fetch(`${backendUrl}/user-progress/lesson/${id}`, {
+    // Single PUT call — the backend now upserts (creates or updates) the progress row
+    const res = await fetch(`${backendUrl}/user-progress/lesson/${id}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -24,30 +25,13 @@ export async function POST(
       },
       body: JSON.stringify({ isCompleted: completed }),
     });
-    
-    if (res.status === 404 && courseId) {
-      await fetch(`${backendUrl}/user-progress`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ lessonId: id, courseId }),
-      });
-      
-      res = await fetch(`${backendUrl}/user-progress/lesson/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isCompleted: completed }),
-      });
-    }
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
-      return NextResponse.json({ error: errorData.message || 'Failed to update progress' }, { status: res.status });
+      return NextResponse.json(
+        { error: errorData.message || 'Failed to update progress' },
+        { status: res.status }
+      );
     }
 
     return NextResponse.json({ success: true });

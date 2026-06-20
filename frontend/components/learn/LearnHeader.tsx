@@ -1,34 +1,46 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, X, PlayCircle, ArrowLeft } from "lucide-react";
+import { Menu, X, ArrowLeft, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 interface LearnHeaderProps {
   courseId: string;
   courseTitle: string;
   progressPct: number;
-  sidebarOpen: boolean;
-  onToggleSidebar: () => void;
+  sidebarMobileOpen: boolean;
+  sidebarDesktopVisible: boolean;
+  onToggleMobileSidebar: () => void;
+  onToggleDesktopSidebar: () => void;
 }
 
 export default function LearnHeader({
   courseId,
   courseTitle,
   progressPct,
-  sidebarOpen,
-  onToggleSidebar,
+  sidebarMobileOpen,
+  sidebarDesktopVisible,
+  onToggleMobileSidebar,
+  onToggleDesktopSidebar,
 }: LearnHeaderProps) {
   return (
     <header className="h-14 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center px-4 gap-3 shrink-0 z-30">
       {/* Mobile sidebar toggle */}
       <button
-        onClick={onToggleSidebar}
+        onClick={onToggleMobileSidebar}
         className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
+        title="Nội dung khóa học"
       >
-        {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        {sidebarMobileOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
-
+      {/* Desktop sidebar toggle */}
+      <button
+        onClick={onToggleDesktopSidebar}
+        className="hidden lg:flex p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors"
+        title={sidebarDesktopVisible ? "Ẩn nội dung khóa học" : "Hiện nội dung khóa học"}
+      >
+        {sidebarDesktopVisible ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
+      </button>
 
       {/* Course title */}
       <h1 className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate hidden sm:block max-w-[280px]">

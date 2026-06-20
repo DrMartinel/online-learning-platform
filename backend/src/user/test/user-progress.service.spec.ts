@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserProgressService } from '../services/user-progress.service';
-import { NotFoundException } from '@nestjs/common';
 
 describe('UserProgressService', () => {
   let service: UserProgressService;
@@ -16,6 +15,7 @@ describe('UserProgressService', () => {
             createOrUpdate: jest.fn(),
             findByLesson: jest.fn(),
             findByCourse: jest.fn(),
+            countCourseLessons: jest.fn(),
           },
         },
       ],
@@ -45,38 +45,39 @@ describe('UserProgressService', () => {
 
   describe('getCourseProgress', () => {
     it('should calculate progress correctly', async () => {
-      repo.findByCourse.mockResolvedValue([{ isCompleted: true }, { isCompleted: false }]);
+      repo.findByCourse.mockResolvedValue([
+        { isCompleted: true, lessonId: 'l1' },
+        { isCompleted: false, lessonId: 'l2' },
+      ]);
+      repo.countCourseLessons.mockResolvedValue(3);
       const result = await service.getCourseProgress('u1', 'c1');
-      expect(result.totalLessons).toBe(2);
-      expect(result.completedLessons).toBe(1);
-      expect(result.progressPercentage).toBe(50);
+      expect(result.totalLessonsCount).toBe(3);
+      expect(result.completedLessonsCount).toBe(1);
+      expect(result.percentage).toBe(33);
+      expect(result.progress).toHaveLength(2);
     });
 
-    it('should calculate 0% for empty lessons', async () => {
+    it('should calculate 0% when no lessons', async () => {
       repo.findByCourse.mockResolvedValue([]);
+      repo.countCourseLessons.mockResolvedValue(0);
       const result = await service.getCourseProgress('u1', 'c1');
-      expect(result.progressPercentage).toBe(0);
+      expect(result.percentage).toBe(0);
     });
   });
 
   describe('updateProgress', () => {
-    it('should update progress', async () => {
-      repo.findByLesson.mockResolvedValue({ courseId: 'c1', isCompleted: false, lastPosition: 0 });
-      repo.createOrUpdate.mockResolvedValue({ courseId: 'c1', isCompleted: true, lastPosition: 10 });
-      const result = await service.updateProgress('u1', 'l1', { isCompleted: true, lastPosition: 10 });
+    it('should upsert progress when record exists', async () => {
+      repo.findByLesson.mockResolvedValue({ courseId: 'c1', isCompleted: false });
+      repo.createOrUpdate.mockResolvedValue({ courseId: 'c1', isCompleted: true });
+      const result = await service.updateProgress('u1', 'l1', { isCompleted: true });
       expect(result).toBeDefined();
     });
 
-    it('should update progress with defaults', async () => {
-      repo.findByLesson.mockResolvedValue({ courseId: 'c1', isCompleted: false, lastPosition: 0 });
-      repo.createOrUpdate.mockResolvedValue({ courseId: 'c1', isCompleted: false, lastPosition: 0 });
-      const result = await service.updateProgress('u1', 'l1', {});
-      expect(result).toBeDefined();
-    });
-
-    it('should throw if not found', async () => {
+    it('should upsert progress even when no existing record', async () => {
       repo.findByLesson.mockResolvedValue(null);
-      await expect(service.updateProgress('u1', 'l1', {})).rejects.toThrow(NotFoundException);
+      repo.createOrUpdate.mockResolvedValue({ lessonId: 'l1', isCompleted: true });
+      const result = await service.updateProgress('u1', 'l1', { isCompleted: true });
+      expect(result).toBeDefined();
     });
   });
 });

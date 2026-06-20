@@ -1,6 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { IUserProgressRepository } from './IUserProgressRepository';
-import { CreateUserProgressDTO, UpdateUserProgressDTO } from '../dto/user-progress.dto';
 
 export class SupabaseUserProgressRepository implements IUserProgressRepository {
   constructor(private client: SupabaseClient) {}
@@ -8,10 +7,10 @@ export class SupabaseUserProgressRepository implements IUserProgressRepository {
   private mapToUserProgress(row: any): any {
     return {
       userId: row.user_id,
-      courseId: row.lessons?.course_id,
+      courseId: row.lessons?.course_id ?? undefined,
       lessonId: row.lesson_id,
       isCompleted: row.completed,
-      completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
+      completedAt: row.completed_at ? new Date(row.completed_at) : null,
     };
   }
 
@@ -22,10 +21,10 @@ export class SupabaseUserProgressRepository implements IUserProgressRepository {
         {
           user_id: dto.userId,
           lesson_id: dto.lessonId,
-          completed: dto.isCompleted,
+          completed: dto.isCompleted ?? false,
           completed_at: dto.isCompleted ? new Date().toISOString() : null,
         },
-        { onConflict: 'user_id, lesson_id' }
+        { onConflict: 'user_id,lesson_id' }
       )
       .select('*, lessons(course_id)')
       .single();
@@ -55,6 +54,16 @@ export class SupabaseUserProgressRepository implements IUserProgressRepository {
       .eq('lessons.course_id', courseId);
 
     if (error) throw error;
-    return data.map(this.mapToUserProgress);
+    return (data ?? []).map((row) => this.mapToUserProgress(row));
+  }
+
+  async countCourseLessons(courseId: string): Promise<number> {
+    const { count, error } = await this.client
+      .from('lessons')
+      .select('id', { count: 'exact', head: true })
+      .eq('course_id', courseId);
+
+    if (error) throw error;
+    return count ?? 0;
   }
 }
