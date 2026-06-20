@@ -74,13 +74,16 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     { href: "/", label: "Trang chủ", icon: Home },
     { href: "/courses", label: "Khóa học", icon: BookOpen },
     { href: "/my-courses", label: "Khóa học của tôi", icon: GraduationCap },
-    { href: "/exams", label: "Học liệu & Đề thi", icon: FileText },
-    { href: "/profile", label: "Hồ sơ cá nhân", icon: User },
   ];
 
-  if (user?.permissions?.includes('action:course:create')) {
-    navItems.push({ href: "/courses/create", label: "Tạo khóa học", icon: PlusCircle });
+  const canManageExams = user?.role === 'admin' || user?.permissions?.includes('action:course:create');
+
+  if (canManageExams) {
+    navItems.push({ href: "/exams", label: "Quản lý đề thi", icon: FileText });
+    navItems.push({ href: "/exam-sessions", label: "Tổ chức thi", icon: BookOpen });
   }
+
+  navItems.push({ href: "/profile", label: "Hồ sơ cá nhân", icon: User });
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });

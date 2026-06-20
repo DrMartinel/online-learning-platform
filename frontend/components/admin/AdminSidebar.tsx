@@ -5,12 +5,10 @@ import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Users, BookOpen, Shield, FileText, CreditCard } from 'lucide-react';
 
 const navItems = [
-  { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { name: 'Users', href: '/admin/users', icon: Users },
-  { name: 'Roles & Permissions', href: '/admin/iam', icon: Shield },
-  { name: 'Exams & Questions', href: '/admin/exams', icon: FileText },
-  { name: 'Exam Sessions', href: '/admin/exam-sessions', icon: BookOpen },
-  { name: 'Transactions', href: '/admin/transactions', icon: CreditCard },
+  { name: 'Bảng điều khiển', href: '/admin', icon: LayoutDashboard },
+  { name: 'Người dùng', href: '/admin/users', icon: Users },
+  { name: 'Vai trò & Quyền', href: '/admin/iam', icon: Shield },
+  { name: 'Giao dịch', href: '/admin/transactions', icon: CreditCard },
 ];
 
 export default function AdminSidebar() {

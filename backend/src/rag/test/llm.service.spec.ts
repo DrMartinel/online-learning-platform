@@ -57,6 +57,7 @@ describe('LlmService', () => {
 
   describe('generateAnswer', () => {
     it('should return fallback message if no context chunks provided', async () => {
+      mockGenerateContent.mockResolvedValue({ text: "I don't have enough information." });
       const answer = await service.generateAnswer('test question', []);
       expect(answer).toContain('I don\'t have enough information');
     });

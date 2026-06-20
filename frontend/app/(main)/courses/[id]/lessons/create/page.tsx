@@ -6,10 +6,13 @@ import { ChevronLeft } from 'lucide-react';
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ chapterId?: string }>;
 }
 
-export default async function CreateLessonPage({ params }: PageProps) {
+export default async function CreateLessonPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const resolvedSearchParams = await searchParams;
+  const defaultChapterId = resolvedSearchParams?.chapterId;
   const cookieStore = await cookies();
   const token = cookieStore.get('olp_session')?.value;
 
@@ -58,11 +61,11 @@ export default async function CreateLessonPage({ params }: PageProps) {
           <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-800">
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">Bài học mới cho "{course.title}"</h1>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Tải lên video bài giảng và thêm nội dung văn bản.
+              Tạo bài học và cấu hình các học liệu đi kèm (video, tài liệu, đề thi).
             </p>
           </div>
           <div className="p-6">
-            <CreateLessonForm courseId={id} token={token} />
+            <CreateLessonForm courseId={id} token={token} defaultChapterId={defaultChapterId} />
           </div>
         </div>
       </div>

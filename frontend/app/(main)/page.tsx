@@ -257,9 +257,9 @@ export default async function DashboardPage() {
               </div>
             </Link>
 
-            {user.role === "admin" ? (
+            {user.role === "admin" || user.permissions?.includes("action:course:create") ? (
               <Link
-                href="/admin/exams"
+                href="/exams"
                 className="group relative overflow-hidden bg-gradient-to-br from-amber-500/5 to-orange-500/5 bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-amber-500/40 dark:hover:border-amber-500/30 transition-all duration-300 flex flex-col gap-3 scale-100 hover:scale-[1.01]"
               >
                 <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400 flex items-center justify-center transition-transform group-hover:scale-110">
@@ -267,7 +267,7 @@ export default async function DashboardPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-zinc-900 dark:text-white text-sm group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                    Bảng Quản trị hệ thống
+                    Quản lý đề & đợt thi
                   </h3>
                   <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
                     Quản lý khóa học, đề thi & đợt thi.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ChevronDown,
@@ -9,13 +9,21 @@ import {
   CheckCircle2,
   Circle,
   X,
+  BookOpen,
 } from "lucide-react";
 import type { Lesson } from "@/components/courses/LessonList";
+
+interface Chapter {
+  id: string;
+  title: string;
+  orderIndex: number;
+}
 
 interface LessonSidebarProps {
   courseId: string;
   activeLessonId: string;
   lessons: Lesson[];
+  chapters: Chapter[];
   /** IDs of lessons the user has already completed */
   completedLessonIds: Set<string>;
   isOpen: boolean;
@@ -26,14 +34,97 @@ export default function LessonSidebar({
   courseId,
   activeLessonId,
   lessons,
+  chapters,
   completedLessonIds,
   isOpen,
   onClose,
 }: LessonSidebarProps) {
-  const sorted = [...lessons].sort((a, b) => a.orderIndex - b.orderIndex);
+  // Sort chapters and lessons
+  const sortedChapters = [...chapters].sort((a, b) => a.orderIndex - b.orderIndex);
+  const sortedLessons = [...lessons].sort((a, b) => a.orderIndex - b.orderIndex);
 
-  // Group into a single "module" since the backend currently has a flat lesson list
-  const [expanded, setExpanded] = useState(true);
+  // Group lessons by chapterId
+  const lessonsByChapter = sortedLessons.reduce((acc, lesson) => {
+    const chapId = lesson.chapterId || "unassigned";
+    if (!acc[chapId]) acc[chapId] = [];
+    acc[chapId].push(lesson);
+    return acc;
+  }, {} as Record<string, Lesson[]>);
+
+  // Accordion open/close states
+  const [expandedChapters, setExpandedChapters] = useState<Record<string, boolean>>({});
+
+  // Auto-expand the chapter containing the active lesson on initial load
+  useEffect(() => {
+    const activeLesson = sortedLessons.find((l) => l.id === activeLessonId);
+    if (activeLesson) {
+      const chapId = activeLesson.chapterId || "unassigned";
+      setExpandedChapters((prev) => ({
+        ...prev,
+        [chapId]: true,
+      }));
+    } else if (sortedChapters.length > 0) {
+      // If no active lesson, expand the first chapter
+      setExpandedChapters((prev) => ({
+        ...prev,
+        [sortedChapters[0].id]: true,
+      }));
+    }
+  }, [activeLessonId, chapters]);
+
+  const toggleChapter = (chapterId: string) => {
+    setExpandedChapters((prev) => ({
+      ...prev,
+      [chapterId]: !prev[chapterId],
+    }));
+  };
+
+  const renderLessonLink = (lesson: Lesson) => {
+    const isActive = lesson.id === activeLessonId;
+    const isDone = completedLessonIds.has(lesson.id);
+    const Icon = lesson.videoUrl ? PlayCircle : FileText;
+
+    return (
+      <Link
+        key={lesson.id}
+        href={`/learn/${courseId}/${lesson.id}`}
+        onClick={onClose}
+        className={`flex items-center gap-2.5 pl-8 pr-4 py-2.5 transition-colors border-r-2 ${
+          isActive
+            ? "bg-primary/5 dark:bg-primary/10 border-primary"
+            : "border-transparent hover:bg-gray-50 dark:hover:bg-gray-800/40"
+        }`}
+      >
+        {isDone ? (
+          <CheckCircle2 size={15} className="text-emerald-500 shrink-0" />
+        ) : (
+          <Circle size={15} className="text-gray-300 dark:text-gray-600 shrink-0" />
+        )}
+
+        <Icon
+          size={14}
+          className={`shrink-0 ${
+            lesson.videoUrl ? "text-blue-500" : "text-emerald-500"
+          }`}
+        />
+
+        <div className="flex-1 min-w-0">
+          <p
+            className={`text-xs truncate ${
+              isActive
+                ? "text-primary font-bold"
+                : "text-gray-700 dark:text-gray-300 font-medium"
+            }`}
+          >
+            {lesson.title}
+          </p>
+          <p className="text-[10px] text-gray-400 mt-0.5">
+            {lesson.videoUrl ? "Video bài giảng" : "Tài liệu lý thuyết"}
+          </p>
+        </div>
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -41,7 +132,7 @@ export default function LessonSidebar({
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 bg-black/30 z-10 lg:hidden top-14"
+          className="fixed inset-0 bg-black/40 z-10 lg:hidden top-14 backdrop-blur-xs"
         />
       )}
 
@@ -49,106 +140,99 @@ export default function LessonSidebar({
         className={`
           fixed lg:static inset-y-0 left-0 z-20 w-72 bg-white dark:bg-gray-900
           border-r border-gray-200 dark:border-gray-800
-          transform transition-transform duration-200 ease-in-out flex flex-col
+          transform transition-transform duration-250 ease-in-out flex flex-col
           ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 top-14 overflow-y-auto
         `}
       >
         {/* Header */}
         <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
           <div>
-            <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+            <h2 className="text-sm font-bold text-gray-800 dark:text-gray-200">
               Nội dung khóa học
             </h2>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-              {completedLessonIds.size}/{sorted.length} hoàn thành
+            <p className="text-xs text-gray-450 dark:text-gray-500 mt-0.5 font-medium">
+              {completedLessonIds.size}/{sortedLessons.length} bài hoàn thành
             </p>
           </div>
           <button
             onClick={onClose}
-            className="lg:hidden p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="lg:hidden p-1.5 rounded-xl text-gray-400 hover:text-gray-650 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
-        {/* Accordion — single module */}
-        <div className="flex-1 overflow-y-auto pb-4">
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="w-full flex items-center gap-2 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
-          >
-            <ChevronDown
-              size={16}
-              className={`text-gray-400 shrink-0 transition-transform duration-200 ${
-                expanded ? "" : "-rotate-90"
-              }`}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                Danh sách bài học
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {sorted.length} bài
-              </p>
-            </div>
-          </button>
+        {/* Chapters & Lessons Accordion List */}
+        <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-850">
+          {sortedChapters.map((chapter) => {
+            const chapterLessons = lessonsByChapter[chapter.id] || [];
+            const isExpanded = !!expandedChapters[chapter.id];
 
-          {expanded && (
-            <div className="pb-1">
-              {sorted.map((lesson) => {
-                const isActive = lesson.id === activeLessonId;
-                const isDone = completedLessonIds.has(lesson.id);
-                const Icon = lesson.videoUrl ? PlayCircle : FileText;
-
-                return (
-                  <Link
-                    key={lesson.id}
-                    href={`/learn/${courseId}/${lesson.id}`}
-                    onClick={onClose}
-                    className={`flex items-center gap-2.5 pl-10 pr-4 py-2.5 transition-colors ${
-                      isActive
-                        ? "bg-primary/5 dark:bg-primary/10 border-r-2 border-primary"
-                        : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
+            return (
+              <div key={chapter.id} className="w-full">
+                <button
+                  onClick={() => toggleChapter(chapter.id)}
+                  className="w-full flex items-start gap-2 px-4 py-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors text-left"
+                >
+                  <ChevronDown
+                    size={15}
+                    className={`text-gray-450 mt-0.5 shrink-0 transition-transform duration-200 ${
+                      isExpanded ? "" : "-rotate-90"
                     }`}
-                  >
-                    {isDone ? (
-                      <CheckCircle2
-                        size={16}
-                        className="text-emerald-500 shrink-0"
-                      />
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-gray-800 dark:text-gray-200 leading-snug">
+                      {chapter.title}
+                    </p>
+                    <p className="text-[10px] text-gray-400 mt-0.5 font-medium">
+                      {chapterLessons.length} bài học
+                    </p>
+                  </div>
+                </button>
+
+                {isExpanded && (
+                  <div className="bg-gray-50/20 dark:bg-gray-900/10 pb-2 border-t border-gray-50 dark:border-gray-850">
+                    {chapterLessons.length === 0 ? (
+                      <p className="text-[10px] text-gray-400 dark:text-gray-550 italic pl-8 py-2">
+                        Chưa có bài học nào trong chương này.
+                      </p>
                     ) : (
-                      <Circle
-                        size={16}
-                        className="text-gray-300 dark:text-gray-600 shrink-0"
-                      />
+                      chapterLessons.map((lesson) => renderLessonLink(lesson))
                     )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
-                    <Icon
-                      size={15}
-                      className={`shrink-0 ${
-                        lesson.videoUrl
-                          ? "text-blue-500"
-                          : "text-emerald-500"
-                      }`}
-                    />
+          {/* Unassigned lessons (if any) */}
+          {lessonsByChapter["unassigned"] && lessonsByChapter["unassigned"].length > 0 && (
+            <div className="w-full">
+              <button
+                onClick={() => toggleChapter("unassigned")}
+                className="w-full flex items-start gap-2 px-4 py-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors text-left"
+              >
+                <ChevronDown
+                  size={15}
+                  className={`text-gray-450 mt-0.5 shrink-0 transition-transform duration-200 ${
+                    !!expandedChapters["unassigned"] ? "" : "-rotate-90"
+                  }`}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-gray-850 dark:text-gray-200 leading-snug">
+                    Bài giảng bổ sung
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-0.5 font-medium">
+                    {lessonsByChapter["unassigned"].length} bài học
+                  </p>
+                </div>
+              </button>
 
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className={`text-sm truncate ${
-                          isActive
-                            ? "text-primary font-medium"
-                            : "text-gray-700 dark:text-gray-300"
-                        }`}
-                      >
-                        {lesson.title}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {lesson.videoUrl ? "Video" : "Tài liệu"}
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })}
+              {!!expandedChapters["unassigned"] && (
+                <div className="bg-gray-50/20 dark:bg-gray-900/10 pb-2 border-t border-gray-50 dark:border-gray-850">
+                  {lessonsByChapter["unassigned"].map((lesson) => renderLessonLink(lesson))}
+                </div>
+              )}
             </div>
           )}
         </div>

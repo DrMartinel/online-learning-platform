@@ -389,7 +389,7 @@ export default function ExamsDashboard() {
       </div>
 
       {/* Table Card */}
-      <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-150 dark:border-gray-800 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-12 flex flex-col items-center justify-center gap-3">
             <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>

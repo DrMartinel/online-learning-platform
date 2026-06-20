@@ -31,6 +31,14 @@ export class LessonController {
     return this.lessonService.findByCourseId(courseId, publishedOnly);
   }
 
+  @Get('chapter/:chapterId')
+  @Auth()
+  @ApiOperation({ summary: 'Lấy danh sách bài học của chương' })
+  @ApiResponse({ status: 200, type: [LessonResponseDTO] })
+  async findByChapterId(@Param('chapterId') chapterId: string): Promise<LessonResponseDTO[]> {
+    return this.lessonService.findByChapterId(chapterId);
+  }
+
   @Get(':id')
   @Auth('action:lesson:read') // Bắt buộc user phải có token
   @ApiOperation({ summary: 'Get lesson by ID (With Paywall)' })

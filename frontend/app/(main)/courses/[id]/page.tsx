@@ -8,6 +8,7 @@ import LessonList, { type Lesson } from "@/components/courses/LessonList";
 import EnrollButton from "@/components/courses/EnrollButton";
 import ChatWidget from "@/components/rag/ChatWidget";
 import CourseActionMenu from "@/components/admin/CourseActionMenu";
+import ChapterManager from "@/components/courses/ChapterManager";
 import type { Course } from "@/components/courses/CourseCard";
 import type { Metadata } from "next";
 import PaymentButton from '@/components/courses/PaymentButton';
@@ -65,6 +66,28 @@ async function getLessons(courseId: string): Promise<Lesson[]> {
   }
 }
 
+async function getChapters(courseId: string): Promise<any[]> {
+  const backendUrl = process.env.BACKEND_URL;
+  if (!backendUrl) return [];
+
+  try {
+    const token = await getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${backendUrl}/chapters/course/${courseId}`, {
+      headers,
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      return [];
+    }
+    return res.json();
+  } catch (e) {
+    return [];
+  }
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const course = await getCourse(id);
@@ -78,10 +101,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function CourseDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  // Fetch course + lessons in parallel
-  const [course, lessons] = await Promise.all([
+  // Fetch course + lessons + chapters in parallel
+  const [course, lessons, chapters] = await Promise.all([
     getCourse(id),
     getLessons(id),
+    getChapters(id),
   ]);
 
   if (!course) {
@@ -182,7 +206,15 @@ const thumbnailSignedUrl = await getSignedMediaUrl(course.thumbnailUrl, token);
                   {course.title}
                 </h1>
                 {isInstructor && (
-                  <CourseActionMenu courseId={course.id} isPublished={course.isPublished} />
+                  <CourseActionMenu 
+                    courseId={course.id} 
+                    isPublished={course.isPublished} 
+                    token={token || ""} 
+                    initialTitle={course.title}
+                    initialDescription={course.description}
+                    initialPrice={course.price}
+                    initialThumbnailUrl={course.thumbnailUrl}
+                  />
                 )}
               </div>
 
@@ -232,15 +264,18 @@ const thumbnailSignedUrl = await getSignedMediaUrl(course.thumbnailUrl, token);
                   Nội dung khóa học
                 </h2>
                 {isInstructor && (
-                  <Link
-                    href={`/courses/${id}/lessons/create`}
-                    className="inline-flex items-center text-sm font-medium text-white bg-primary hover:bg-primary/90 px-3 py-1.5 rounded-lg transition-colors"
-                  >
-                    + Thêm bài học
-                  </Link>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <ChapterManager courseId={id} initialChapters={chapters} />
+                  </div>
                 )}
               </div>
-              <LessonList lessons={sortedLessons} />
+              <LessonList 
+                lessons={sortedLessons} 
+                chapters={chapters} 
+                isInstructor={isInstructor} 
+                courseId={id} 
+                token={token} 
+              />
             </section>
           </div>
 
@@ -295,9 +330,21 @@ const thumbnailSignedUrl = await getSignedMediaUrl(course.thumbnailUrl, token);
 
                 {/* KHU VỰC CÁC NÚT HÀNH ĐỘNG CẬP NHẬT PAYWALL */}
                 <div className="border-t border-gray-100 dark:border-gray-800 pt-4 space-y-3">
-                  {!isLoggedIn ? (
+                  {isInstructor ? (
+                    <div className="space-y-3">
+                      {sortedLessons.length > 0 && (
+                        <Link
+                          href={`/learn/${course.id}/${sortedLessons[0].id}`}
+                          className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-base font-semibold shadow-lg transition-all"
+                        >
+                          <PlayCircle size={18} />
+                          Vào học (Giảng viên)
+                        </Link>
+                      )}
+                    </div>
+                  ) : !isLoggedIn ? (
                     // Nếu CHƯA ĐĂNG NHẬP
-                    <p className="text-xs text-center text-gray-400 dark:text-gray-500">
+                    <p className="text-xs text-center text-gray-400 dark:text-gray-550">
                       Bạn cần{" "}
                       <Link
                         href={`/login?next=/courses/${course.id}`}
@@ -310,9 +357,6 @@ const thumbnailSignedUrl = await getSignedMediaUrl(course.thumbnailUrl, token);
                   ) : isEnrolled ? (
                     // Nếu ĐÃ MUA / ĐÃ ENROLL
                     <div className="space-y-3">
-                      <div className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 p-3 rounded-lg text-sm text-center font-medium border border-emerald-200 dark:border-emerald-800">
-                        Bạn đã sở hữu khóa học này
-                      </div>
                       <EnrollButton courseId={course.id} isLoggedIn={isLoggedIn} isEnrolled={isEnrolled} />
                     </div>
                   ) : course.price > 0 ? (

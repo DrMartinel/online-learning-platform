@@ -37,8 +37,8 @@ describe('CourseController', () => {
   });
 
   it('should create a course', async () => {
-    await expect(controller.createCourse({ id: 'inst1' }, { title: 'Test' })).resolves.toEqual({ id: '1' });
-    expect(service.create).toHaveBeenCalledWith('inst1', { title: 'Test' });
+    await expect(controller.createCourse({ id: 'inst1' }, { title: 'Test', price: 0 })).resolves.toEqual({ id: '1' });
+    expect(service.create).toHaveBeenCalledWith('inst1', { title: 'Test', price: 0 });
   });
 
   it('should get a course', async () => {

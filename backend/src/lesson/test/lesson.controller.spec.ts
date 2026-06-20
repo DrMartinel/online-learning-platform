@@ -17,6 +17,7 @@ describe('LessonController', () => {
           useValue: {
             create: jest.fn().mockResolvedValue({ id: '1' }),
             findById: jest.fn().mockResolvedValue({ id: '1' }),
+            getLessonDetail: jest.fn().mockResolvedValue({ id: '1' }),
             findByCourseId: jest.fn().mockResolvedValue([{ id: '1' }]),
             update: jest.fn().mockResolvedValue({ id: '1' }),
             delete: jest.fn().mockResolvedValue(undefined),
@@ -47,8 +48,8 @@ describe('LessonController', () => {
   });
 
   it('should get a lesson', async () => {
-    await expect(controller.getLesson('1')).resolves.toEqual({ id: '1' });
-    expect(service.findById).toHaveBeenCalledWith('1');
+    await expect(controller.getLesson({ id: 'u1' }, '1')).resolves.toEqual({ id: '1' });
+    expect(service.getLessonDetail).toHaveBeenCalledWith('1', 'u1');
   });
 
   it('should update a lesson', async () => {

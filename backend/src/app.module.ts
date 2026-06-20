@@ -12,6 +12,8 @@ import { QuestionModule } from './question/question.module';
 import { ExamModule } from './exam/exam.module';
 import { ExamSessionModule } from './exam-session/exam-session.module';
 import { PaymentModule } from './payment/payment.module';
+import { ChapterModule } from './chapter/chapter.module';
+import { CommentModule } from './comment/comment.module';
 
 @Module({
   imports: [
@@ -31,6 +33,8 @@ import { PaymentModule } from './payment/payment.module';
     ExamModule,
     ExamSessionModule,
     PaymentModule,
+    ChapterModule,
+    CommentModule,
   ],
 })
 export class AppModule {}

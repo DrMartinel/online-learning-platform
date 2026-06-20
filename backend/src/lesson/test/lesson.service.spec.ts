@@ -1,10 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LessonService } from '../services/lesson.service';
 import { NotFoundException } from '@nestjs/common';
+import { CourseService } from '../../course/services/course.service';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 describe('LessonService', () => {
   let service: LessonService;
   let repo: any;
+  let courseService: any;
+  let supabaseClient: any;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -16,8 +20,24 @@ describe('LessonService', () => {
             create: jest.fn(),
             findById: jest.fn(),
             findByCourseId: jest.fn(),
+            findByChapterId: jest.fn(),
             update: jest.fn(),
             delete: jest.fn(),
+          },
+        },
+        {
+          provide: CourseService,
+          useValue: {
+            findById: jest.fn(),
+          },
+        },
+        {
+          provide: SupabaseClient,
+          useValue: {
+            from: jest.fn().mockReturnThis(),
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            maybeSingle: jest.fn(),
           },
         },
       ],
@@ -25,6 +45,8 @@ describe('LessonService', () => {
 
     service = module.get<LessonService>(LessonService);
     repo = module.get('ILessonRepository');
+    courseService = module.get(CourseService);
+    supabaseClient = module.get(SupabaseClient);
   });
 
   it('should create a lesson', async () => {

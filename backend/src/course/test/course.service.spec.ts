@@ -30,14 +30,14 @@ describe('CourseService', () => {
 
   it('should create a course', async () => {
     repo.create.mockImplementation(async (c: Course) => c);
-    const result = await service.create('inst1', { title: 'Test' });
+    const result = await service.create('inst1', { title: 'Test', price: 0 });
     expect(result.title).toBe('Test');
     expect(result.instructorId).toBe('inst1');
   });
 
   describe('findById', () => {
     it('should find a course', async () => {
-      const c = new Course('1', 'inst1', 'Test', null, null, false, new Date());
+      const c = new Course('1', 'inst1', 'Test', null, null, false, new Date(), 0);
       repo.findById.mockResolvedValue(c);
       const result = await service.findById('1');
       expect(result.id).toBe('1');
@@ -50,7 +50,7 @@ describe('CourseService', () => {
   });
 
   it('should list courses', async () => {
-    const c = new Course('1', 'inst1', 'Test', null, null, false, new Date());
+    const c = new Course('1', 'inst1', 'Test', null, null, false, new Date(), 0);
     repo.findAll.mockResolvedValue([c]);
     const result = await service.list({});
     expect(result.length).toBe(1);
@@ -59,11 +59,11 @@ describe('CourseService', () => {
 
   describe('update', () => {
     it('should update a course', async () => {
-      const c = new Course('1', 'inst1', 'Test', null, null, false, new Date());
+      const c = new Course('1', 'inst1', 'Test', null, null, false, new Date(), 0);
       repo.findById.mockResolvedValue(c);
       repo.update.mockResolvedValue(c);
 
-      const result = await service.update('1', { title: 'New', description: 'Desc', thumbnailUrl: 'url', isPublished: true }, 'inst1');
+      const result = await service.update('1', { title: 'New', description: 'Desc', thumbnailUrl: 'url', isPublished: true, price: 0 }, 'inst1');
       expect(result.title).toBe('New');
       expect(result.description).toBe('Desc');
       expect(result.thumbnailUrl).toBe('url');
@@ -71,7 +71,7 @@ describe('CourseService', () => {
     });
 
     it('should unpublish a course', async () => {
-      const c = new Course('1', 'inst1', 'Test', null, null, true, new Date());
+      const c = new Course('1', 'inst1', 'Test', null, null, true, new Date(), 0);
       repo.findById.mockResolvedValue(c);
       repo.update.mockResolvedValue(c);
 
@@ -85,7 +85,7 @@ describe('CourseService', () => {
     });
 
     it('should throw if not instructor', async () => {
-      const c = new Course('1', 'inst1', 'Test', null, null, false, new Date());
+      const c = new Course('1', 'inst1', 'Test', null, null, false, new Date(), 0);
       repo.findById.mockResolvedValue(c);
       await expect(service.update('1', { title: 'New' }, 'inst2')).rejects.toThrow('You do not have permission');
     });
@@ -93,7 +93,7 @@ describe('CourseService', () => {
 
   describe('delete', () => {
     it('should delete a course', async () => {
-      const c = new Course('1', 'inst1', 'Test', null, null, false, new Date());
+      const c = new Course('1', 'inst1', 'Test', null, null, false, new Date(), 0);
       repo.findById.mockResolvedValue(c);
       repo.delete.mockResolvedValue(undefined);
       await expect(service.delete('1', 'inst1')).resolves.toBeUndefined();
@@ -105,7 +105,7 @@ describe('CourseService', () => {
     });
 
     it('should throw if not instructor', async () => {
-      const c = new Course('1', 'inst1', 'Test', null, null, false, new Date());
+      const c = new Course('1', 'inst1', 'Test', null, null, false, new Date(), 0);
       repo.findById.mockResolvedValue(c);
       await expect(service.delete('1', 'inst2')).rejects.toThrow('You do not have permission');
     });
@@ -114,17 +114,17 @@ describe('CourseService', () => {
   describe('admin methods', () => {
     it('should create a course as admin', async () => {
       repo.create.mockImplementation(async (c: Course) => c);
-      const result = await service.adminCreate({ title: 'Test', instructorId: 'inst99' });
+      const result = await service.adminCreate({ title: 'Test', instructorId: 'inst99', price: 0 });
       expect(result.title).toBe('Test');
       expect(result.instructorId).toBe('inst99');
     });
 
     it('should update a course as admin', async () => {
-      const c = new Course('1', 'inst1', 'Test', null, null, false, new Date());
+      const c = new Course('1', 'inst1', 'Test', null, null, false, new Date(), 0);
       repo.findById.mockResolvedValue(c);
       repo.update.mockResolvedValue(c);
 
-      const result = await service.adminUpdate('1', { title: 'New', description: 'Desc', thumbnailUrl: 'url', instructorId: 'inst99', isPublished: true });
+      const result = await service.adminUpdate('1', { title: 'New', description: 'Desc', thumbnailUrl: 'url', instructorId: 'inst99', isPublished: true, price: 0 });
       expect(result.title).toBe('New');
       expect(result.description).toBe('Desc');
       expect(result.thumbnailUrl).toBe('url');
@@ -133,7 +133,7 @@ describe('CourseService', () => {
     });
 
     it('should unpublish a course as admin', async () => {
-      const c = new Course('1', 'inst1', 'Test', null, null, true, new Date());
+      const c = new Course('1', 'inst1', 'Test', null, null, true, new Date(), 0);
       repo.findById.mockResolvedValue(c);
       repo.update.mockResolvedValue(c);
 
@@ -147,7 +147,7 @@ describe('CourseService', () => {
     });
 
     it('should delete a course as admin', async () => {
-      const c = new Course('1', 'inst1', 'Test', null, null, false, new Date());
+      const c = new Course('1', 'inst1', 'Test', null, null, false, new Date(), 0);
       repo.findById.mockResolvedValue(c);
       repo.delete.mockResolvedValue(undefined);
       await expect(service.adminDelete('1')).resolves.toBeUndefined();

@@ -14,6 +14,7 @@ export class SupabaseLessonRepository implements LessonRepository {
       content: row.content,
       orderIndex: row.order_index,
       createdAt: row.created_at,
+      chapterId: row.chapter_id,
     };
   }
 
@@ -26,6 +27,7 @@ export class SupabaseLessonRepository implements LessonRepository {
         video_url: lesson.videoUrl,
         content: lesson.content,
         order_index: lesson.orderIndex,
+        chapter_id: lesson.chapterId || null,
       })
       .select()
       .single();
@@ -57,12 +59,24 @@ export class SupabaseLessonRepository implements LessonRepository {
     return data.map(this.mapToLesson);
   }
 
+  async findByChapterId(chapterId: string): Promise<Lesson[]> {
+    const { data, error } = await this.client
+      .from('lessons')
+      .select()
+      .eq('chapter_id', chapterId)
+      .order('order_index', { ascending: true });
+
+    if (error) throw error;
+    return (data || []).map(row => this.mapToLesson(row));
+  }
+
   async update(id: string, lesson: Partial<Omit<Lesson, 'id' | 'courseId' | 'createdAt'>>): Promise<Lesson | null> {
     const updates: any = {};
     if (lesson.title !== undefined) updates.title = lesson.title;
     if (lesson.videoUrl !== undefined) updates.video_url = lesson.videoUrl === null ? null : lesson.videoUrl;
     if (lesson.content !== undefined) updates.content = lesson.content === null ? null : lesson.content;
     if (lesson.orderIndex !== undefined) updates.order_index = lesson.orderIndex;
+    if (lesson.chapterId !== undefined) updates.chapter_id = lesson.chapterId;
 
     const { data, error } = await this.client
       .from('lessons')

@@ -28,17 +28,7 @@ export default function LearnHeader({
         {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
-      {/* Logo */}
-      <Link href="/" className="flex items-center gap-2 shrink-0">
-        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-          <PlayCircle size={16} className="text-white" />
-        </div>
-        <span className="font-bold text-gray-800 dark:text-white hidden sm:inline text-sm">
-          EduSpace
-        </span>
-      </Link>
 
-      <div className="hidden sm:block w-px h-6 bg-gray-200 dark:bg-gray-700" />
 
       {/* Course title */}
       <h1 className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate hidden sm:block max-w-[280px]">

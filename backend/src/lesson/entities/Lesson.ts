@@ -6,4 +6,5 @@ export interface Lesson {
   content: string | null;
   orderIndex: number;
   createdAt: string;
+  chapterId?: string | null;
 }

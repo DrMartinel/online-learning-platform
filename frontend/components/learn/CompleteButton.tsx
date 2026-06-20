@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Loader2, RotateCcw } from "lucide-react";
+import { CheckCircle2, Loader2, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface CompleteButtonProps {
@@ -74,7 +74,7 @@ export default function CompleteButton({
           </>
         ) : (
           <>
-            <RotateCcw size={16} />
+            <Check size={16} />
             Đánh dấu hoàn thành
           </>
         )}

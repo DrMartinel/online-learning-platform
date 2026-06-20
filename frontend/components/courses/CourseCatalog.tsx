@@ -2,13 +2,15 @@
 
 import { useState, useMemo } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
+import Link from "next/link";
 import CourseCard, { type Course } from "./CourseCard";
 
 interface CourseCatalogProps {
   initialCourses: Course[];
+  canCreateCourse?: boolean;
 }
 
-export default function CourseCatalog({ initialCourses }: CourseCatalogProps) {
+export default function CourseCatalog({ initialCourses, canCreateCourse }: CourseCatalogProps) {
   const [query, setQuery] = useState("");
   const [showPublishedOnly, setShowPublishedOnly] = useState(false);
 
@@ -34,7 +36,7 @@ export default function CourseCatalog({ initialCourses }: CourseCatalogProps) {
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
       {/* Section header */}
-      <div className="flex items-end justify-between mb-8">
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
             Khóa học nổi bật
@@ -43,6 +45,14 @@ export default function CourseCatalog({ initialCourses }: CourseCatalogProps) {
             Khám phá tất cả khóa học trên nền tảng
           </p>
         </div>
+        {canCreateCourse && (
+          <Link
+            href="/courses/create"
+            className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/95 transition-all shadow-md shadow-primary/10"
+          >
+            + Tạo khóa học mới
+          </Link>
+        )}
       </div>
 
       {/* Search & filter bar */}

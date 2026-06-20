@@ -36,11 +36,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         <header className="h-16 flex items-center justify-between px-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 z-10 shrink-0">
           <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Admin Console</h1>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Bảng quản trị</h1>
           </div>
           <div className="flex items-center gap-4">
              <Link href="/" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">
-               Back to Site
+               Quay lại trang chủ
              </Link>
           </div>
         </header>

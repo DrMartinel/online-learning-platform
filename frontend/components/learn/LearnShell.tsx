@@ -10,6 +10,7 @@ interface LearnShellProps {
   courseTitle: string;
   activeLessonId: string;
   lessons: Lesson[];
+  chapters: any[];
   completedLessonIds: string[];
   progressPct: number;
   children: React.ReactNode;
@@ -20,6 +21,7 @@ export default function LearnShell({
   courseTitle,
   activeLessonId,
   lessons,
+  chapters,
   completedLessonIds,
   progressPct,
   children,
@@ -42,6 +44,7 @@ export default function LearnShell({
           courseId={courseId}
           activeLessonId={activeLessonId}
           lessons={lessons}
+          chapters={chapters}
           completedLessonIds={completedSet}
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}

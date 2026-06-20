@@ -23,6 +23,7 @@ export class LessonService {
       content: dto.content || null,
       videoUrl: dto.videoUrl || null,
       orderIndex: dto.orderIndex,
+      chapterId: dto.chapterId || null,
     });
     return this.mapToResponse(lesson);
   }
@@ -39,6 +40,11 @@ export class LessonService {
     return lessons.map((l) => this.mapToResponse(l));
   }
 
+  async findByChapterId(chapterId: string): Promise<LessonResponseDTO[]> {
+    const lessons = await this.lessonRepo.findByChapterId(chapterId);
+    return lessons.map((l) => this.mapToResponse(l));
+  }
+
   async update(id: string, dto: UpdateLessonDTO): Promise<LessonResponseDTO> {
     const lesson = await this.lessonRepo.findById(id);
     if (!lesson) throw new NotFoundException('Lesson not found');
@@ -48,6 +54,7 @@ export class LessonService {
       content: dto.content !== undefined ? dto.content : lesson.content,
       videoUrl: dto.videoUrl !== undefined ? dto.videoUrl : lesson.videoUrl,
       orderIndex: dto.orderIndex !== undefined ? dto.orderIndex : lesson.orderIndex,
+      chapterId: dto.chapterId !== undefined ? dto.chapterId : lesson.chapterId,
     });
     
     if (!updated) throw new NotFoundException('Lesson not found');
@@ -115,6 +122,7 @@ export class LessonService {
       orderIndex: lesson.orderIndex,
       isPublished: true, // Placeholder since DB doesn't have it
       createdAt: new Date(lesson.createdAt),
+      chapterId: lesson.chapterId || undefined,
     };
   }
 }

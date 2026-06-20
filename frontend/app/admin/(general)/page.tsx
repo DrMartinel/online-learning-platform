@@ -74,17 +74,17 @@ export default async function AdminDashboardPage() {
   const metrics = await getSystemMetrics(token);
 
   const statCards = [
-    { label: 'Total Users', value: stats.users, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { label: 'Total Courses', value: stats.courses, icon: BookOpen, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-    { label: 'Total Lessons', value: stats.lessons, icon: Presentation, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { label: 'System Status', value: 'Healthy', icon: Activity, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Tổng người dùng', value: stats.users, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'Tổng khóa học', value: stats.courses, icon: BookOpen, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+    { label: 'Tổng bài học', value: stats.lessons, icon: Presentation, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { label: 'Trạng thái hệ thống', value: 'Hoạt động tốt', icon: Activity, color: 'text-primary', bg: 'bg-primary/10' },
   ];
 
   return (
     <div className="space-y-6">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard Overview</h2>
-        <p className="text-gray-500 dark:text-gray-400">Welcome to the AdminOS. Here is what is happening today.</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Tổng quan bảng điều khiển</h2>
+        <p className="text-gray-500 dark:text-gray-400">Chào mừng đến với AdminOS. Dưới đây là tình hình hoạt động hôm nay.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
