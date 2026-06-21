@@ -108,7 +108,7 @@ export default function LessonContentPlayer({
                   <h4 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2 truncate max-w-md">
                     {selectedContent.title}
                   </h4>
-                  <p className="text-sm text-gray-450 dark:text-gray-500 mb-6 max-w-sm">
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mb-6 max-w-sm">
                     Bài thi đánh giá đính kèm bài giảng. Vui lòng bấm nút bên dưới để tham gia làm bài thi trực tuyến.
                   </p>
                   <div className="flex flex-wrap gap-3">
@@ -142,7 +142,7 @@ export default function LessonContentPlayer({
         {/* Contents Sidebar (Only show if there are multiple contents) */}
         {hasContents && (
           <div className="lg:col-span-1 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-2xl p-4 space-y-3 flex flex-col h-auto max-h-[360px] lg:max-h-none overflow-y-auto">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-450 dark:text-gray-500">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
               Học liệu bài học
             </h4>
             <div className="space-y-1.5 flex-1 overflow-y-auto pr-1">

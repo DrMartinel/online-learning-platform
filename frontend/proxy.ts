@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PROTECTED_PATHS = ['/profile', '/my-courses', '/learn', '/admin'];
+const PROTECTED_PATHS = ['/profile', '/my-courses', '/learn', '/admin', '/courses', '/exams', '/exam-sessions', '/payment'];
 
 export async function proxy(request: NextRequest) {
   const token = request.cookies.get('olp_session')?.value;

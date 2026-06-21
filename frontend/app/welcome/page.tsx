@@ -2,37 +2,8 @@ import Link from "next/link";
 import { 
   ArrowRight, Users, BookOpen, Award, TrendingUp, Lock, Sparkles, LogIn
 } from "lucide-react";
-import CourseCatalog from "@/components/courses/CourseCatalog";
-import type { Course } from "@/components/courses/CourseCard";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { getSignedMediaUrl } from "@/lib/supabase";
-
-async function getCourses(): Promise<Course[]> {
-  try {
-    const backendUrl = process.env.BACKEND_URL;
-    if (!backendUrl) return [];
-
-    const res = await fetch(`${backendUrl}/courses`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) return [];
-    const courses: Course[] = await res.json();
-    
-    // Resolve signed URLs for all thumbnails
-    const coursesWithSignedUrls = await Promise.all(
-      courses.map(async (course) => ({
-        ...course,
-        thumbnailUrl: course.thumbnailUrl ? await getSignedMediaUrl(course.thumbnailUrl) : course.thumbnailUrl
-      }))
-    );
-    
-    return coursesWithSignedUrls;
-  } catch {
-    return [];
-  }
-}
 
 const stats = [
   { icon: Users, value: "50,000+", label: "Học viên học tập" },
@@ -42,7 +13,6 @@ const stats = [
 ];
 
 export default async function WelcomePage() {
-  const courses = await getCourses();
 
   return (
     <div className="flex flex-col min-h-screen bg-[#fafaf9] text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -185,8 +155,7 @@ export default async function WelcomePage() {
           </ul>
         </section>
 
-        {/* Real-time Public Course Catalog */}
-        <CourseCatalog initialCourses={courses} />
+        {/* Removed Course Catalog (requires auth now) */}
 
         {/* Footer Call To Action Banner */}
         <section className="border-t border-zinc-200 bg-zinc-100/80 py-12 dark:border-zinc-800 dark:bg-zinc-900/40">

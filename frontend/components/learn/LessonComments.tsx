@@ -280,13 +280,13 @@ export default function LessonComments({
                       setEditingId(comment.id);
                       setEditText(comment.content);
                     }}
-                    className="text-xs text-gray-450 dark:text-gray-500 hover:text-amber-500 dark:hover:text-amber-400 font-medium transition-colors"
+                    className="text-xs text-gray-400 dark:text-gray-500 hover:text-amber-500 dark:hover:text-amber-400 font-medium transition-colors"
                   >
                     Chỉnh sửa
                   </button>
                   <button
                     onClick={() => handleDeleteComment(comment.id)}
-                    className="text-xs text-gray-450 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 font-medium transition-colors"
+                    className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 font-medium transition-colors"
                   >
                     Xóa
                   </button>
@@ -378,7 +378,7 @@ export default function LessonComments({
       {/* Comment List */}
       <div className="divide-y divide-gray-100 dark:divide-gray-850">
         {rootComments.length === 0 ? (
-          <p className="text-sm text-gray-450 dark:text-gray-500 italic text-center py-6">
+          <p className="text-sm text-gray-400 dark:text-gray-500 italic text-center py-6">
             Chưa có bình luận nào. Hãy là người đầu tiên thảo luận!
           </p>
         ) : (

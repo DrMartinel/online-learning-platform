@@ -3,14 +3,15 @@
 import { useState, useMemo } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import Link from "next/link";
-import CourseCard, { type Course } from "./CourseCard";
+import CourseCard, { type Course, type CourseProgressInfo } from "./CourseCard";
 
 interface CourseCatalogProps {
   initialCourses: Course[];
   canCreateCourse?: boolean;
+  enrolledCoursesProgress?: Record<string, CourseProgressInfo>;
 }
 
-export default function CourseCatalog({ initialCourses, canCreateCourse }: CourseCatalogProps) {
+export default function CourseCatalog({ initialCourses, canCreateCourse, enrolledCoursesProgress }: CourseCatalogProps) {
   const [query, setQuery] = useState("");
   const [showPublishedOnly, setShowPublishedOnly] = useState(false);
 
@@ -108,7 +109,7 @@ export default function CourseCatalog({ initialCourses, canCreateCourse }: Cours
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.map((course) => (
-              <CourseCard key={course.id} course={course} />
+              <CourseCard key={course.id} course={course} progress={enrolledCoursesProgress?.[course.id]} />
             ))}
           </div>
         </>

@@ -83,7 +83,7 @@ export default function LessonList({
               {lesson.title}
             </p>
             {lesson.content && (
-              <p className="text-[10px] text-gray-400 dark:text-gray-550 mt-0.5 line-clamp-1">
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 line-clamp-1">
                 {lesson.content}
               </p>
             )}
@@ -94,7 +94,7 @@ export default function LessonList({
               size={12}
               className={lesson.videoUrl ? "text-blue-500" : "text-emerald-500"}
             />
-            <span className="text-[10px] text-gray-400 dark:text-gray-550">
+            <span className="text-[10px] text-gray-400 dark:text-gray-500">
               {lesson.videoUrl ? "Video" : "Tài liệu"}
             </span>
           </div>
@@ -134,7 +134,7 @@ export default function LessonList({
             >
               <ChevronDown
                 size={16}
-                className={`text-gray-450 mt-1 shrink-0 transition-transform duration-200 ${
+                className={`text-gray-400 mt-1 shrink-0 transition-transform duration-200 ${
                   isExpanded ? "" : "-rotate-90"
                 }`}
               />
@@ -152,7 +152,7 @@ export default function LessonList({
             {isExpanded && (
               <div className="p-4 pt-0 border-t border-gray-100 dark:border-gray-850 bg-white/50 dark:bg-gray-950/20">
                 {chapterLessons.length === 0 ? (
-                  <p className="text-xs text-gray-400 dark:text-gray-550 italic py-3 pl-2">
+                  <p className="text-xs text-gray-400 dark:text-gray-500 italic py-3 pl-2">
                     Chưa có bài học nào trong chương này.
                   </p>
                 ) : (
@@ -186,7 +186,7 @@ export default function LessonList({
           >
             <ChevronDown
               size={16}
-              className={`text-gray-450 mt-1 shrink-0 transition-transform duration-200 ${
+              className={`text-gray-400 mt-1 shrink-0 transition-transform duration-200 ${
                 !!expanded["unassigned"] ? "" : "-rotate-90"
               }`}
             />
@@ -194,7 +194,7 @@ export default function LessonList({
               <h3 className="text-sm font-bold text-gray-800 dark:text-white leading-tight">
                 Bài giảng khác
               </h3>
-              <p className="text-[10px] text-gray-450 mt-1 font-medium">
+              <p className="text-[10px] text-gray-400 mt-1 font-medium">
                 {lessonsByChapter["unassigned"].length} bài giảng
               </p>
             </div>

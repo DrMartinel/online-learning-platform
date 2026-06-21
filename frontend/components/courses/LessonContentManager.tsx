@@ -126,7 +126,7 @@ export default function LessonContentManager({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-      <div className="w-full max-w-2xl bg-white dark:bg-gray-905 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div className="w-full max-w-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
@@ -157,7 +157,7 @@ export default function LessonContentManager({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Title */}
               <div className="sm:col-span-2">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-450 dark:text-gray-500 mb-1">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">
                   Tiêu đề học liệu *
                 </label>
                 <input
@@ -166,19 +166,19 @@ export default function LessonContentManager({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
-                  className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-850 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none"
+                  className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none"
                 />
               </div>
 
               {/* Type */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-450 dark:text-gray-500 mb-1">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">
                   Loại học liệu
                 </label>
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value as any)}
-                  className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-850 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none"
+                  className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none"
                 >
                   <option value="video">Video bài giảng</option>
                   <option value="document">Tài liệu học (PDF, Doc, v.v.)</option>
@@ -187,7 +187,7 @@ export default function LessonContentManager({
 
               {/* Order Index */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-450 dark:text-gray-500 mb-1">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">
                   Thứ tự hiển thị
                 </label>
                 <input
@@ -196,14 +196,14 @@ export default function LessonContentManager({
                   onChange={(e) => setOrderIndex(parseInt(e.target.value) || 1)}
                   required
                   min={1}
-                  className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-850 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none"
+                  className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none"
                 />
               </div>
 
               {/* Duration (video only) */}
               {type === "video" && (
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-450 dark:text-gray-500 mb-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">
                     Thời lượng video (phút)
                   </label>
                   <input
@@ -212,7 +212,7 @@ export default function LessonContentManager({
                     onChange={(e) => setDuration(parseInt(e.target.value) || 0)}
                     required
                     min={0}
-                    className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-850 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none"
+                    className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none"
                   />
                 </div>
               )}
@@ -220,10 +220,10 @@ export default function LessonContentManager({
 
             {/* File Upload Area */}
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-450 dark:text-gray-500 mb-2">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                 Tệp tin đính kèm *
               </label>
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-350 dark:border-gray-700 border-dashed rounded-xl cursor-pointer bg-white dark:bg-gray-850 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-350 dark:border-gray-700 border-dashed rounded-xl cursor-pointer bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                 <div className="flex flex-col items-center justify-center pt-4 pb-4 px-4 text-center">
                   {file ? (
                     <>
@@ -334,7 +334,7 @@ export default function LessonContentManager({
               onClose();
               window.location.reload(); // Reload page when closing to update player
             }}
-            className="px-5 py-2 text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-750 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
+            className="px-5 py-2 text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
           >
             Đóng
           </button>

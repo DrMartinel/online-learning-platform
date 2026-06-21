@@ -283,7 +283,7 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
               <FilePlus className="text-primary" size={18} />
               Thành phần học liệu đính kèm
             </h3>
-            <p className="text-xs text-gray-450 dark:text-gray-500">Bài học có thể đính kèm nhiều Video, Tài liệu hoặc Đề thi khác nhau.</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">Bài học có thể đính kèm nhiều Video, Tài liệu hoặc Đề thi khác nhau.</p>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -314,7 +314,7 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
         {/* Components List */}
         {items.length === 0 ? (
           <div className="border border-dashed border-gray-250 dark:border-gray-800 rounded-2xl py-8 text-center bg-gray-50/30 dark:bg-gray-900/10">
-            <p className="text-xs text-gray-400 dark:text-gray-550 italic">Chưa có thành phần học liệu nào. Hãy bấm các nút phía trên để thêm.</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 italic">Chưa có thành phần học liệu nào. Hãy bấm các nút phía trên để thêm.</p>
           </div>
         ) : (
           <div className="space-y-4">

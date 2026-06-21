@@ -165,7 +165,7 @@ export default function LessonSidebar({
               <h2 className="text-sm font-bold text-gray-800 dark:text-gray-200">
                 Nội dung khóa học
               </h2>
-              <p className="text-xs text-gray-450 dark:text-gray-500 mt-0.5 font-medium">
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 font-medium">
                 {completedLessonIds.size}/{sortedLessons.length} bài hoàn thành
               </p>
             </div>
@@ -194,7 +194,7 @@ export default function LessonSidebar({
                   >
                     <ChevronDown
                       size={15}
-                      className={`text-gray-450 mt-0.5 shrink-0 transition-transform duration-200 ${
+                      className={`text-gray-400 mt-0.5 shrink-0 transition-transform duration-200 ${
                         isExpanded ? "" : "-rotate-90"
                       }`}
                     />
@@ -211,7 +211,7 @@ export default function LessonSidebar({
                   {isExpanded && (
                     <div className="bg-gray-50/20 dark:bg-gray-900/10 pb-2 border-t border-gray-50 dark:border-gray-850">
                       {chapterLessons.length === 0 ? (
-                        <p className="text-[10px] text-gray-400 dark:text-gray-550 italic pl-8 py-2">
+                        <p className="text-[10px] text-gray-400 dark:text-gray-500 italic pl-8 py-2">
                           Chưa có bài học nào trong chương này.
                         </p>
                       ) : (
@@ -232,7 +232,7 @@ export default function LessonSidebar({
                 >
                   <ChevronDown
                     size={15}
-                    className={`text-gray-450 mt-0.5 shrink-0 transition-transform duration-200 ${
+                    className={`text-gray-400 mt-0.5 shrink-0 transition-transform duration-200 ${
                       !!expandedChapters["unassigned"] ? "" : "-rotate-90"
                     }`}
                   />

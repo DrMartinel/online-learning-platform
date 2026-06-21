@@ -168,7 +168,7 @@ export default function CourseActionMenu({
                 setIsOpen(false);
                 setEditOpen(true);
               }}
-              className="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-55 dark:hover:bg-gray-800 flex items-center gap-2 cursor-pointer"
+              className="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2 cursor-pointer"
             >
               <Edit2 size={14} className="text-primary shrink-0" /> Chỉnh sửa khóa học
             </button>
@@ -176,7 +176,7 @@ export default function CourseActionMenu({
             {/* Toggle Status Option */}
             <button 
               onClick={toggleStatus}
-              className="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-55 dark:hover:bg-gray-800 flex items-center gap-2 border-t border-gray-100 dark:border-gray-850 cursor-pointer"
+              className="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2 border-t border-gray-100 dark:border-gray-850 cursor-pointer"
             >
               {isPublished ? (
                 <><EyeOff size={14} className="text-amber-500 shrink-0" /> Hủy xuất bản</>
@@ -188,7 +188,7 @@ export default function CourseActionMenu({
             {/* Sync AI Option */}
             <button 
               onClick={ingestCourse}
-              className="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-55 dark:hover:bg-gray-800 flex items-center gap-2 border-t border-gray-100 dark:border-gray-850 cursor-pointer"
+              className="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2 border-t border-gray-100 dark:border-gray-850 cursor-pointer"
             >
               <BrainCircuit size={14} className="text-primary shrink-0" /> Đồng bộ dữ liệu AI
             </button>
@@ -208,7 +208,7 @@ export default function CourseActionMenu({
       {/* --- EDIT COURSE DETAILS MODAL (GLASSMORPHISM) --- */}
       {editOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white dark:bg-gray-905 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+          <div className="w-full max-w-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
             
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
@@ -228,7 +228,7 @@ export default function CourseActionMenu({
             <form onSubmit={handleEditSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
               {/* Title */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-450 dark:text-gray-500 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5">
                   Tiêu đề khóa học *
                 </label>
                 <input
@@ -236,28 +236,28 @@ export default function CourseActionMenu({
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-850 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none"
+                  className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none"
                   placeholder="Nhập tiêu đề khóa học..."
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-450 dark:text-gray-500 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5">
                   Mô tả khóa học
                 </label>
                 <textarea
                   rows={4}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-850 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none resize-none"
+                  className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none resize-none"
                   placeholder="Giới thiệu sơ lược về nội dung khóa học..."
                 ></textarea>
               </div>
 
               {/* Price */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-450 dark:text-gray-500 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5">
                   Giá khóa học (VNĐ) <span className="text-[10px] text-gray-400 font-normal normal-case">(Nhập 0 nếu miễn phí)</span>
                 </label>
                 <div className="relative">
@@ -267,7 +267,7 @@ export default function CourseActionMenu({
                     step={1000}
                     value={price}
                     onChange={(e) => setPrice(Number(e.target.value) || 0)}
-                    className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-850 px-4 py-2.5 pr-12 text-gray-900 dark:text-white focus:border-primary outline-none"
+                    className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 pr-12 text-gray-900 dark:text-white focus:border-primary outline-none"
                     placeholder="Ví dụ: 200000"
                   />
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center text-xs font-bold text-gray-400 select-none pointer-events-none">
@@ -278,10 +278,10 @@ export default function CourseActionMenu({
 
               {/* Thumbnail Image upload */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-450 dark:text-gray-500 mb-2">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
                   Ảnh bìa khóa học mới (Tùy chọn)
                 </label>
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-xl cursor-pointer bg-white dark:bg-gray-850 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-xl cursor-pointer bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                   <div className="flex flex-col items-center justify-center pt-4 pb-4 px-4 text-center">
                     {thumbnailFile ? (
                       <>

@@ -115,9 +115,17 @@ export default async function CourseDetailPage({ params }: PageProps) {
   const cookieStore = await cookies();
   const token = cookieStore.get("olp_session")?.value;
   
+  const sortedLessons = [...lessons].sort((a, b) => a.orderIndex - b.orderIndex);
+  const lessonCount = sortedLessons.length;
+  
   let isLoggedIn = false;
   let isEnrolled = false;
   let isInstructor = false;
+  let courseProgress = {
+    completedLessons: 0,
+    percentage: 0,
+    firstIncompleteLessonId: null as string | null
+  };
 
   if (token) {
     const backendUrl = process.env.BACKEND_URL;
@@ -156,17 +164,42 @@ if (isLoggedIn) {
             console.error("Lỗi khi kiểm tra quyền sở hữu khóa học:", error);
             isEnrolled = false;
           }
+
+          if (isEnrolled) {
+            try {
+              const progressRes = await fetch(`${backendUrl}/user-progress/course/${course.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+                cache: 'no-store'
+              });
+              if (progressRes.ok) {
+                const progressData = await progressRes.json();
+                courseProgress.completedLessons = progressData.completedLessonsCount || 0;
+                
+                if (lessonCount > 0) {
+                   courseProgress.percentage = Math.round((courseProgress.completedLessons / lessonCount) * 100);
+                }
+
+                const completedLessonIds = new Set(
+                  progressData.progress?.filter((p: any) => p.completed).map((p: any) => p.lessonId) || []
+                );
+                
+                const firstIncomplete = sortedLessons.find(l => !completedLessonIds.has(l.id));
+                if (firstIncomplete) {
+                   courseProgress.firstIncompleteLessonId = firstIncomplete.id;
+                }
+              }
+            } catch (err) {
+              console.error("Lỗi khi fetch progress", err);
+            }
+          }
         }
       } catch (e) {
         console.error(e);
       }
     }
   }
-
-  const sortedLessons = [...lessons].sort((a, b) => a.orderIndex - b.orderIndex);
-  const lessonCount = sortedLessons.length;
   
-const thumbnailSignedUrl = await getSignedMediaUrl(course.thumbnailUrl, token);
+  const thumbnailSignedUrl = await getSignedMediaUrl(course.thumbnailUrl, token);
 
   return (
     <div className="min-h-full bg-white dark:bg-gray-950">
@@ -356,8 +389,43 @@ const thumbnailSignedUrl = await getSignedMediaUrl(course.thumbnailUrl, token);
                     </p>
                   ) : isEnrolled ? (
                     // Nếu ĐÃ MUA / ĐÃ ENROLL
-                    <div className="space-y-3">
-                      <EnrollButton courseId={course.id} isLoggedIn={isLoggedIn} isEnrolled={isEnrolled} />
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-1.5">
+                          <span>{courseProgress.completedLessons} / {lessonCount} bài học</span>
+                          <span className="font-semibold text-primary">{courseProgress.percentage}%</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${courseProgress.percentage}%`,
+                              background: courseProgress.percentage === 100 ? '#22c55e' : 'var(--color-primary)',
+                            }}
+                          />
+                        </div>
+                      </div>
+                      
+                      <Link
+                        href={courseProgress.percentage === 100 
+                          ? `/courses/${course.id}` 
+                          : courseProgress.firstIncompleteLessonId 
+                            ? `/learn/${course.id}/${courseProgress.firstIncompleteLessonId}`
+                            : (sortedLessons.length > 0 ? `/learn/${course.id}/${sortedLessons[0].id}` : `/courses/${course.id}`)}
+                        className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-base font-semibold shadow-lg transition-all"
+                      >
+                        {courseProgress.percentage === 100 ? (
+                          <>
+                            <CheckCircle2 size={18} />
+                            Xem lại khóa học
+                          </>
+                        ) : (
+                          <>
+                            <PlayCircle size={18} />
+                            {courseProgress.completedLessons > 0 ? 'Tiếp tục học' : 'Bắt đầu học'}
+                          </>
+                        )}
+                      </Link>
                     </div>
                   ) : course.price > 0 ? (
                     // Nếu TRẢ PHÍ (giá > 0) và CHƯA MUA

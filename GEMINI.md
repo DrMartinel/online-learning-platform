@@ -40,13 +40,15 @@ A full-stack online learning platform (OLP) built with a **Next.js** frontend, a
 
 ### Critical Commands
 
-| Command                    | Description                                                   |
-| -------------------------- | ------------------------------------------------------------- |
-| `pnpm run dev`             | Starts the dev stack (Supabase + hot-reload frontend/backend) |
-| `pnpm run dev:reset`       | Nukes volumes and orphans, then restarts the dev stack        |
-| `pnpm run dev:volume-reset`| **Deletes local DB and storage data** on disk                 |
-| `pnpm run build`           | Local build (Next.js + Backend NestJS)                        |
-| `pnpm run start`           | Runs the production-style stack                               |
+| Command                     | Description                                                   |
+| --------------------------- | ------------------------------------------------------------- |
+| `pnpm run dev`              | Starts the dev stack (Supabase + hot-reload frontend/backend) |
+| `pnpm run dev:reset`        | Nukes volumes and orphans, then restarts the dev stack        |
+| `pnpm run dev:volume-reset` | **Deletes local DB and storage data** on disk                 |
+| `pnpm run build`            | Local build (Next.js + Backend NestJS)                        |
+| `pnpm run start`            | Runs the production-style stack                               |
+| `pnpm run db:migrate`       | Apply any pending migrations to the running DB container      |
+| `pnpm run db:migrate:status`| Show which migrations are applied vs pending                  |
 
 ## Development Conventions
 
@@ -67,9 +69,16 @@ The backend follows a **Feature-Based Module** structure via NestJS. Each featur
 
 ### Database Migrations
 
-- Place new SQL migrations in `backend/migrations/`.
-- Migrations are automatically applied on a fresh database volume via `volumes/db/run-user-migrations.sh`.
-- To apply new migrations to an existing volume, use Supabase Studio or reset the volume.
+- Place new SQL migrations in `backend/migrations/` using the `NNNNN_description.sql` naming convention (e.g. `00013_new_feature.sql`).
+- Applied migrations are tracked in the `public.schema_migrations` table — each filename is recorded on first successful execution.
+- **Fresh volume:** migrations are auto-applied at DB init time via `volumes/db/run-user-migrations.sh`.
+- **Existing volume (e.g. after `git pull`):** apply new migrations without a reset:
+  ```bash
+  pnpm run db:migrate            # apply pending migrations
+  pnpm run db:migrate:status     # check status (does not apply anything)
+  ```
+- The `db:migrate` command requires the stack to be running (`pnpm run dev`) and is idempotent — already-applied migrations are safely skipped.
+- Write new migrations defensively using `CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, etc. to keep them idempotent.
 
 ### Security
 
