@@ -8,7 +8,7 @@ import type { Course } from "@/components/courses/CourseCard";
 import MyCourseCard, { type EnrolledCourse } from "@/components/user/MyCourseCard";
 import { getSignedMediaUrl } from "@/lib/supabase";
 
-async function getCourses(token: string | undefined): Promise<Course[]> {
+async function getCourses(token: string | undefined, isAdminOrTeacher: boolean): Promise<Course[]> {
   try {
     const backendUrl = process.env.BACKEND_URL;
     if (!backendUrl) return [];
@@ -16,7 +16,9 @@ async function getCourses(token: string | undefined): Promise<Course[]> {
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const res = await fetch(`${backendUrl}/courses`, {
+    const url = isAdminOrTeacher ? `${backendUrl}/courses` : `${backendUrl}/courses?published=true`;
+
+    const res = await fetch(url, {
       headers,
       cache: "no-store",
     });
@@ -139,9 +141,11 @@ export default async function DashboardPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get("olp_session")?.value;
 
-  const [user, courses, myCoursesData] = await Promise.all([
-    getCurrentUser(token),
-    getCourses(token),
+  const user = await getCurrentUser(token);
+  const isAdminOrTeacher = user?.role === "admin" || user?.permissions?.includes("action:course:create");
+
+  const [courses, myCoursesData] = await Promise.all([
+    getCourses(token, isAdminOrTeacher),
     getMyCoursesData(token) // Đổi tên biến nhận dữ liệu mới
   ]);
 
