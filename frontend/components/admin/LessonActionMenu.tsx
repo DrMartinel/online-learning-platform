@@ -173,7 +173,7 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: title.trim(),
-            content: content.trim() || null,
+            content: content.trim() || '',
             orderIndex: Number(orderIndex),
             chapterId: chapterId,
           }),

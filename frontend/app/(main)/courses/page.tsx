@@ -3,7 +3,7 @@ import CourseCatalog from "@/components/courses/CourseCatalog";
 import type { Course } from "@/components/courses/CourseCard";
 import { getSignedMediaUrl } from "@/lib/supabase";
 
-async function getCourses(): Promise<Course[]> {
+async function getCourses(isAdminOrTeacher: boolean): Promise<Course[]> {
   try {
     const backendUrl = process.env.BACKEND_URL;
     if (!backendUrl) return [];
@@ -14,7 +14,9 @@ async function getCourses(): Promise<Course[]> {
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const res = await fetch(`${backendUrl}/courses`, {
+    const url = isAdminOrTeacher ? `${backendUrl}/courses` : `${backendUrl}/courses?published=true`;
+
+    const res = await fetch(url, {
       headers,
       cache: "no-store",
     });
@@ -125,13 +127,13 @@ export default async function CoursesPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get("olp_session")?.value;
 
-  const [courses, user, enrolledCoursesProgress] = await Promise.all([
-    getCourses(),
-    getCurrentUser(token),
+  const user = await getCurrentUser(token);
+  const canCreate = user?.permissions?.includes('action:course:create') || user?.role === 'admin';
+
+  const [courses, enrolledCoursesProgress] = await Promise.all([
+    getCourses(canCreate),
     getEnrolledCoursesProgress(token),
   ]);
-
-  const canCreate = user?.permissions?.includes('action:course:create') || user?.role === 'admin';
 
   return <CourseCatalog initialCourses={courses} canCreateCourse={canCreate} enrolledCoursesProgress={enrolledCoursesProgress} />;
 }

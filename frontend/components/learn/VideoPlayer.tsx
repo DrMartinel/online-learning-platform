@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Play,
   Pause,
@@ -11,6 +11,7 @@ import {
   SkipBack,
   Settings,
   Lock, // Bổ sung icon Lock
+  Minimize,
 } from "lucide-react";
 import Link from "next/link"; // Bổ sung Link để điều hướng
 
@@ -36,6 +37,18 @@ export default function VideoPlayer({ src, title, isLocked, courseId }: VideoPla
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showCC, setShowCC] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Track fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -123,9 +136,21 @@ export default function VideoPlayer({ src, title, isLocked, courseId }: VideoPla
   const onPlay = () => setIsPlaying(true);
   const onPause = () => setIsPlaying(false);
 
+  const changePlaybackRate = (rate: number) => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = rate;
+    }
+    setPlaybackRate(rate);
+    setShowSettings(false);
+  };
+
   const fullscreen = () => {
-    const el = videoRef.current?.parentElement;
-    if (el?.requestFullscreen) el.requestFullscreen();
+    if (!document.fullscreenElement) {
+      const el = videoRef.current?.parentElement;
+      if (el?.requestFullscreen) el.requestFullscreen();
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen();
+    }
   };
 
   // === 3. GIAO DIỆN VIDEO PLAYER CŨ CỦA BẠN GIỮ NGUYÊN ===
@@ -221,14 +246,38 @@ export default function VideoPlayer({ src, title, isLocked, courseId }: VideoPla
           >
             CC
           </button>
-          <button className="text-white/60 hover:text-white transition-colors">
-            <Settings size={18} />
-          </button>
+          <div className="relative flex items-center">
+            <button 
+              onClick={() => setShowSettings(!showSettings)}
+              className={`transition-colors ${showSettings ? "text-white" : "text-white/60 hover:text-white"}`}
+            >
+              <Settings size={18} />
+            </button>
+            
+            {showSettings && (
+              <div className="absolute bottom-full right-0 mb-3 bg-gray-900/95 backdrop-blur-md border border-gray-800 rounded-xl p-2 shadow-xl min-w-[130px] z-50 animate-in fade-in zoom-in-95 duration-200">
+                <div className="text-[10px] font-bold text-gray-400 mb-1.5 px-2 uppercase tracking-wider">Tốc độ phát</div>
+                {[0.5, 0.75, 1, 1.25, 1.5, 2].map(rate => (
+                  <button
+                    key={rate}
+                    onClick={() => changePlaybackRate(rate)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                      playbackRate === rate 
+                        ? "bg-primary/20 text-primary" 
+                        : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                    }`}
+                  >
+                    {rate === 1 ? 'Chuẩn (1x)' : `${rate}x`}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <button
             onClick={fullscreen}
             className="text-white/60 hover:text-white transition-colors"
           >
-            <Maximize size={18} />
+            {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
           </button>
         </div>
       </div>
