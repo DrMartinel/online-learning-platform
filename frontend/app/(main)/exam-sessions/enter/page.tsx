@@ -36,7 +36,12 @@ function EnterExamSessionForm() {
       });
 
       if (res.ok) {
-        // Success, redirect to the session details page
+        // Lưu accessCode vào sessionStorage để lobby page dùng khi startAttempt
+        // (backend sẽ xác thực lại accessCode khi bắt đầu làm bài)
+        if (accessCode.trim()) {
+          sessionStorage.setItem(`exam_access_${sessionId.trim()}`, accessCode.trim());
+        }
+        // Success, redirect to the session lobby page
         router.push(`/exam-sessions/${sessionId.trim()}`);
       } else {
         const data = await res.json();

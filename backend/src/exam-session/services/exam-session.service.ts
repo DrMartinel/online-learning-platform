@@ -80,6 +80,7 @@ export class ExamSessionService {
     }
 
     if (dto.title !== undefined) session.title = dto.title;
+    if (dto.examId !== undefined) session.examId = dto.examId;
     if (dto.startTime !== undefined) session.startTime = new Date(dto.startTime);
     if (dto.endTime !== undefined) session.endTime = new Date(dto.endTime);
     if (dto.durationMinutes !== undefined) session.durationMinutes = dto.durationMinutes;

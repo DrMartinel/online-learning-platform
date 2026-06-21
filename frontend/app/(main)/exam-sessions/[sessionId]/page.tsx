@@ -38,15 +38,23 @@ export default function ExamSessionLobbyPage({ params }: { params: Promise<{ ses
   const handleStartAttempt = async () => {
     try {
       setStartLoading(true);
+
+      // Đọc accessCode đã lưu từ bước /enter (nếu có) để xác thực lại với backend
+      const savedAccessCode = sessionStorage.getItem(`exam_access_${sessionId}`) || undefined;
+
       const res = await fetch(`/api/exam-sessions/attempts/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId }), // Access code was already validated during enter, but we might need it if the backend requires it. 
-        // Note: Start attempt will create or resume attempt.
+        body: JSON.stringify({
+          sessionId,
+          accessCode: savedAccessCode,
+        }),
       });
 
       if (res.ok) {
         const attempt = await res.json();
+        // Xóa accessCode khỏi sessionStorage sau khi đã bắt đầu thi
+        sessionStorage.removeItem(`exam_access_${sessionId}`);
         router.push(`/exam-sessions/attempts/${attempt.id}/take`);
       } else {
         const err = await res.json();

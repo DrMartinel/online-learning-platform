@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use, useRef } from 'react';
+import { useState, useEffect, use, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Clock, Save, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
@@ -22,6 +22,10 @@ export default function ExamAttemptTakePage({ params }: { params: Promise<{ atte
   const [katexLoaded, setKatexLoaded] = useState(false);
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Refs để tránh stale closure trong auto-submit khi hết giờ
+  const submittingRef = useRef(false);
+  const answersRef = useRef<Record<string, any>>({});
+  const handleSubmitRef = useRef<((autoSubmit?: boolean) => Promise<void>) | null>(null);
 
   useEffect(() => {
     // Check if katex is already on page
@@ -101,15 +105,17 @@ export default function ExamAttemptTakePage({ params }: { params: Promise<{ atte
     }
   };
 
+  // Auto-submit khi hết giờ — dùng ref để tránh stale closure và vòng lặp deps
   useEffect(() => {
-    if (timeLeft !== null && timeLeft <= 0 && !submitting) {
-      handleSubmit(true);
+    if (timeLeft !== null && timeLeft <= 0 && !submittingRef.current) {
+      handleSubmitRef.current?.(true);
     }
-  }, [timeLeft, submitting]);
+  }, [timeLeft]);
 
   const handleAnswerChange = (questionId: string, value: any) => {
     const newAnswers = { ...answers, [questionId]: value };
     setAnswers(newAnswers);
+    answersRef.current = newAnswers; // Cập nhật ref để auto-submit dùng được answers mới nhất
     
     // Auto save with debounce
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
@@ -133,21 +139,25 @@ export default function ExamAttemptTakePage({ params }: { params: Promise<{ atte
     }
   };
 
-  const handleSubmit = async (autoSubmit = false) => {
-    if (submitting) return;
+  const handleSubmit = useCallback(async (autoSubmit = false) => {
+    if (submittingRef.current) return;
 
     if (!autoSubmit && !window.confirm('Bạn có chắc chắn muốn nộp bài? Sau khi nộp sẽ không thể sửa lại.')) {
       return;
     }
     
     try {
+      submittingRef.current = true;
       setSubmitting(true);
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      
+      // Dùng answersRef.current để lấy answers mới nhất, tránh stale closure
+      const currentAnswers = autoSubmit ? answersRef.current : answers;
       
       const res = await fetch(`/api/exam-sessions/attempts/${attemptId}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers }),
+        body: JSON.stringify({ answers: currentAnswers }),
       });
       
       if (res.ok) {
@@ -155,13 +165,18 @@ export default function ExamAttemptTakePage({ params }: { params: Promise<{ atte
       } else {
         const data = await res.json();
         alert(data.error || 'Có lỗi khi nộp bài');
+        submittingRef.current = false;
         setSubmitting(false);
       }
     } catch (e) {
       alert('Lỗi kết nối khi nộp bài');
+      submittingRef.current = false;
       setSubmitting(false);
     }
-  };
+  }, [answers, attemptId, router]);
+
+  // Luôn cập nhật ref để auto-submit effect gọi được phiên bản mới nhất
+  handleSubmitRef.current = handleSubmit;
 
   const formatTime = (seconds: number | null) => {
     if (seconds === null) return '--:--';

@@ -17,6 +17,7 @@ export class CreateExamSessionDTO extends createZodDto(createExamSessionSchema) 
 
 export const updateExamSessionSchema = z.object({
   title: z.string().min(1).optional(),
+  examId: z.string().uuid().optional(),
   startTime: z.string().datetime().optional(),
   endTime: z.string().datetime().optional(),
   durationMinutes: z.number().int().min(1).optional(),

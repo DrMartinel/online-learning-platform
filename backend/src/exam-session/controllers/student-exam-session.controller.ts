@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, Query, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, ForbiddenException } from '@nestjs/common';
 import { ExamSessionService } from '../services/exam-session.service';
 import {
   CreateExamAttemptDTO,
@@ -26,24 +26,6 @@ export class StudentExamSessionController {
     @Body('accessCode') accessCode?: string,
   ): Promise<ExamSessionResponseDTO> {
     return this.service.enterSession(sessionId, user.id, accessCode);
-  }
-
-  @Get(':id')
-  @Auth()
-  @ApiOperation({ summary: 'Get basic session info before entering' })
-  @ApiResponse({ status: 200, description: 'Session info', type: ExamSessionResponseDTO })
-  async getSessionInfo(
-    @Param('id') sessionId: string,
-  ): Promise<ExamSessionResponseDTO> {
-    const session = await this.service.getSessionDetail(sessionId);
-    if (!session) {
-      throw new ForbiddenException('Không tìm thấy đợt thi.');
-    }
-    // Không trả về accessCode thực sự ra ngoài
-    return {
-      ...session,
-      accessCode: session.accessCode ? 'REQUIRED' : null
-    } as any;
   }
 
   @Post('attempts/start')
@@ -81,6 +63,16 @@ export class StudentExamSessionController {
     return this.service.submitAttempt(attemptId, user.id, dto.answers);
   }
 
+  // NOTE: /attempts/:id/exam-data MUST be registered before /attempts/:id
+  // to prevent NestJS matching '123/exam-data' as id='123' then ignoring the suffix.
+  @Get('attempts/:id/exam-data')
+  @Auth()
+  @ApiOperation({ summary: 'Get exam data for an attempt (strips correct answers if in progress)' })
+  @ApiResponse({ status: 200, description: 'Exam structure and questions' })
+  async getAttemptExamData(@Param('id') id: string, @CurrentUser() user: any): Promise<any> {
+    return this.service.getAttemptExamData(id, user.id);
+  }
+
   @Get('attempts/:id')
   @Auth()
   @ApiOperation({ summary: 'Get current student attempt detail' })
@@ -89,11 +81,21 @@ export class StudentExamSessionController {
     return this.service.getAttemptDetail(id, user.id);
   }
 
-  @Get('attempts/:id/exam-data')
+  @Get(':id')
   @Auth()
-  @ApiOperation({ summary: 'Get exam data for an attempt (strips correct answers if in progress)' })
-  @ApiResponse({ status: 200, description: 'Exam structure and questions' })
-  async getAttemptExamData(@Param('id') id: string, @CurrentUser() user: any): Promise<any> {
-    return this.service.getAttemptExamData(id, user.id);
+  @ApiOperation({ summary: 'Get basic session info before entering' })
+  @ApiResponse({ status: 200, description: 'Session info', type: ExamSessionResponseDTO })
+  async getSessionInfo(
+    @Param('id') sessionId: string,
+  ): Promise<ExamSessionResponseDTO> {
+    const session = await this.service.getSessionDetail(sessionId);
+    if (!session) {
+      throw new ForbiddenException('Không tìm thấy đợt thi.');
+    }
+    // Không trả về accessCode thực sự ra ngoài
+    return {
+      ...session,
+      accessCode: session.accessCode ? 'REQUIRED' : null
+    } as any;
   }
 }
