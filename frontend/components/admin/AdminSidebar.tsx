@@ -5,7 +5,8 @@ import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Users, BookOpen, Shield, FileText, CreditCard } from 'lucide-react';
 
 const navItems = [
-  { name: 'Bảng điều khiển', href: '/admin', icon: LayoutDashboard },
+  { name: 'Đề thi', href: '/admin/exams', icon: FileText },
+  { name: 'Đợt thi', href: '/admin/exam-sessions', icon: BookOpen },
   { name: 'Người dùng', href: '/admin/users', icon: Users },
   { name: 'Vai trò & Quyền', href: '/admin/iam', icon: Shield },
   { name: 'Giao dịch', href: '/admin/transactions', icon: CreditCard },

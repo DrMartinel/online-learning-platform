@@ -17,10 +17,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/components/layout/ThemeProvider";
 
-const navItems = [
-  { href: "/", label: "Trang chủ" },
-  { href: "/courses", label: "Khóa học" },
-];
+
 
 interface UserProfile {
   id: string;
@@ -102,19 +99,8 @@ export default function Header() {
         </Link>
 
         {/* Desktop nav */}
+
         <nav className="hidden md:flex items-center gap-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${pathname === item.href
-                ? "bg-primary/10 text-primary dark:bg-primary/20"
-                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
-            >
-              {item.label}
-            </Link>
-          ))}
           {user?.role === 'admin' && (
             <Link
               href="/admin/exams"
@@ -180,7 +166,7 @@ export default function Header() {
                         className="flex items-center gap-2 px-4 py-2 text-sm text-primary dark:text-primary hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
                         <User size={14} />
-                        Admin Dashboard
+                        Bảng quản trị
                       </Link>
                     )}
                     {user.permissions?.includes('action:course:create') && (
@@ -250,19 +236,6 @@ export default function Header() {
       {/* Mobile nav */}
       {mobileOpen && (
         <div className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3 space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMobileOpen(false)}
-              className={`block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === item.href
-                  ? "bg-primary/10 text-primary"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
-            >
-              {item.label}
-            </Link>
-          ))}
           {user?.role === 'admin' && (
             <Link
               href="/exams"

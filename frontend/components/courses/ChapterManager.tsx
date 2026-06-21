@@ -125,7 +125,7 @@ export default function ChapterManager({ courseId, initialChapters }: ChapterMan
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-2xl bg-white dark:bg-gray-905 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+          <div className="w-full max-w-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
             
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
@@ -154,7 +154,7 @@ export default function ChapterManager({ courseId, initialChapters }: ChapterMan
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
                       required
-                      className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-850 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none transition-all"
+                      className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none transition-all"
                     />
                   </div>
                   <div>
@@ -165,7 +165,7 @@ export default function ChapterManager({ courseId, initialChapters }: ChapterMan
                       onChange={(e) => setNewOrder(parseInt(e.target.value) || 1)}
                       required
                       min={1}
-                      className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-850 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none transition-all"
+                      className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none transition-all"
                     />
                   </div>
                 </div>
@@ -185,7 +185,7 @@ export default function ChapterManager({ courseId, initialChapters }: ChapterMan
               <div className="space-y-3">
                 <h3 className="text-xs font-bold text-gray-900 dark:text-white">Danh sách chương học hiện tại</h3>
                 {chapters.length === 0 ? (
-                  <p className="text-xs text-gray-450 dark:text-gray-500 italic py-4 text-center">
+                  <p className="text-xs text-gray-400 dark:text-gray-500 italic py-4 text-center">
                     Khóa học này chưa có chương học nào.
                   </p>
                 ) : (
@@ -201,17 +201,17 @@ export default function ChapterManager({ courseId, initialChapters }: ChapterMan
                                 type="text"
                                 value={editingTitle}
                                 onChange={(e) => setEditingTitle(e.target.value)}
-                                className="flex-1 text-xs rounded-lg border border-gray-300 dark:border-gray-750 bg-white dark:bg-gray-800 px-3 py-1.5 text-gray-900 dark:text-white focus:border-primary outline-none"
+                                className="flex-1 text-xs rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-gray-900 dark:text-white focus:border-primary outline-none"
                               />
                               <input
                                 type="number"
                                 value={editingOrder}
                                 onChange={(e) => setEditingOrder(parseInt(e.target.value) || 1)}
-                                className="w-16 text-xs rounded-lg border border-gray-300 dark:border-gray-750 bg-white dark:bg-gray-800 px-2 py-1.5 text-gray-900 dark:text-white focus:border-primary outline-none"
+                                className="w-16 text-xs rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-gray-900 dark:text-white focus:border-primary outline-none"
                               />
                               <button
                                 onClick={() => handleSaveEdit(ch.id)}
-                                className="p-1.5 bg-emerald-55 hover:bg-emerald-60 transition-colors text-emerald-700 dark:text-emerald-400 rounded-lg"
+                                className="p-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 transition-colors text-emerald-700 dark:text-emerald-400 rounded-lg"
                                 title="Lưu thay đổi"
                               >
                                 <Check size={14} />
@@ -264,7 +264,7 @@ export default function ChapterManager({ courseId, initialChapters }: ChapterMan
             <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex justify-end">
               <button
                 onClick={() => setIsOpen(false)}
-                className="px-5 py-2 text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-750 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
+                className="px-5 py-2 text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
               >
                 Đóng
               </button>

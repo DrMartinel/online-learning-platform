@@ -249,7 +249,7 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
       <button 
         onClick={() => setIsOpen(!isOpen)}
         disabled={isPending}
-        className="p-2 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-55 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-750 dark:hover:text-gray-200 transition-colors disabled:opacity-50 cursor-pointer"
+        className="p-2 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors disabled:opacity-50 cursor-pointer"
       >
         {isPending ? <Loader2 size={16} className="animate-spin text-gray-500" /> : <MoreVertical size={16} />}
       </button>
@@ -306,7 +306,7 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
               </h2>
               <button
                 onClick={() => setEditOpen(false)}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-750 dark:hover:text-gray-200 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -318,7 +318,7 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
               {/* Title & Order Index */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="sm:col-span-2">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-450 dark:text-gray-500 mb-1.5">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5">
                     Tiêu đề bài học *
                   </label>
                   <input
@@ -326,13 +326,13 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-850 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none"
+                    className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none"
                     placeholder="Nhập tiêu đề..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-450 dark:text-gray-500 mb-1.5">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5">
                     Thứ tự hiển thị *
                   </label>
                   <input
@@ -341,14 +341,14 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
                     min={1}
                     value={orderIndex}
                     onChange={(e) => setOrderIndex(Number(e.target.value) || 1)}
-                    className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-850 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none"
+                    className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none"
                   />
                 </div>
               </div>
 
               {/* Chapter Select */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-450 dark:text-gray-500 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5">
                   Chương học *
                 </label>
                 {chapters.length === 0 ? (
@@ -359,7 +359,7 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
                   <select
                     value={chapterId}
                     onChange={(e) => setChapterId(e.target.value)}
-                    className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-850 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none"
+                    className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none"
                     required
                   >
                     {chapters.map((ch) => (
@@ -373,14 +373,14 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
 
               {/* Description Content */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-450 dark:text-gray-500 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5">
                   Nội dung / Mô tả
                 </label>
                 <textarea
                   rows={3}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-850 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none resize-none"
+                  className="w-full text-xs rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-gray-900 dark:text-white focus:border-primary outline-none resize-none"
                   placeholder="Viết nội dung bài giảng lý thuyết..."
                 ></textarea>
               </div>
@@ -449,7 +449,7 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
                       <Plus className="text-primary" size={16} />
                       Thêm học liệu đính kèm mới
                     </h3>
-                    <p className="text-[10px] text-gray-450 dark:text-gray-500 mt-0.5">Thêm các Videos, Tài liệu hoặc Đề thi trực tiếp vào bài học.</p>
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Thêm các Videos, Tài liệu hoặc Đề thi trực tiếp vào bài học.</p>
                   </div>
 
                   <div className="flex flex-wrap gap-2">

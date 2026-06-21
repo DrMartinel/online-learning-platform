@@ -83,8 +83,8 @@ async function getMyCoursesData(token: string | undefined): Promise<{ total: num
 
       if (progressRes.ok) {
         const progress = await progressRes.json();
-        if (progress && progress.completedLessons) {
-          completedLessons = progress.completedLessons;
+        if (progress && progress.completedLessonsCount !== undefined) {
+          completedLessons = progress.completedLessonsCount;
         }
       }
 
