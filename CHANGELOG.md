@@ -451,4 +451,7 @@ Check updates for each service to learn more.
 ### Supavisor
 - Updated to `2.7.0` - [Release](https://github.com/supabase/supavisor/releases/tag/v2.7.0)
 
+
+### Pnpm version
+- Update to 21.x
 ---
