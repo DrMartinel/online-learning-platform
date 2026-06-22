@@ -16,6 +16,7 @@ import {
   Bell
 } from "lucide-react";
 import { useTheme } from "@/components/layout/ThemeProvider";
+import AvatarImage from "@/components/user/AvatarImage";
 
 
 
@@ -25,6 +26,7 @@ interface UserProfile {
   fullName: string;
   role: string;
   permissions?: string[];
+  avatarUrl?: string;
 }
 
 function getInitials(user: UserProfile): string {
@@ -140,9 +142,11 @@ export default function Header() {
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center gap-1.5"
                 >
-                  <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold cursor-pointer">
-                    {getInitials(user)}
-                  </div>
+                  <AvatarImage 
+                    avatarUrl={user.avatarUrl} 
+                    fullName={user.fullName || user.email} 
+                    className="w-9 h-9 rounded-full object-cover border border-gray-200 dark:border-gray-700 cursor-pointer" 
+                  />
                   <ChevronDown
                     size={14}
                     className="hidden sm:block text-gray-400"

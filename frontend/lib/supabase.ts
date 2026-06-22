@@ -24,6 +24,12 @@ export const getMediaUrl = (pathOrUrl: string | null | undefined) => {
   return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/course-media/${pathOrUrl}`;
 };
 
+export const getAvatarUrl = (pathOrUrl: string | null | undefined) => {
+  if (!pathOrUrl) return '';
+  if (pathOrUrl.startsWith('http')) return pathOrUrl;
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${pathOrUrl}`;
+};
+
 export const getSignedMediaUrl = async (pathOrUrl: string | null | undefined, sessionToken?: string) => {
   if (!pathOrUrl) return '';
   if (pathOrUrl.startsWith('http')) return pathOrUrl;
@@ -37,6 +43,31 @@ export const getSignedMediaUrl = async (pathOrUrl: string | null | undefined, se
   
   if (error || !data?.signedUrl) {
     console.error("Failed to generate signed URL:", error);
+    return '';
+  }
+  
+  if (isServer && process.env.SUPABASE_INTERNAL_URL) {
+    return data.signedUrl.replace(
+      process.env.SUPABASE_INTERNAL_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_URL!
+    );
+  }
+  
+  return data.signedUrl;
+};
+
+export const getSignedAvatarUrl = async (pathOrUrl: string | null | undefined, sessionToken?: string) => {
+  if (!pathOrUrl) return '';
+  if (pathOrUrl.startsWith('http')) return pathOrUrl;
+  
+  const supabase = sessionToken 
+    ? getSupabaseClient(sessionToken)
+    : createClient(supabaseUrl, supabaseKey);
+
+  const { data, error } = await supabase.storage.from('avatars').createSignedUrl(pathOrUrl, 86400); // 24 hours
+  
+  if (error || !data?.signedUrl) {
+    console.error("Failed to generate signed URL for avatar:", error);
     return '';
   }
   

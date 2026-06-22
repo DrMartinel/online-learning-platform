@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { User, Save, Loader2, CheckCircle2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { User, Save, Loader2, CheckCircle2, Camera } from 'lucide-react';
+import { getSupabaseClient, getSignedAvatarUrl } from '@/lib/supabase';
 
 interface UserProfile {
   id: string;
@@ -14,12 +15,71 @@ interface UserProfile {
 
 interface ProfileFormProps {
   initialProfile: UserProfile;
+  token: string;
 }
 
-export default function ProfileForm({ initialProfile }: ProfileFormProps) {
+export default function ProfileForm({ initialProfile, token }: ProfileFormProps) {
   const [fullName, setFullName] = useState(initialProfile.fullName ?? '');
+  const [avatarUrl, setAvatarUrl] = useState(initialProfile.avatarUrl ?? '');
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadSignedUrl() {
+      if (!avatarUrl) {
+        setAvatarPreviewUrl('');
+        return;
+      }
+      if (avatarUrl.startsWith('http')) {
+        setAvatarPreviewUrl(avatarUrl);
+        return;
+      }
+      try {
+        const signedUrl = await getSignedAvatarUrl(avatarUrl, token);
+        if (isMounted) setAvatarPreviewUrl(signedUrl);
+      } catch (err) {
+        console.error("Failed to load signed avatar URL:", err);
+      }
+    }
+    loadSignedUrl();
+    return () => { isMounted = false; };
+  }, [avatarUrl, token]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingAvatar(true);
+    setErrorMsg('');
+
+    try {
+      const supabase = getSupabaseClient(token);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `avatar_${initialProfile.id}_${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      setAvatarUrl(fileName);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Lỗi tải ảnh lên.');
+      setStatus('error');
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +92,7 @@ export default function ProfileForm({ initialProfile }: ProfileFormProps) {
       const res = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName: fullName.trim() }),
+        body: JSON.stringify({ fullName: fullName.trim(), avatarUrl: avatarUrl }),
       });
 
       if (!res.ok) {
@@ -58,20 +118,41 @@ export default function ProfileForm({ initialProfile }: ProfileFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Avatar placeholder */}
       <div className="flex items-center gap-5">
-        <div className="w-20 h-20 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center border-2 border-[var(--color-primary)]/20 shrink-0">
-          {initialProfile.avatarUrl ? (
-            <img
-              src={initialProfile.avatarUrl}
-              alt={initialProfile.fullName ?? 'Avatar'}
-              className="w-full h-full rounded-full object-cover"
-            />
-          ) : (
-            <User className="w-9 h-9 text-[var(--color-primary)]" />
-          )}
+        <div className="relative group">
+          <div className="w-20 h-20 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center border-2 border-[var(--color-primary)]/20 shrink-0 overflow-hidden relative">
+            {avatarPreviewUrl ? (
+              <img
+                src={avatarPreviewUrl}
+                alt={fullName || 'Avatar'}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <User className="w-9 h-9 text-[var(--color-primary)]" />
+            )}
+            
+            {/* Upload Overlay */}
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-full"
+            >
+              {uploadingAvatar ? (
+                <Loader2 className="w-6 h-6 text-white animate-spin" />
+              ) : (
+                <Camera className="w-6 h-6 text-white" />
+              )}
+            </div>
+          </div>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleAvatarUpload} 
+            accept="image/*" 
+            className="hidden" 
+          />
         </div>
         <div>
           <p className="font-semibold text-gray-900 dark:text-white text-lg">
-            {initialProfile.fullName ?? 'Chưa đặt tên'}
+            {fullName || 'Chưa đặt tên'}
           </p>
           <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
             {roleLabel[initialProfile.role] ?? initialProfile.role}
@@ -148,7 +229,7 @@ export default function ProfileForm({ initialProfile }: ProfileFormProps) {
       {/* Submit */}
       <button
         type="submit"
-        disabled={status === 'loading' || status === 'success' || !fullName.trim()}
+        disabled={status === 'loading' || status === 'success' || uploadingAvatar || !fullName.trim()}
         className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[var(--color-primary)] text-white text-sm font-semibold hover:bg-[var(--color-primary-dark)] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
       >
         {status === 'loading' ? (

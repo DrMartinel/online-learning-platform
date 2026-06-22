@@ -20,6 +20,7 @@ import {
   X
 } from "lucide-react";
 import { useTheme } from "@/components/layout/ThemeProvider";
+import AvatarImage from "@/components/user/AvatarImage";
 
 interface UserProfile {
   id: string;
@@ -27,6 +28,7 @@ interface UserProfile {
   fullName: string;
   role: string;
   permissions?: string[];
+  avatarUrl?: string;
 }
 
 function getInitials(user: UserProfile): string {
@@ -190,9 +192,11 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             {(!isCollapsed || isOpen) ? (
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold shrink-0">
-                    {getInitials(user)}
-                  </div>
+                  <AvatarImage 
+                    avatarUrl={user.avatarUrl} 
+                    fullName={user.fullName || user.email} 
+                    className="w-10 h-10 rounded-full object-cover shrink-0 border border-gray-200 dark:border-gray-700" 
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                       {user.fullName || user.email}
@@ -221,9 +225,11 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               </div>
             ) : (
               <div className="flex flex-col items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold">
-                  {getInitials(user)}
-                </div>
+                <AvatarImage 
+                  avatarUrl={user.avatarUrl} 
+                  fullName={user.fullName || user.email} 
+                  className="w-10 h-10 rounded-full object-cover shrink-0 border border-gray-200 dark:border-gray-700" 
+                />
                 <div className="flex flex-col gap-2 pt-2 border-t border-gray-100 dark:border-gray-800 w-full items-center">
                   <button
                     onClick={toggleTheme}
