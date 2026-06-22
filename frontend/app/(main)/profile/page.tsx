@@ -84,7 +84,7 @@ export default async function ProfilePage() {
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
             Thông tin tài khoản
           </h2>
-          <ProfileForm initialProfile={initialProfile} />
+          <ProfileForm initialProfile={initialProfile} token={token} />
         </div>
       </div>
     </div>

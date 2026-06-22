@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+
 import { UserPlus, Mail, Calendar, UserIcon, Edit2, ShieldAlert } from "lucide-react";
+import AvatarImage from "@/components/user/AvatarImage";
 import UserRoleSelect from "@/components/admin/UserRoleSelect";
 import UserModal from "@/components/admin/UserModal";
 
@@ -67,13 +69,11 @@ export default function UsersClientView({ initialUsers }: { initialUsers: UserPr
                 <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      {user.avatarUrl ? (
-                        <img src={user.avatarUrl} alt={user.fullName} className="w-10 h-10 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                          <UserIcon size={20} className="text-gray-400" />
-                        </div>
-                      )}
+                      <AvatarImage 
+                        avatarUrl={user.avatarUrl} 
+                        fullName={user.fullName} 
+                        className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700" 
+                      />
                       <span className="font-medium text-gray-900 dark:text-white">{user.fullName}</span>
                     </div>
                   </td>
