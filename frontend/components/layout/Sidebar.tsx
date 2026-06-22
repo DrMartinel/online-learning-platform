@@ -73,8 +73,11 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const navItems = [
     { href: "/", label: "Trang chủ", icon: Home },
     { href: "/courses", label: "Khóa học", icon: BookOpen },
-    { href: "/my-courses", label: "Khóa học của tôi", icon: GraduationCap },
   ];
+
+  if (user?.role !== 'admin' && user?.role !== 'operator') {
+    navItems.push({ href: "/my-courses", label: "Khóa học của tôi", icon: GraduationCap });
+  }
 
   const canManageExams = user?.role === 'admin' || user?.permissions?.includes('action:course:create');
 
