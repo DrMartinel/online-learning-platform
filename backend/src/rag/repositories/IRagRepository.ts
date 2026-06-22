@@ -51,7 +51,12 @@ export interface IRagRepository {
   saveTranscript(lessonId: string, transcript: string): Promise<void>;
 
   /**
-   * Get the transcript for a lesson (returns null if not set).
+   * Save a transcript to the lesson_contents table.
    */
-  getTranscript(lessonId: string): Promise<string | null>;
+  saveContentTranscript(contentId: string, transcript: string): Promise<void>;
+
+  /**
+   * Get the transcript for a lesson_content (returns null if not set).
+   */
+  getContentTranscript(contentId: string): Promise<string | null>;
 }

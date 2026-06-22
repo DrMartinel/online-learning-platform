@@ -275,7 +275,7 @@ export default function ExamSessionsPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-200 dark:border-gray-800 pb-5">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-wider">
-            <Link href="/admin/exams" className="hover:underline flex items-center gap-1">
+            <Link href="/exams" className="hover:underline flex items-center gap-1">
               <ArrowLeft size={12} /> Quản lý đề thi
             </Link>
             <span>/</span>
@@ -398,7 +398,7 @@ export default function ExamSessionsPage() {
                 {/* Actions Bottom */}
                 <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-4 mt-4">
                   <Link 
-                    href={`/admin/exams/sessions/${session.id}/dashboard`}
+                    href={`/exam-sessions/${session.id}/dashboard`}
                     className="flex items-center gap-1 px-3 py-1.5 bg-primary/10 hover:bg-primary/15 text-primary text-xs font-extrabold rounded-xl transition-all"
                   >
                     <Award size={13} /> Dashboard giám sát

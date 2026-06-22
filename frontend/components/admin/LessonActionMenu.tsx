@@ -6,6 +6,7 @@ import {
   MoreVertical, Loader2, BrainCircuit, Edit2, Trash2, X, Plus, UploadCloud, Video, FileText, BookOpen, AlertCircle, FilePlus
 } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase';
+import ProgressModal from '@/components/ui/ProgressModal';
 
 interface Props {
   lesson: any;
@@ -40,6 +41,9 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
   const [loadingContents, setLoadingContents] = useState(false);
   const [exams, setExams] = useState<any[]>([]);
   const [newItems, setNewItems] = useState<ComponentItem[]>([]);
+
+  // Sync Modal State
+  const [syncModalOpen, setSyncModalOpen] = useState(false);
 
   useEffect(() => {
     if (editOpen) {
@@ -120,20 +124,7 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
 
   const ingestLesson = () => {
     setIsOpen(false);
-    startTransition(async () => {
-      try {
-        const res = await fetch(`/api/rag/ingest/lesson/${lesson.id}`, {
-          method: 'POST',
-        });
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Đồng bộ bài học với AI thất bại');
-        }
-        alert('Bắt đầu đồng bộ thành công! Cơ sở tri thức AI đang được cập nhật.');
-      } catch (err) {
-        alert(err instanceof Error ? err.message : 'Đã xảy ra lỗi');
-      }
-    });
+    setSyncModalOpen(true);
   };
 
   const deleteLesson = () => {
@@ -660,6 +651,18 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
           </div>
         </div>
       )}
+
+      {/* --- SYNC PROGRESS MODAL --- */}
+      <ProgressModal
+        isOpen={syncModalOpen}
+        onClose={() => setSyncModalOpen(false)}
+        title="Đồng bộ bài học với AI"
+        description={`Đang phân tích và đồng bộ nội dung của bài học "${title}" vào cơ sở tri thức...`}
+        streamUrl={`/api/rag/ingest/lesson/${lesson.id}/stream`}
+        onSuccess={() => {
+          // Could refresh if needed
+        }}
+      />
     </div>
   );
 }

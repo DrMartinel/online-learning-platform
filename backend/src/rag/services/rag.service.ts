@@ -95,16 +95,24 @@ export class RagService {
     title: string,
     content: string,
     category: string = 'general',
+    progressCallback?: (progress: number, message: string) => void,
   ): Promise<void> {
     this.logger.log(`Ingesting knowledge base entry: "${title}" [${category}]`);
+    progressCallback?.(10, 'Chunking text content...');
 
     const fullText = `${title}\n\n${content}`;
     const chunks = this.embeddingService.chunkText(fullText);
-    if (chunks.length === 0) return;
+    if (chunks.length === 0) {
+      progressCallback?.(100, 'No content to ingest');
+      return;
+    }
 
     this.logger.log(`Embedding ${chunks.length} knowledge base chunks for "${title}"`);
+    progressCallback?.(40, `Embedding ${chunks.length} chunks...`);
 
     const embeddings = await this.embeddingService.generateEmbeddings(chunks);
+    
+    progressCallback?.(80, 'Saving chunks to database...');
 
     const documentChunks: DocumentChunk[] = chunks.map((chunkContent, index) => ({
       id: randomUUID(),
@@ -126,19 +134,21 @@ export class RagService {
     }));
 
     await this.ragRepo.upsertKnowledgeBaseChunks(documentChunks, title);
+    progressCallback?.(100, 'Ingestion complete');
   }
 
   /**
    * Ingest all lessons of a course: chunk content, generate embeddings,
    * transcribe videos, and store everything.
    */
-  async ingestCourse(courseId: string): Promise<void> {
+  async ingestCourse(courseId: string, progressCallback?: (progress: number, message: string) => void): Promise<void> {
     this.logger.log(`Starting ingestion for course: ${courseId}`);
+    progressCallback?.(5, 'Fetching course lessons...');
 
     // Fetch all lessons for the course
     const { data: lessons, error } = await this.supabase
       .from('lessons')
-      .select('id, title, content, video_url, transcript')
+      .select('id, title, content, video_url, transcript, lesson_contents(*)')
       .eq('course_id', courseId)
       .order('order_index', { ascending: true });
 
@@ -148,8 +158,11 @@ export class RagService {
 
     if (!lessons || lessons.length === 0) {
       this.logger.warn(`No lessons found for course ${courseId}`);
+      progressCallback?.(100, 'No lessons found for course');
       return;
     }
+
+    progressCallback?.(10, 'Fetching course description...');
 
     // Also fetch course description for embedding
     const { data: course, error: courseError } = await this.supabase
@@ -162,6 +175,9 @@ export class RagService {
       throw new Error(`Failed to fetch course ${courseId}: ${courseError.message}`);
     }
 
+    let currentProgress = 15;
+    const progressPerLesson = 85 / lessons.length;
+
     // Ingest course description if available
     if (course?.description) {
       await this.ingestText(
@@ -173,22 +189,30 @@ export class RagService {
     }
 
     // Ingest each lesson
-    for (const lesson of lessons) {
-      await this.ingestLessonContent(courseId, lesson);
+    for (const [index, lesson] of lessons.entries()) {
+      progressCallback?.(Math.round(currentProgress), `Processing lesson ${index + 1}/${lessons.length}: ${lesson.title}`);
+      await this.ingestLessonContent(courseId, lesson, (p, m) => {
+        // Map lesson progress (0-100) to the course progress slice
+        const absoluteProgress = currentProgress + (p / 100) * progressPerLesson;
+        progressCallback?.(Math.round(absoluteProgress), m);
+      });
+      currentProgress += progressPerLesson;
     }
 
+    progressCallback?.(100, 'Ingestion complete');
     this.logger.log(`Ingestion complete for course: ${courseId}`);
   }
 
   /**
    * Ingest a single lesson's content and video transcript.
    */
-  async ingestLesson(lessonId: string): Promise<void> {
+  async ingestLesson(lessonId: string, progressCallback?: (progress: number, message: string) => void): Promise<void> {
     this.logger.log(`Starting ingestion for lesson: ${lessonId}`);
+    progressCallback?.(10, 'Fetching lesson data...');
 
     const { data: lesson, error } = await this.supabase
       .from('lessons')
-      .select('id, course_id, title, content, video_url, transcript')
+      .select('id, course_id, title, content, video_url, transcript, lesson_contents(*)')
       .eq('id', lessonId)
       .single();
 
@@ -196,18 +220,20 @@ export class RagService {
       throw new Error(`Failed to fetch lesson ${lessonId}: ${error?.message || 'Not found'}`);
     }
 
-    await this.ingestLessonContent(lesson.course_id, lesson);
+    progressCallback?.(20, 'Ingesting lesson content...');
+    await this.ingestLessonContent(lesson.course_id, lesson, progressCallback);
 
+    progressCallback?.(100, 'Ingestion complete');
     this.logger.log(`Ingestion complete for lesson: ${lessonId}`);
   }
 
   /**
-   * Force re-transcription of a lesson's video.
+   * Force re-transcription of all videos in a lesson.
    */
   async transcribeLesson(lessonId: string): Promise<void> {
     const { data: lesson, error } = await this.supabase
       .from('lessons')
-      .select('id, course_id, title, video_url')
+      .select('id, course_id, title, lesson_contents(*)')
       .eq('id', lessonId)
       .single();
 
@@ -215,21 +241,24 @@ export class RagService {
       throw new Error(`Failed to fetch lesson ${lessonId}: ${error?.message || 'Not found'}`);
     }
 
-    if (!lesson.video_url) {
-      throw new Error(`Lesson ${lessonId} has no video URL`);
+    const videos = lesson.lesson_contents?.filter(c => c.type === 'video') || [];
+    if (videos.length === 0) {
+      throw new Error(`Lesson ${lessonId} has no videos to transcribe`);
     }
 
-    // Transcribe and save
-    const transcription = await this.transcriptionService.transcribeVideo(lesson.video_url);
-    await this.ragRepo.saveTranscript(lessonId, transcription.fullText);
+    for (const video of videos) {
+      if (!video.url) continue;
+      
+      const transcription = await this.transcriptionService.transcribeVideo(video.url);
+      await this.ragRepo.saveContentTranscript(video.id, transcription.fullText);
 
-    // Re-ingest the video transcript chunks
-    await this.ingestVideoTranscript(
-      lesson.course_id,
-      lessonId,
-      transcription,
-      lesson.title,
-    );
+      await this.ingestVideoTranscript(
+        lesson.course_id,
+        lessonId,
+        transcription,
+        `${lesson.title} - ${video.title}`,
+      );
+    }
   }
 
   /**
@@ -251,53 +280,91 @@ export class RagService {
       id: string;
       title: string;
       content: string | null;
-      video_url: string | null;
-      transcript: string | null;
+      lesson_contents?: any[];
     },
+    progressCallback?: (progress: number, message: string) => void,
   ): Promise<void> {
-    // 1. Ingest text content
-    if (lesson.content) {
-      await this.ingestText(
-        courseId,
-        lesson.id,
-        `Lesson: ${lesson.title}\n\n${lesson.content}`,
-        { source: 'lesson_content', lesson_title: lesson.title },
-      );
-    }
+    // 1. Ingest text content (always ingest title, append content description if exists)
+    const textContent = lesson.content 
+      ? `Lesson: ${lesson.title}\n\n${lesson.content}`
+      : `Lesson: ${lesson.title}`;
 
-    // 2. Ingest video transcript
-    if (lesson.video_url) {
-      let transcript = lesson.transcript;
+    progressCallback?.(25, `Embedding text content for: ${lesson.title}`);
+    await this.ingestText(
+      courseId,
+      lesson.id,
+      textContent,
+      { source: 'lesson_content', lesson_title: lesson.title },
+    );
 
-      // Auto-transcribe if no cached transcript exists
-      if (!transcript) {
-        try {
-          const result = await this.transcriptionService.transcribeVideo(lesson.video_url);
-          transcript = result.fullText;
+    const contents = lesson.lesson_contents || [];
+    const contentsProgressStep = 75 / (contents.length || 1);
+    let currentContentProgress = 25;
 
-          // Cache the transcript
-          await this.ragRepo.saveTranscript(lesson.id, transcript);
+    for (const content of contents) {
+      if (content.type === 'video' && content.url) {
+        let transcript = content.transcript;
 
-          // Use the segmented transcript for better timestamps
-          await this.ingestVideoTranscript(courseId, lesson.id, result, lesson.title);
-          return; // Already ingested via segments
-        } catch (error) {
-          this.logger.error(
-            `Failed to transcribe video for lesson ${lesson.id}: ${error}`,
+        if (!transcript) {
+          try {
+            progressCallback?.(Math.round(currentContentProgress), `Transcribing video: ${content.title} (This may take a while)...`);
+            const result = await this.transcriptionService.transcribeVideo(content.url);
+            transcript = result.fullText;
+
+            await this.ragRepo.saveContentTranscript(content.id, transcript);
+
+            progressCallback?.(Math.round(currentContentProgress + contentsProgressStep * 0.5), `Embedding video transcript for: ${content.title}...`);
+            await this.ingestVideoTranscript(courseId, lesson.id, result, `${lesson.title} - ${content.title}`);
+          } catch (error) {
+            this.logger.error(`Failed to transcribe video ${content.id}: ${error}`);
+          }
+        } else {
+          progressCallback?.(Math.round(currentContentProgress), `Embedding cached video transcript for: ${content.title}...`);
+          await this.ingestText(
+            courseId,
+            lesson.id,
+            `Video Transcript - ${lesson.title} - ${content.title}\n\n${transcript}`,
+            { source: 'video_transcript', lesson_title: lesson.title, content_title: content.title },
+            'video_transcript',
           );
-          // Continue without video transcript
-          return;
+        }
+      } else if (content.type === 'document' && content.url) {
+        try {
+          progressCallback?.(Math.round(currentContentProgress), `Extracting text from document: ${content.title}...`);
+          const documentText = await this.extractTextFromUrl(content.url);
+          
+          progressCallback?.(Math.round(currentContentProgress + contentsProgressStep * 0.5), `Embedding document text for: ${content.title}...`);
+          await this.ingestText(
+            courseId,
+            lesson.id,
+            `Document - ${lesson.title} - ${content.title}\n\n${documentText}`,
+            { source: 'document', lesson_title: lesson.title, content_title: content.title },
+            'text',
+          );
+        } catch (error) {
+          this.logger.error(`Failed to extract text from document ${content.id}: ${error}`);
         }
       }
+      currentContentProgress += contentsProgressStep;
+    }
+  }
 
-      // Ingest from cached (non-segmented) transcript
-      await this.ingestText(
-        courseId,
-        lesson.id,
-        `Video Transcript - Lesson: ${lesson.title}\n\n${transcript}`,
-        { source: 'video_transcript', lesson_title: lesson.title },
-        'video_transcript',
-      );
+  private async extractTextFromUrl(url: string): Promise<string> {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch document: ${response.statusText}`);
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/pdf') || url.toLowerCase().endsWith('.pdf') || url.includes('.pdf?')) {
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const pdfParse = require('pdf-parse');
+      const data = await pdfParse(buffer);
+      return data.text;
+    } else {
+      // Fallback for plain text or markdown
+      return response.text();
     }
   }
 
