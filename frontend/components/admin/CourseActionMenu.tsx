@@ -7,6 +7,7 @@ import {
   Edit2, UploadCloud, X, Image as ImageIcon 
 } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase';
+import ProgressModal from '@/components/ui/ProgressModal';
 
 interface Props {
   courseId: string;
@@ -38,6 +39,9 @@ export default function CourseActionMenu({
   const [price, setPrice] = useState(initialPrice);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
+  // Sync Modal State
+  const [syncModalOpen, setSyncModalOpen] = useState(false);
+
   const toggleStatus = () => {
     setIsOpen(false);
     startTransition(async () => {
@@ -60,20 +64,7 @@ export default function CourseActionMenu({
 
   const ingestCourse = () => {
     setIsOpen(false);
-    startTransition(async () => {
-      try {
-        const res = await fetch(`/api/rag/ingest/course/${courseId}`, {
-          method: 'POST',
-        });
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Đồng bộ dữ liệu AI thất bại');
-        }
-        alert('Bắt đầu đồng bộ thành công! Cơ sở tri thức AI đang được cập nhật.');
-      } catch (err) {
-        alert(err instanceof Error ? err.message : 'Đã xảy ra lỗi');
-      }
-    });
+    setSyncModalOpen(true);
   };
 
   const deleteCourse = () => {
@@ -340,6 +331,18 @@ export default function CourseActionMenu({
           </div>
         </div>
       )}
+
+      {/* --- SYNC PROGRESS MODAL --- */}
+      <ProgressModal
+        isOpen={syncModalOpen}
+        onClose={() => setSyncModalOpen(false)}
+        title="Đồng bộ khóa học với AI"
+        description={`Đang phân tích và đồng bộ nội dung của khóa học "${title}" vào cơ sở tri thức...`}
+        streamUrl={`/api/rag/ingest/course/${courseId}/stream`}
+        onSuccess={() => {
+          // Could refresh if needed, but usually not required for RAG sync
+        }}
+      />
     </div>
   );
 }

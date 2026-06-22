@@ -7,7 +7,9 @@ import {
   HttpCode,
   HttpStatus,
   BadRequestException,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { Auth } from '../../iam/decorators/auth.decorator';
@@ -58,6 +60,36 @@ export class RagController {
     return { message: `Ingestion complete for course ${courseId}` };
   }
 
+  @Post('ingest/course/:id/stream')
+  @ApiBearerAuth()
+  @Auth('action:admin:rag:ingest')
+  @ApiOperation({ summary: 'Admin: Ingest all content for a course with SSE progress stream' })
+  async ingestCourseStream(@Param('id') courseId: string, @Res() res: Response) {
+    this.ensureApiKeyConfigured();
+    
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    const progressCallback = (progress: number, message: string) => {
+      res.write(`data: ${JSON.stringify({ progress, message })}\n\n`);
+      if (typeof (res as any).flush === 'function') {
+        (res as any).flush();
+      }
+    };
+
+    try {
+      progressCallback(1, 'Starting course ingestion...');
+      await this.ragService.ingestCourse(courseId, progressCallback);
+      res.write(`data: ${JSON.stringify({ progress: 100, message: 'Ingestion complete', complete: true })}\n\n`);
+    } catch (error) {
+      res.write(`data: ${JSON.stringify({ error: error instanceof Error ? error.message : 'An error occurred' })}\n\n`);
+    } finally {
+      res.end();
+    }
+  }
+
   @Post('ingest/lesson/:id')
   @ApiBearerAuth()
   @Auth('action:admin:rag:ingest')
@@ -70,6 +102,36 @@ export class RagController {
     return { message: `Ingestion complete for lesson ${lessonId}` };
   }
 
+  @Post('ingest/lesson/:id/stream')
+  @ApiBearerAuth()
+  @Auth('action:admin:rag:ingest')
+  @ApiOperation({ summary: 'Admin: Ingest content for a single lesson with SSE progress stream' })
+  async ingestLessonStream(@Param('id') lessonId: string, @Res() res: Response) {
+    this.ensureApiKeyConfigured();
+    
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    const progressCallback = (progress: number, message: string) => {
+      res.write(`data: ${JSON.stringify({ progress, message })}\n\n`);
+      if (typeof (res as any).flush === 'function') {
+        (res as any).flush();
+      }
+    };
+
+    try {
+      progressCallback(1, 'Starting lesson ingestion...');
+      await this.ragService.ingestLesson(lessonId, progressCallback);
+      res.write(`data: ${JSON.stringify({ progress: 100, message: 'Ingestion complete', complete: true })}\n\n`);
+    } catch (error) {
+      res.write(`data: ${JSON.stringify({ error: error instanceof Error ? error.message : 'An error occurred' })}\n\n`);
+    } finally {
+      res.end();
+    }
+  }
+
   @Post('ingest/knowledge-base')
   @ApiBearerAuth()
   @Auth('action:admin:rag:ingest')
@@ -80,6 +142,36 @@ export class RagController {
     this.ensureApiKeyConfigured();
     await this.ragService.ingestKnowledgeBase(dto.title, dto.content, dto.category);
     return { message: `Knowledge base ingestion complete for "${dto.title}"` };
+  }
+
+  @Post('ingest/knowledge-base/stream')
+  @ApiBearerAuth()
+  @Auth('action:admin:rag:ingest')
+  @ApiOperation({ summary: 'Admin: Ingest knowledge base content with SSE progress stream' })
+  async ingestKnowledgeBaseStream(@Body() dto: IngestKnowledgeBaseDto, @Res() res: Response) {
+    this.ensureApiKeyConfigured();
+    
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    const progressCallback = (progress: number, message: string) => {
+      res.write(`data: ${JSON.stringify({ progress, message })}\n\n`);
+      if (typeof (res as any).flush === 'function') {
+        (res as any).flush();
+      }
+    };
+
+    try {
+      progressCallback(1, 'Starting knowledge base ingestion...');
+      await this.ragService.ingestKnowledgeBase(dto.title, dto.content, dto.category, progressCallback);
+      res.write(`data: ${JSON.stringify({ progress: 100, message: 'Ingestion complete', complete: true })}\n\n`);
+    } catch (error) {
+      res.write(`data: ${JSON.stringify({ error: error instanceof Error ? error.message : 'An error occurred' })}\n\n`);
+    } finally {
+      res.end();
+    }
   }
 
   @Get('status/course/:id')

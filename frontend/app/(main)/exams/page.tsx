@@ -256,7 +256,7 @@ export default function ExamsDashboard() {
       if (res.ok) {
         const data = await res.json();
         showToast('Tạo tài liệu đề thi mới thành công!', 'success');
-        router.push(`/admin/exams/${data.id}/edit`);
+        router.push(`/exams/${data.id}/edit`);
       } else {
         showToast('Không thể tạo đề thi mới.', 'error');
       }
@@ -322,7 +322,7 @@ export default function ExamsDashboard() {
   };
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto px-4 md:px-0">
+    <div className="space-y-8 max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -411,7 +411,7 @@ export default function ExamsDashboard() {
                         </div>
                         <div className="space-y-1">
                           <h4 className="font-bold text-gray-900 dark:text-white text-base hover:text-primary transition-colors">
-                            <Link href={`/admin/exams/${exam.id}/questions`}>{exam.title}</Link>
+                            <Link href={`/exams/${exam.id}/questions`}>{exam.title}</Link>
                           </h4>
                           <div className="flex flex-wrap items-center gap-1.5">
                             <span className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-gray-500 dark:text-gray-400">
@@ -457,7 +457,7 @@ export default function ExamsDashboard() {
                           <Eye size={16} />
                         </button>
                         <Link
-                          href={`/admin/exams/${exam.id}/edit`}
+                          href={`/exams/${exam.id}/edit`}
                           title="Thiết lập đề thi"
                           className="p-2 rounded-xl border border-gray-100 dark:border-gray-800 text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 transition-all inline-block"
                         >

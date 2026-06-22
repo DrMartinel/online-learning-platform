@@ -1343,7 +1343,7 @@ export default function ExamQuestionsEditor() {
   questionLinks.forEach(l => { questionLinkMap[l.id] = l; });
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto px-4 md:px-0 relative pb-16 print:p-0 print:m-0 print:max-w-full">
+    <div className="space-y-8 max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12 relative pb-16 print:p-0 print:m-0 print:max-w-full">
       
       {/* Dynamic PRINT STYLE overriding style tags for perfect PDF */}
       <style jsx global>{`

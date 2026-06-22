@@ -206,4 +206,29 @@ export class SupabaseRagRepository implements IRagRepository {
 
     return data?.transcript ?? null;
   }
+
+  async saveContentTranscript(contentId: string, transcript: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('lesson_contents')
+      .update({ transcript })
+      .eq('id', contentId);
+
+    if (error) {
+      throw new Error(`Failed to save content transcript: ${error.message}`);
+    }
+  }
+
+  async getContentTranscript(contentId: string): Promise<string | null> {
+    const { data, error } = await this.supabase
+      .from('lesson_contents')
+      .select('transcript')
+      .eq('id', contentId)
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to get content transcript: ${error.message}`);
+    }
+
+    return data?.transcript ?? null;
+  }
 }

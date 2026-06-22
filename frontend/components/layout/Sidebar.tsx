@@ -76,7 +76,12 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     { href: "/my-courses", label: "Khóa học của tôi", icon: GraduationCap },
   ];
 
-  // Admin/Teacher exam links have been migrated to the AdminOS sidebar
+  const canManageExams = user?.role === 'admin' || user?.permissions?.includes('action:course:create');
+
+  if (canManageExams) {
+    navItems.push({ href: "/exams", label: "Quản lý đề thi", icon: FileText });
+    navItems.push({ href: "/exam-sessions", label: "Tổ chức thi", icon: BookOpen });
+  }
 
   navItems.push({ href: "/profile", label: "Hồ sơ cá nhân", icon: User });
 
