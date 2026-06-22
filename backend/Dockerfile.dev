@@ -1,0 +1,17 @@
+FROM node:20-bookworm-slim
+WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+
+# Install procps for 'ps' command required by NestJS watch mode
+RUN apt-get update && apt-get install -y procps && rm -rf /var/lib/apt/lists/*
+
+# Install deps in image (cached), source will be bind-mounted in dev.
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install
+
+ENV NODE_ENV=development
+ENV PORT=3001
+ENV NODE_OPTIONS=--max-old-space-size=8192
+
+EXPOSE 3001
+CMD ["sh", "-lc", "pnpm run start:debug"]

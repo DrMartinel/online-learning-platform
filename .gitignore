@@ -1,0 +1,28 @@
+volumes/db/data
+volumes/storage
+volumes/snippets/
+.env
+.env.old
+test.http
+docker-compose.override.yml
+node_modules
+frontend/node_modules
+backend/node_modules
+backend/dist
+backend/.tsbuildinfo
+
+# build output
+dist/
+.next/
+
+backend/dist
+frontend/dist
+backend/.tsbuildinfo
+frontend/.turbo
+
+# typescript
+*.d.ts
+*.d.ts.map
+coverage
+.pnpm-store
+.env.old
