@@ -228,19 +228,37 @@ class SupabaseProxyClient {
 export const supabaseProxyClient = new SupabaseProxyClient();
 
 /**
- * Helper: Get public media URL (no signed URL needed)
+ * Helper: Get media proxy URL
  */
-export const getProxyMediaUrl = (path: string) => {
+export const getProxyMediaUrl = (path: string | null | undefined, token?: string) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  return `${API_BASE_URL}${SUPABASE_PROXY_PREFIX}/storage/object/course-media/${path}`;
+  
+  if (path.startsWith('/api/media/')) {
+    if (token && !path.includes('token=')) {
+      const separator = path.includes('?') ? '&' : '?';
+      return `${path}${separator}token=${token}`;
+    }
+    return path;
+  }
+  
+  return `/api/media/course-media/${path}${token ? `?token=${token}` : ''}`;
 };
 
 /**
- * Helper: Get public avatar URL
+ * Helper: Get avatar proxy URL
  */
-export const getProxyAvatarUrl = (path: string) => {
+export const getProxyAvatarUrl = (path: string | null | undefined, token?: string) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  return `${API_BASE_URL}${SUPABASE_PROXY_PREFIX}/storage/object/avatars/${path}`;
+  
+  if (path.startsWith('/api/media/')) {
+    if (token && !path.includes('token=')) {
+      const separator = path.includes('?') ? '&' : '?';
+      return `${path}${separator}token=${token}`;
+    }
+    return path;
+  }
+  
+  return `/api/media/avatars/${path}${token ? `?token=${token}` : ''}`;
 };

@@ -9,7 +9,7 @@ import {
   Lock,
 } from "lucide-react";
 import Link from "next/link";
-import { getSignedMediaUrl } from "@/lib/supabase";
+import { getProxyMediaUrl } from "@/lib/supabase-proxy";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import LearnShell from "@/components/learn/LearnShell";
@@ -236,12 +236,12 @@ export default async function LearnPage({ params }: PageProps) {
 
   const isLocked = (lesson as any).isLocked === true;
 
-  // Resolve signed URLs for all lesson contents (of type video or document if hosted on supabase storage)
+  // Resolve proxy URLs for all lesson contents (of type video or document if hosted on supabase storage)
   const resolvedContents = await Promise.all(
     (lessonContents || []).map(async (content: any) => {
-      // If it's a supabase file path, get signed URL. Otherwise use absolute url.
+      // If it's a supabase file path, get proxy URL. Otherwise use absolute url.
       try {
-        const signedUrl = await getSignedMediaUrl(content.url, bearerToken);
+        const signedUrl = getProxyMediaUrl(content.url, bearerToken);
         return {
           ...content,
           signedUrl: signedUrl || content.url,
@@ -336,7 +336,7 @@ export default async function LearnPage({ params }: PageProps) {
         ) : (
           <LessonContentPlayer
             contents={resolvedContents}
-            fallbackVideoUrl={lesson.videoUrl ? await getSignedMediaUrl(lesson.videoUrl, bearerToken) : null}
+            fallbackVideoUrl={lesson.videoUrl ? getProxyMediaUrl(lesson.videoUrl, bearerToken) : null}
             fallbackContent={lesson.content}
             lessonTitle={lesson.title}
           />

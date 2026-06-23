@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import CourseCatalog from "@/components/courses/CourseCatalog";
 import type { Course } from "@/components/courses/CourseCard";
-import { getSignedMediaUrl } from "@/lib/supabase";
+import { getProxyMediaUrl } from "@/lib/supabase-proxy";
 
 async function getCourses(isAdminOrTeacher: boolean): Promise<Course[]> {
   try {
@@ -28,7 +28,7 @@ async function getCourses(isAdminOrTeacher: boolean): Promise<Course[]> {
     const coursesWithSignedUrls = await Promise.all(
       courses.map(async (course) => ({
         ...course,
-        thumbnailUrl: course.thumbnailUrl ? await getSignedMediaUrl(course.thumbnailUrl) : course.thumbnailUrl
+        thumbnailUrl: course.thumbnailUrl ? getProxyMediaUrl(course.thumbnailUrl, token) : course.thumbnailUrl
       }))
     );
     

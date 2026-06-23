@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { PlayCircle, BookOpen, Clock, User, ChevronLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { getSignedMediaUrl } from "@/lib/supabase";
+import { getProxyMediaUrl } from "@/lib/supabase-proxy";
 import LessonList, { type Lesson } from "@/components/courses/LessonList";
 import EnrollFreeButton from "@/components/courses/EnrollFreeButton";
 import CourseSessionsManager from "@/components/courses/CourseSessionsManager";
@@ -234,7 +234,7 @@ if (isLoggedIn) {
     }
   }
   
-  const thumbnailSignedUrl = await getSignedMediaUrl(course.thumbnailUrl, token);
+  const thumbnailSignedUrl = getProxyMediaUrl(course.thumbnailUrl, token);
 
   return (
     <div className="min-h-full bg-white dark:bg-gray-950">

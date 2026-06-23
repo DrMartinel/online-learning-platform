@@ -6,7 +6,7 @@ import {
 import CourseCatalog from "@/components/courses/CourseCatalog";
 import type { Course } from "@/components/courses/CourseCard";
 import MyCourseCard, { type EnrolledCourse } from "@/components/user/MyCourseCard";
-import { getSignedMediaUrl } from "@/lib/supabase";
+import { getProxyMediaUrl } from "@/lib/supabase-proxy";
 
 async function getCourses(token: string | undefined, isAdminOrTeacher: boolean): Promise<Course[]> {
   try {
@@ -30,7 +30,7 @@ async function getCourses(token: string | undefined, isAdminOrTeacher: boolean):
     const coursesWithSignedUrls = await Promise.all(
       courses.map(async (course) => ({
         ...course,
-        thumbnailUrl: course.thumbnailUrl ? await getSignedMediaUrl(course.thumbnailUrl, token) : course.thumbnailUrl
+        thumbnailUrl: course.thumbnailUrl ? getProxyMediaUrl(course.thumbnailUrl, token) : course.thumbnailUrl
       }))
     );
     
@@ -96,7 +96,7 @@ async function getMyCoursesData(token: string | undefined): Promise<{ total: num
       }
 
       const thumbnailUrl = course.thumbnailUrl 
-        ? await getSignedMediaUrl(course.thumbnailUrl, token) 
+        ? getProxyMediaUrl(course.thumbnailUrl, token) 
         : course.thumbnailUrl;
 
       enrolledCourses.push({

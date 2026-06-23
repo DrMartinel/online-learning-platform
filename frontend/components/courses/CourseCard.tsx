@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PlayCircle, BookOpen, CheckCircle2 } from "lucide-react";
-import { getMediaUrl } from "@/lib/supabase";
+import { getProxyMediaUrl } from "@/lib/supabase-proxy";
 
 export interface Course {
   id: string;
@@ -36,7 +36,7 @@ export default function CourseCard({ course, progress }: CourseCardProps) {
       <div className="aspect-video bg-gradient-to-br from-primary/10 to-blue-100 dark:from-primary/20 dark:to-blue-900/30 flex items-center justify-center flex-shrink-0 relative">
         {course.thumbnailUrl ? (
           <img
-            src={getMediaUrl(course.thumbnailUrl)}
+            src={getProxyMediaUrl(course.thumbnailUrl)}
             alt={course.title}
             className="w-full h-full object-cover"
           />

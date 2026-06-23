@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: 'Xem tất cả khóa học bạn đã đăng ký.',
 };
 
-import { getSignedMediaUrl } from '@/lib/supabase';
+import { getProxyMediaUrl } from '@/lib/supabase-proxy';
 
 async function fetchMyCourses(): Promise<EnrolledCourse[]> {
   try {
@@ -71,7 +71,7 @@ async function fetchMyCourses(): Promise<EnrolledCourse[]> {
 
       // Xử lý link ảnh
       const thumbnailUrl = course.thumbnailUrl 
-        ? await getSignedMediaUrl(course.thumbnailUrl, token) 
+        ? getProxyMediaUrl(course.thumbnailUrl, token) 
         : course.thumbnailUrl;
 
       enrolledCourses.push({
