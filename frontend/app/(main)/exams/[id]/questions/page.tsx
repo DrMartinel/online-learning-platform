@@ -10,7 +10,7 @@ import {
   CheckCircle, FileText, ChevronDown, ChevronUp, FileCode, Check, Grid, RefreshCw, X, Image as ImageIcon, Loader2,
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List, HelpCircle, Settings, Hash, Award, GripVertical, Layers
 } from 'lucide-react';
-import { getSupabaseClient, getMediaUrl } from '@/lib/supabase';
+import { supabaseProxyClient, getProxyMediaUrl } from '@/lib/supabase-proxy';
 
 // ===== INTERFACES =====
 
@@ -660,20 +660,13 @@ export default function ExamQuestionsEditor() {
     if (!file || !sessionToken) return;
     try {
       setUploadingTarget(target);
-      const supabase = getSupabaseClient(sessionToken);
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
       const filePath = `exams/images/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('course-media')
-        .upload(filePath, file);
+      await supabaseProxyClient.uploadObjectWithFormData('course-media', filePath, file, sessionToken);
 
-      if (uploadError) {
-        throw new Error(`Upload failed: ${uploadError.message}`);
-      }
-
-      const imageUrl = getMediaUrl(filePath);
+      const imageUrl = getProxyMediaUrl(filePath);
       const markdownImage = `![Ảnh](${imageUrl})`;
 
       if (target === 'header') {

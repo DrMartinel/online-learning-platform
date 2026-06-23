@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { getSupabaseClient } from '@/lib/supabase';
+import { supabaseProxyClient } from '@/lib/supabase-proxy';
 import { createCourseAction } from '@/app/actions/courses';
 import { Loader2, UploadCloud, Image as ImageIcon } from 'lucide-react';
 
@@ -20,19 +20,11 @@ export default function CreateCourseForm({ token }: { token: string }) {
       
       // Upload thumbnail if provided
       if (file) {
-        const supabase = getSupabaseClient(token);
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
         const filePath = `thumbnails/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('course-media')
-          .upload(filePath, file);
-
-        if (uploadError) {
-          throw new Error(`Upload failed: ${uploadError.message}`);
-        }
-
+        await supabaseProxyClient.uploadObjectWithFormData('course-media', filePath, file, token);
         formData.set('thumbnailUrl', filePath);
       }
 

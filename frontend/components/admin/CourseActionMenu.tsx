@@ -6,7 +6,7 @@ import {
   MoreVertical, Trash2, EyeOff, Eye, Loader2, BrainCircuit, 
   Edit2, UploadCloud, X, Image as ImageIcon 
 } from 'lucide-react';
-import { getSupabaseClient } from '@/lib/supabase';
+import { supabaseProxyClient } from '@/lib/supabase-proxy';
 import ProgressModal from '@/components/ui/ProgressModal';
 
 interface Props {
@@ -97,18 +97,11 @@ export default function CourseActionMenu({
 
         // Upload new thumbnail if provided
         if (thumbnailFile) {
-          const supabase = getSupabaseClient(token);
           const fileExt = thumbnailFile.name.split('.').pop();
           const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
           const uploadPath = `thumbnails/${fileName}`;
 
-          const { error: uploadError } = await supabase.storage
-            .from('course-media')
-            .upload(uploadPath, thumbnailFile);
-
-          if (uploadError) {
-            throw new Error(`Upload ảnh bìa thất bại: ${uploadError.message}`);
-          }
+          await supabaseProxyClient.uploadObjectWithFormData('course-media', uploadPath, thumbnailFile, token);
           filePath = uploadPath;
         }
 

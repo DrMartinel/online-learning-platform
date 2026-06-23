@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getSupabaseClient } from '@/lib/supabase';
+import { supabaseProxyClient } from '@/lib/supabase-proxy';
 import { createLessonAction } from '@/app/actions/lessons';
 import { 
   Loader2, UploadCloud, Video, FileText, Trash2, Plus, 
@@ -129,8 +129,6 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
       const lessonId = newLesson.id;
 
       // 2. Upload files and create lesson contents in database
-      const supabase = getSupabaseClient(token);
-      
       for (const item of items) {
         let urlPath = '';
 
@@ -143,11 +141,9 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
           const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
           urlPath = `${folder}/${fileName}`;
 
-          const { error: uploadError } = await supabase.storage
-            .from('course-media')
-            .upload(urlPath, item.file);
-
-          if (uploadError) {
+          try {
+            await supabaseProxyClient.uploadObjectWithFormData('course-media', urlPath, item.file, token);
+          } catch (uploadError) {
             throw new Error(`Tải tệp "${item.file.name}" thất bại: ${uploadError.message}`);
           }
         } else if (item.type === 'exam') {
