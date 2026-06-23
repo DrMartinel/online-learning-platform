@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { User, Save, Loader2, CheckCircle2, Camera } from 'lucide-react';
-import { getSupabaseClient, getSignedAvatarUrl } from '@/lib/supabase';
+import { supabaseProxyClient, getProxyAvatarUrl } from '@/lib/supabase-proxy';
 
 interface UserProfile {
   id: string;
@@ -39,7 +39,7 @@ export default function ProfileForm({ initialProfile, token }: ProfileFormProps)
         return;
       }
       try {
-        const signedUrl = await getSignedAvatarUrl(avatarUrl, token);
+        const signedUrl = await supabaseProxyClient.getSignedUrl('avatars', avatarUrl, token);
         if (isMounted) setAvatarPreviewUrl(signedUrl);
       } catch (err) {
         console.error("Failed to load signed avatar URL:", err);
@@ -57,18 +57,10 @@ export default function ProfileForm({ initialProfile, token }: ProfileFormProps)
     setErrorMsg('');
 
     try {
-      const supabase = getSupabaseClient(token);
       const fileExt = file.name.split('.').pop();
       const fileName = `avatar_${initialProfile.id}_${Date.now()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file);
-
-      if (uploadError) {
-        throw new Error(`Upload failed: ${uploadError.message}`);
-      }
-
+      await supabaseProxyClient.uploadObjectWithFormData('avatars', fileName, file, token);
       setAvatarUrl(fileName);
     } catch (err: any) {
       setErrorMsg(err.message || 'Lỗi tải ảnh lên.');

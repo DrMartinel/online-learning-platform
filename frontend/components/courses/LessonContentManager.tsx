@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { FolderOpen, Trash2, Plus, UploadCloud, Video, FileText, Loader2, X } from "lucide-react";
-import { getSupabaseClient } from "@/lib/supabase";
+import { supabaseProxyClient } from "@/lib/supabase-proxy";
 
 interface LessonContent {
   id: string;
@@ -63,20 +63,13 @@ export default function LessonContentManager({
 
     startTransition(async () => {
       try {
-        // 1. Upload file to Supabase storage
-        const supabase = getSupabaseClient(token);
+        // 1. Upload file to backend proxy
         const fileExt = file.name.split(".").pop();
         const folder = type === "video" ? "videos" : "documents";
         const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
         const filePath = `${folder}/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from("course-media")
-          .upload(filePath, file);
-
-        if (uploadError) {
-          throw new Error(`Upload file thất bại: ${uploadError.message}`);
-        }
+        await supabaseProxyClient.uploadObjectWithFormData('course-media', filePath, file, token);
 
         // 2. Save content metadata to backend database
         const res = await fetch("/api/lessons/contents", {
