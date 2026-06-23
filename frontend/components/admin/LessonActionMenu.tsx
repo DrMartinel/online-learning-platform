@@ -41,6 +41,7 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
   const [loadingContents, setLoadingContents] = useState(false);
   const [exams, setExams] = useState<any[]>([]);
   const [newItems, setNewItems] = useState<ComponentItem[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<{ title: string; percent: number } | null>(null);
 
   // Sync Modal State
   const [syncModalOpen, setSyncModalOpen] = useState(false);
@@ -50,6 +51,7 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
       fetchContents();
       fetchExams();
       setNewItems([]);
+      setUploadProgress(null);
     }
   }, [editOpen, lesson.id]);
 
@@ -156,6 +158,8 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
       return;
     }
 
+    setUploadProgress(null);
+
     startTransition(async () => {
       try {
         // 1. Update lesson meta info
@@ -189,7 +193,20 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
             urlPath = `${folder}/${fileName}`;
 
             try {
-              await supabaseProxyClient.uploadObjectWithFormData('course-media', urlPath, item.file, token);
+              if (item.type === 'video' || item.file.size > 50 * 1024 * 1024) {
+                await supabaseProxyClient.uploadVideoResumable(
+                  'course-media', 
+                  urlPath, 
+                  item.file, 
+                  token,
+                  (uploaded, total) => {
+                    setUploadProgress({ title: item.title, percent: Math.round((uploaded / total) * 100) });
+                  }
+                );
+              } else {
+                setUploadProgress({ title: item.title, percent: 100 });
+                await supabaseProxyClient.uploadObjectWithFormData('course-media', urlPath, item.file, token);
+              }
             } catch (uploadError) {
               throw new Error(`Tải tệp "${item.file.name}" thất bại: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`);
             }
@@ -224,9 +241,11 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
         }
 
         setEditOpen(false);
+        setUploadProgress(null);
         router.refresh();
         window.location.reload();
       } catch (err) {
+        setUploadProgress(null);
         alert(err instanceof Error ? err.message : 'Đã xảy ra lỗi');
       }
     });
@@ -637,10 +656,29 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
                 <button
                   type="submit"
                   disabled={!title.trim() || isPending || chapters.length === 0}
-                  className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold bg-primary hover:bg-primary/95 text-white rounded-xl shadow-md transition-all disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center justify-center gap-1.5 px-5 py-2 text-xs font-bold bg-primary hover:bg-primary/95 text-white rounded-xl shadow-md transition-all disabled:opacity-50 cursor-pointer min-w-[150px] relative overflow-hidden"
                 >
-                  {isPending ? <Loader2 size={12} className="animate-spin" /> : null}
-                  Lưu thay đổi
+                  {isPending ? (
+                    uploadProgress ? (
+                      <div className="absolute inset-0 w-full h-full bg-primary/80 flex items-center justify-center">
+                        <div 
+                          className="absolute left-0 top-0 bottom-0 bg-white/20 transition-all duration-300"
+                          style={{ width: `${uploadProgress.percent}%` }}
+                        />
+                        <span className="relative z-10 flex items-center drop-shadow-md">
+                          <Loader2 size={12} className="animate-spin mr-1.5" />
+                          {uploadProgress.percent}% - {uploadProgress.title}
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <Loader2 size={12} className="animate-spin" />
+                        Đang xử lý...
+                      </>
+                    )
+                  ) : (
+                    'Lưu thay đổi'
+                  )}
                 </button>
               </div>
             </form>

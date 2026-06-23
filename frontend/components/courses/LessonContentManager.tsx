@@ -36,6 +36,8 @@ export default function LessonContentManager({
   const [isPending, startTransition] = useTransition();
   const [loadingList, setLoadingList] = useState(true);
 
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+
   const fetchContents = async () => {
     try {
       setLoadingList(true);
@@ -69,7 +71,21 @@ export default function LessonContentManager({
         const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
         const filePath = `${folder}/${fileName}`;
 
-        await supabaseProxyClient.uploadObjectWithFormData('course-media', filePath, file, token);
+        if (type === "video" || file.size > 50 * 1024 * 1024) {
+          setUploadProgress(0);
+          await supabaseProxyClient.uploadVideoResumable(
+            'course-media', 
+            filePath, 
+            file, 
+            token,
+            (uploaded, total) => {
+              setUploadProgress(Math.round((uploaded / total) * 100));
+            }
+          );
+          setUploadProgress(null);
+        } else {
+          await supabaseProxyClient.uploadObjectWithFormData('course-media', filePath, file, token);
+        }
 
         // 2. Save content metadata to backend database
         const res = await fetch("/api/lessons/contents", {
@@ -93,6 +109,7 @@ export default function LessonContentManager({
         setOrderIndex((prev) => prev + 1);
         await fetchContents();
       } catch (err) {
+        setUploadProgress(null);
         alert(err instanceof Error ? err.message : "Đã xảy ra lỗi");
       }
     });
@@ -256,17 +273,33 @@ export default function LessonContentManager({
               </label>
             </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-end pt-2">
-              <button
-                type="submit"
-                disabled={!title.trim() || !file || isPending}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold bg-primary hover:bg-primary/95 text-white rounded-xl shadow-md transition-all disabled:opacity-50"
-              >
-                {isPending ? <Loader2 size={14} className="animate-spin" /> : null}
-                Tải lên học liệu
-              </button>
-            </div>
+            {/* Submit Button & Progress */}
+            {uploadProgress !== null ? (
+              <div className="flex flex-col pt-2">
+                <div className="flex justify-between text-xs font-bold mb-1.5 text-primary">
+                  <span>Đang tải lên...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                  <div 
+                    className="bg-primary h-2.5 rounded-full transition-all duration-300 ease-out" 
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+                <p className="text-[10px] text-gray-500 mt-2 text-center">Vui lòng không đóng cửa sổ này khi đang tải video.</p>
+              </div>
+            ) : (
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  disabled={!title.trim() || !file || isPending}
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold bg-primary hover:bg-primary/95 text-white rounded-xl shadow-md transition-all disabled:opacity-50"
+                >
+                  {isPending ? <Loader2 size={14} className="animate-spin" /> : null}
+                  Tải lên học liệu
+                </button>
+              </div>
+            )}
           </form>
 
           {/* List of Existing Contents */}

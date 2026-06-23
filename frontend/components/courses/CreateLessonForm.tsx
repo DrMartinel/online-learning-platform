@@ -38,6 +38,8 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
   // Dynamic Components State
   const [items, setItems] = useState<ComponentItem[]>([]);
 
+  const [uploadProgress, setUploadProgress] = useState<{ title: string; percent: number } | null>(null);
+
   // Fetch Chapters
   useEffect(() => {
     const fetchChapters = async () => {
@@ -110,6 +112,7 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
     }
 
     setLoading(true);
+    setUploadProgress(null);
     setError('');
 
     try {
@@ -142,7 +145,20 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
           urlPath = `${folder}/${fileName}`;
 
           try {
-            await supabaseProxyClient.uploadObjectWithFormData('course-media', urlPath, item.file, token);
+            if (item.type === 'video' || item.file.size > 50 * 1024 * 1024) {
+              await supabaseProxyClient.uploadVideoResumable(
+                'course-media', 
+                urlPath, 
+                item.file, 
+                token,
+                (uploaded, total) => {
+                  setUploadProgress({ title: item.title, percent: Math.round((uploaded / total) * 100) });
+                }
+              );
+            } else {
+              setUploadProgress({ title: item.title, percent: 100 });
+              await supabaseProxyClient.uploadObjectWithFormData('course-media', urlPath, item.file, token);
+            }
           } catch (uploadError: any) {
             throw new Error(`Tải tệp "${item.file.name}" thất bại: ${uploadError.message || String(uploadError)}`);
           }
@@ -183,6 +199,7 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
       console.error(err);
       setError(err.message || 'Đã xảy ra lỗi khi tạo bài học.');
       setLoading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -488,13 +505,26 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
         <button
           type="submit"
           disabled={loading || chapters.length === 0}
-          className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary/95 shadow-lg shadow-primary/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary/95 shadow-lg shadow-primary/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed min-w-[180px] relative overflow-hidden"
         >
           {loading ? (
-            <>
-              <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
-              Đang tải lên học liệu...
-            </>
+            uploadProgress ? (
+              <div className="absolute inset-0 w-full h-full bg-primary/80 flex items-center justify-center">
+                <div 
+                  className="absolute left-0 top-0 bottom-0 bg-white/20 transition-all duration-300"
+                  style={{ width: `${uploadProgress.percent}%` }}
+                />
+                <span className="relative z-10 flex items-center drop-shadow-md">
+                  <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                  {uploadProgress.percent}% - {uploadProgress.title}
+                </span>
+              </div>
+            ) : (
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                Đang xử lý...
+              </>
+            )
           ) : (
             'Tạo bài học'
           )}

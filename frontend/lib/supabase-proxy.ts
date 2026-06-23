@@ -8,6 +8,8 @@
  * - Better security: sensitive operations controlled server-side
  */
 
+import * as tus from 'tus-js-client';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
 const SUPABASE_PROXY_PREFIX = '/api/supabase';
 
@@ -186,21 +188,19 @@ class SupabaseProxyClient {
   }
 
   /**
-   * Storage - Upload with FormData (needed for file uploads)
+   * Storage - Upload file natively (bypasses FormData for huge video streaming support)
    */
   async uploadObjectWithFormData(bucket: string, path: string, file: File, authToken: string) {
-    const url = `${API_BASE_URL}${SUPABASE_PROXY_PREFIX}/storage/object/${bucket}/${path}`;
+    const url = `/api/media/${bucket}/${path}`;
     
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
+          'Content-Type': file.type || 'application/octet-stream',
         },
-        body: formData,
+        body: file, // Send binary directly, avoiding memory/FormData limits
       });
 
       if (!response.ok) {
@@ -221,6 +221,51 @@ class SupabaseProxyClient {
     return this.request(`/storage/object/${bucket}/${path}`, {
       method: 'DELETE',
       authToken,
+    });
+  }
+
+  /**
+   * Storage - Upload video securely and resumably with TUS via Next.js Proxy
+   */
+  async uploadVideoResumable(
+    bucket: string,
+    path: string,
+    file: File,
+    authToken: string,
+    onProgress?: (bytesUploaded: number, bytesTotal: number) => void
+  ): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const upload = new tus.Upload(file, {
+        endpoint: '/api/tus',
+        retryDelays: [0, 3000, 5000, 10000, 20000],
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+        uploadDataDuringCreation: true,
+        removeFingerprintOnSuccess: true,
+        chunkSize: 6 * 1024 * 1024, // Required by Supabase Storage: 6MB chunks
+        metadata: {
+          bucketName: bucket,
+          objectName: path,
+          contentType: file.type || 'video/mp4',
+        },
+        onError: function (error) {
+          console.error('TUS upload failed:', error);
+          reject(error);
+        },
+        onProgress: function (bytesUploaded, bytesTotal) {
+          if (onProgress) {
+            onProgress(bytesUploaded, bytesTotal);
+          }
+        },
+        onSuccess: function () {
+          console.log('TUS upload completed: %s', upload.url);
+          resolve(path);
+        },
+      });
+
+      // Start the upload
+      upload.start();
     });
   }
 }

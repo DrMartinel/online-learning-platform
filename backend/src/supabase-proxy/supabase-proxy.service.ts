@@ -97,4 +97,38 @@ export class SupabaseProxyService {
       authToken
     );
   }
+
+  /**
+   * Proxy file uploads directly using binary buffers and correct mime-types
+   */
+  async uploadStorageFile(
+    bucket: string,
+    path: string,
+    file: any,
+    authToken?: string
+  ) {
+    try {
+      const config: any = {
+        method: 'post',
+        url: `/storage/v1/object/${bucket}${path}`,
+        data: file.buffer,
+        headers: {
+          ...this.axiosInstance.defaults.headers,
+          'Content-Type': file.mimetype,
+          'x-upsert': 'true', // Allows overwriting existing files
+        },
+      };
+
+      if (authToken) {
+        config.headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
+      const response = await this.axiosInstance(config);
+      return response.data;
+    } catch (error: any) {
+      throw new BadRequestException(
+        error.response?.data || error.message || 'Supabase proxy error'
+      );
+    }
+  }
 }

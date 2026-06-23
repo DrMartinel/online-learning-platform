@@ -116,12 +116,14 @@ export default function VideoPlayer({ src, title, isLocked, courseId }: VideoPla
 
   const skip = (delta: number) => {
     if (videoRef.current) {
+      const vidDuration = videoRef.current.duration;
+      // If duration is not yet available, don't restrict the upper bound
+      const maxDuration = isNaN(vidDuration) ? Infinity : vidDuration;
+      
       videoRef.current.currentTime = Math.max(
         0,
-        Math.min(duration, videoRef.current.currentTime + delta)
+        Math.min(maxDuration, videoRef.current.currentTime + delta)
       );
-    } else {
-      setCurrentTime((t) => Math.max(0, Math.min(duration, t + delta)));
     }
   };
 
@@ -130,7 +132,13 @@ export default function VideoPlayer({ src, title, isLocked, courseId }: VideoPla
   };
 
   const onTimeUpdate = () => {
-    if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
+    if (videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime);
+      const vidDuration = videoRef.current.duration;
+      if (!isNaN(vidDuration) && vidDuration !== duration) {
+        setDuration(vidDuration);
+      }
+    }
   };
 
   const onPlay = () => setIsPlaying(true);

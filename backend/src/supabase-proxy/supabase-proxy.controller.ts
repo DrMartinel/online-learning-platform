@@ -12,7 +12,10 @@ import {
   Param,
   UseGuards,
   Headers,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import { SupabaseProxyService } from './supabase-proxy.service';
 
@@ -146,14 +149,22 @@ export class SupabaseProxyController {
    * POST /api/supabase/storage/object/:bucket/:path (upload)
    */
   @Post('storage/object/:bucket/*')
+  @UseInterceptors(FileInterceptor('file'))
   async uploadToStorage(
     @Param('bucket') bucket: string,
     @Param() params: any,
-    @Body() body: any,
-    @Headers('authorization') authHeader?: string
+    @UploadedFile() file: any,
+    @Headers('authorization') authHeader?: string,
+    @Body() body?: any
   ) {
     const authToken = authHeader?.replace('Bearer ', '');
     const path = `/${params[0] || ''}`;
+    
+    if (file) {
+      return this.proxyService.uploadStorageFile(bucket, path, file, authToken);
+    }
+    
+    // Fallback if no file is provided (e.g. empty file or json upload)
     return this.proxyService.proxyStorageRequest('POST', `/object/${bucket}${path}`, body, authToken);
   }
 

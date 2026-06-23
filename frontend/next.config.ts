@@ -3,6 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   experimental: {
     externalDir: true,
+    serverActions: {
+      bodySizeLimit: '500mb',
+    },
+    proxyClientMaxBodySize: '500mb',
   },
   env: {
     // Expose server-side URL for middleware (Edge Runtime only sees NEXT_PUBLIC_ vars
