@@ -155,7 +155,7 @@ export default async function DashboardPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
         <p className="text-red-500 mb-4 font-semibold">Không thể xác thực thông tin người dùng.</p>
-        <Link href="/login" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold">
+        <Link href="/api/auth/logout" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold">
           Đăng nhập lại
         </Link>
       </div>

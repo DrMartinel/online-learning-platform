@@ -28,11 +28,14 @@ if [ ! -f "$ENV_FILE" ]; then
     exit 1
 fi
 
-# Source safely — only grab the vars we need
+set +e
+set +o pipefail
 POSTGRES_PASSWORD="$(grep -E '^POSTGRES_PASSWORD=' "$ENV_FILE" | head -1 | cut -d'=' -f2-)"
 POSTGRES_DB="$(grep -E '^POSTGRES_DB=' "$ENV_FILE" | head -1 | cut -d'=' -f2-)"
 ADMIN_EMAIL="$(grep -E '^ADMIN_EMAIL=' "$ENV_FILE" | head -1 | cut -d'=' -f2-)"
 ADMIN_PASSWORD="$(grep -E '^ADMIN_PASSWORD=' "$ENV_FILE" | head -1 | cut -d'=' -f2-)"
+set -e
+set -o pipefail
 
 # Fallback defaults for admin credentials
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@example.com}"

@@ -1,13 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ICourseRepository } from '../repositories/ICourseRepository';
+import { ICourseExamRepository } from '../repositories/ICourseExamRepository';
 import { CourseError } from '../CourseErrors';
 import { Course } from '../entities/Course';
-import {
-  CreateCourseDTO,
-  UpdateCourseDTO,
-  CourseResponseDTO,
-  ListCoursesFilterDTO,
-} from '../dto/course.dto';
+
+import { CreateCourseDTO, UpdateCourseDTO, CourseResponseDTO, ListCoursesFilterDTO } from '../dto/course.dto';
 import { AdminCreateCourseDTO, AdminUpdateCourseDTO } from '../dto/course-admin.dto';
 import { randomUUID } from 'crypto';
 
@@ -16,6 +13,8 @@ export class CourseService {
   constructor(
     @Inject('ICourseRepository')
     private readonly courseRepo: ICourseRepository,
+    @Inject('ICourseExamRepository')
+    private readonly courseExamRepo: ICourseExamRepository,
   ) {}
 
   async create(instructorId: string, dto: CreateCourseDTO): Promise<CourseResponseDTO> {
@@ -165,7 +164,25 @@ export class CourseService {
       thumbnailUrl: course.thumbnailUrl || undefined,
       isPublished: course.isPublished,
       createdAt: course.createdAt,
-      price: course.price, // <--- BỔ SUNG DÒNG NÀY ĐỂ FIX LỖI
+      price: course.price,
     };
+  }
+
+  // --- New Methods for Organizing Exams ---
+  async organizeExam(courseId: string, examIds: string[], instructorId: string): Promise<void> {
+    const course = await this.courseRepo.findById(courseId);
+    if (!course) {
+      throw new CourseError('Course not found');
+    }
+    if (course.instructorId !== instructorId) {
+      throw new CourseError('You do not have permission to organize exams for this course');
+    }
+    await this.courseExamRepo.addExamsToCourse(courseId, examIds);
+  }
+
+  async getCourseExams(courseId: string): Promise<any[]> {
+    // Return raw exam data; could map to DTO if needed
+    const exams = await this.courseExamRepo.getExamsByCourse(courseId);
+    return exams;
   }
 }

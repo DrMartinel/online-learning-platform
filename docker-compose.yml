@@ -399,9 +399,10 @@ services:
         - NEXT_PUBLIC_SUPABASE_URL=http://localhost:8000
         - NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}
     ports:
-      - "3002:3000"
+      - "3002:3002"
     environment:
       - NODE_ENV=production
+      - PORT=3002
       - BACKEND_URL=http://backend:3001
       - NEXT_PUBLIC_SUPABASE_URL=http://localhost:8000
       - SUPABASE_INTERNAL_URL=http://kong:8000

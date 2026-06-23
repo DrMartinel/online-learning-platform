@@ -170,7 +170,7 @@ export default function SessionDashboardPage() {
           <button
             onClick={() => fetchDashboardData(true)}
             disabled={refreshing}
-            className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-850 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-bold shadow-sm transition-all cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-bold shadow-sm transition-all cursor-pointer"
           >
             <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
             {refreshing ? 'Đang làm mới...' : 'Làm mới kết quả'}
@@ -256,7 +256,7 @@ export default function SessionDashboardPage() {
                   </div>
                   
                   {/* Tailwind Progress Bar */}
-                  <div className="h-3.5 w-full bg-gray-50 dark:bg-gray-800 rounded-full overflow-hidden border border-gray-150 dark:border-gray-800">
+                  <div className="h-3.5 w-full bg-gray-50 dark:bg-gray-800 rounded-full overflow-hidden border border-gray-200 dark:border-gray-800">
                     <div 
                       className="h-full bg-gradient-to-r from-primary/70 to-primary rounded-full transition-all duration-500"
                       style={{ width: `${percent}%` }}

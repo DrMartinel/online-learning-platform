@@ -209,7 +209,7 @@ export default function LessonSidebar({
                   </button>
 
                   {isExpanded && (
-                    <div className="bg-gray-50/20 dark:bg-gray-900/10 pb-2 border-t border-gray-50 dark:border-gray-850">
+                    <div className="bg-gray-50/20 dark:bg-gray-900/10 pb-2 border-t border-gray-50 dark:border-gray-800">
                       {chapterLessons.length === 0 ? (
                         <p className="text-[10px] text-gray-400 dark:text-gray-500 italic pl-8 py-2">
                           Chưa có bài học nào trong chương này.
@@ -247,7 +247,7 @@ export default function LessonSidebar({
                 </button>
 
                 {!!expandedChapters["unassigned"] && (
-                  <div className="bg-gray-50/20 dark:bg-gray-900/10 pb-2 border-t border-gray-50 dark:border-gray-850">
+                  <div className="bg-gray-50/20 dark:bg-gray-900/10 pb-2 border-t border-gray-50 dark:border-gray-800">
                     {lessonsByChapter["unassigned"].map((lesson) => renderLessonLink(lesson))}
                   </div>
                 )}

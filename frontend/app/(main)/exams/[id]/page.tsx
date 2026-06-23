@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
   ArrowLeft, Eye, EyeOff, Save, Lock, Link as LinkIcon, Globe, FileText, CheckCircle2, 
@@ -116,9 +116,79 @@ export default function PublicExamViewer() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | null }>({ message: '', type: null });
 
   // Interactive practice states
+  const searchParams = useSearchParams();
+  const isPracticeMode = searchParams.get('mode') === 'practice';
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [practiceScore, setPracticeScore] = useState<{ correct: number; total: number } | null>(null);
+
   const [trueFalseAnswers, setTrueFalseAnswers] = useState<Record<string, Record<number, 'true' | 'false' | undefined>>>({});
   const [essayAnswers, setEssayAnswers] = useState<Record<string, string>>({});
   const [essayVerification, setEssayVerification] = useState<Record<string, boolean>>({});
+  const [selectedChoices, setSelectedChoices] = useState<Record<string, number[]>>({});
+
+  const handleSubmitPractice = () => {
+    if (!exam) return;
+
+    let correctCount = 0;
+    let totalCount = 0;
+
+    exam.questions.forEach((qLink) => {
+      const q = qLink.question;
+      if (!q) return;
+      const firstVar = q.variants?.[0];
+      if (!firstVar) return;
+
+      totalCount++;
+
+      const isTF = q.tags?.includes('type:true_false') || firstVar.correctAnswer?.hasOwnProperty('trueIndices');
+      const isEssay = q.type === 'essay';
+
+      if (isEssay) {
+        const studentAns = (essayAnswers[q.id] || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        const correctAns = String(firstVar.correctAnswer?.essayAnswer || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        if (studentAns === correctAns) {
+          correctCount++;
+        }
+      } else if (isTF) {
+        const trueIndices = firstVar.correctAnswer?.trueIndices || [];
+        const studentTF = trueFalseAnswers[q.id] || {};
+        let allTFCorrect = true;
+        firstVar.options?.forEach((opt, oIdx) => {
+          const correctVal = trueIndices.includes(oIdx);
+          const studentVal = studentTF[oIdx];
+          
+          if (correctVal) {
+            if (studentVal !== 'true') allTFCorrect = false;
+          } else {
+            if (studentVal !== 'false') allTFCorrect = false;
+          }
+        });
+        if (allTFCorrect) {
+          correctCount++;
+        }
+      } else {
+        const correctIndices = q.type === 'single_choice'
+          ? (firstVar.correctAnswer?.index !== undefined ? [firstVar.correctAnswer.index] : [])
+          : (firstVar.correctAnswer?.indices || []);
+        
+        const studentChoices = selectedChoices[q.id] || [];
+
+        const sortedCorrect = [...correctIndices].sort((a, b) => a - b);
+        const sortedStudent = [...studentChoices].sort((a, b) => a - b);
+
+        if (
+          sortedCorrect.length === sortedStudent.length &&
+          sortedCorrect.every((val, idx) => val === sortedStudent[idx])
+        ) {
+          correctCount++;
+        }
+      }
+    });
+
+    setPracticeScore({ correct: correctCount, total: totalCount });
+    setIsSubmitted(true);
+    showToast(`Nộp bài luyện tập thành công! Bạn trả lời đúng ${correctCount}/${totalCount} câu.`, 'success');
+  };
 
   // Print Preview Modal State
   const [showPrintPreview, setShowPrintPreview] = useState(false);
@@ -559,38 +629,53 @@ export default function PublicExamViewer() {
           )}
         </div>
 
+        {/* === KẾT QUẢ LUYỆN TẬP === */}
+        {isPracticeMode && isSubmitted && practiceScore && (
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-3xl p-6 text-center space-y-2 animate-in fade-in duration-300">
+            <h2 className="text-lg font-bold text-emerald-600 dark:text-emerald-400">Kết quả luyện tập của bạn</h2>
+            <p className="text-3xl font-black text-emerald-700 dark:text-emerald-355">
+              Đúng {practiceScore.correct} / {practiceScore.total} câu
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+              Bạn có thể xem lời giải chi tiết cho từng câu bên dưới.
+            </p>
+          </div>
+        )}
+
         {/* === PDF PREVIEW LINK === */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-5 py-4 flex items-center justify-between shadow-sm flex-wrap gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500">
-              <FileText size={18} />
+        {!isPracticeMode && (
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-5 py-4 flex items-center justify-between shadow-sm flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500">
+                <FileText size={18} />
+              </div>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                PDF của {exam.title}
+              </span>
             </div>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              PDF của {exam.title}
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  const url = window.location.href;
+                  navigator.clipboard.writeText(url).then(() => {
+                    showToast('Đã sao chép link đề thi!', 'success');
+                  }).catch(() => {
+                    showToast('Không thể sao chép link.', 'error');
+                  });
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs transition-all cursor-pointer"
+              >
+                <LinkIcon size={14} /> Sao chép link
+              </button>
+              <button
+                onClick={() => setShowPrintPreview(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs transition-all cursor-pointer"
+              >
+                <Play size={14} /> Xem ngay
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                const url = window.location.href;
-                navigator.clipboard.writeText(url).then(() => {
-                  showToast('Đã sao chép link đề thi!', 'success');
-                }).catch(() => {
-                  showToast('Không thể sao chép link.', 'error');
-                });
-              }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs transition-all cursor-pointer"
-            >
-              <LinkIcon size={14} /> Sao chép link
-            </button>
-            <button
-              onClick={() => setShowPrintPreview(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs transition-all cursor-pointer"
-            >
-              <Play size={14} /> Xem ngay
-            </button>
-          </div>
-        </div>
+        )}
 
         {/* === SEARCH & TOGGLE NAV PALETTE === */}
         <div className="space-y-4">
@@ -716,32 +801,53 @@ export default function PublicExamViewer() {
                             const isEssayWithAns = q.type === 'essay' && firstVar?.correctAnswer?.essayAnswer;
 
                             if (isEssayWithAns) {
+                              const isCorrect = (essayAnswers[q.id] || '').trim().toLowerCase().replace(/\s+/g, ' ') === String(firstVar.correctAnswer?.essayAnswer || '').trim().toLowerCase().replace(/\s+/g, ' ');
                               return (
                                 <div className="space-y-3 pl-2 max-w-md">
                                   <div className="flex gap-2">
                                     <input
                                       type="text"
                                       placeholder="Nhập đáp số..."
+                                      disabled={isPracticeMode && isSubmitted}
                                       value={essayAnswers[q.id] || ''}
                                       onChange={(e) => setEssayAnswers({ ...essayAnswers, [q.id]: e.target.value })}
-                                      className="flex-1 px-4 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary text-gray-900 dark:text-white"
+                                      className={`flex-1 px-4 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary text-gray-900 dark:text-white ${
+                                        isPracticeMode && isSubmitted
+                                          ? isCorrect
+                                            ? 'border-emerald-500 bg-emerald-500/5 dark:bg-emerald-500/10'
+                                            : 'border-rose-500 bg-rose-500/5 dark:bg-rose-500/10'
+                                          : 'border-gray-200 dark:border-gray-800'
+                                      }`}
                                     />
-                                    <button
-                                      onClick={() => {
-                                        const studentAns = (essayAnswers[q.id] || '').trim().toLowerCase();
-                                        const correctAns = String(firstVar.correctAnswer.essayAnswer).trim().toLowerCase();
-                                        const normalize = (s: string) => s.replace(/\s+/g, ' ');
-                                        const isCorrect = normalize(studentAns) === normalize(correctAns);
-                                        setEssayVerification({ ...essayVerification, [q.id]: isCorrect });
-                                      }}
-                                      className="px-4 py-2.5 bg-primary text-white font-bold text-xs rounded-2xl hover:bg-primary/95 transition-all cursor-pointer shrink-0"
-                                    >
-                                      Kiểm tra
-                                    </button>
+                                    {!isPracticeMode && (
+                                      <button
+                                        onClick={() => {
+                                          const studentAns = (essayAnswers[q.id] || '').trim().toLowerCase();
+                                          const correctAns = String(firstVar.correctAnswer.essayAnswer).trim().toLowerCase();
+                                          const normalize = (s: string) => s.replace(/\s+/g, ' ');
+                                          const isCorrectVal = normalize(studentAns) === normalize(correctAns);
+                                          setEssayVerification({ ...essayVerification, [q.id]: isCorrectVal });
+                                        }}
+                                        className="px-4 py-2.5 bg-primary text-white font-bold text-xs rounded-2xl hover:bg-primary/95 transition-all cursor-pointer shrink-0"
+                                      >
+                                        Kiểm tra
+                                      </button>
+                                    )}
                                   </div>
-                                  {essayVerification[q.id] !== undefined && (
+                                  {!isPracticeMode && essayVerification[q.id] !== undefined && (
                                     <div className={`text-xs font-bold ${essayVerification[q.id] ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                                       {essayVerification[q.id] ? 'Chính xác! 🎉' : 'Chưa đúng, thử lại nhé!'}
+                                    </div>
+                                  )}
+                                  {isPracticeMode && isSubmitted && (
+                                    <div className="text-xs font-bold">
+                                      {isCorrect ? (
+                                        <span className="text-emerald-600 dark:text-emerald-400">Chính xác! 🎉</span>
+                                      ) : (
+                                        <span className="text-rose-600 dark:text-rose-400">
+                                          Chưa chính xác (Đáp án: <strong className="font-extrabold">{firstVar.correctAnswer?.essayAnswer}</strong>)
+                                        </span>
+                                      )}
                                     </div>
                                   )}
                                 </div>
@@ -749,12 +855,39 @@ export default function PublicExamViewer() {
                             }
 
                             if (isTF && firstVar?.options && firstVar.options.length > 0) {
+                              const trueIndices = firstVar.correctAnswer?.trueIndices || [];
                               return (
                                 <div className="space-y-3 pl-2">
                                   {firstVar.options.map((opt, oIdx) => {
                                     const selection = trueFalseAnswers[q.id]?.[oIdx];
+                                    const correctVal = trueIndices.includes(oIdx);
+
+                                    let trueBtnClass = '';
+                                    let falseBtnClass = '';
+
+                                    if (isPracticeMode && isSubmitted) {
+                                      if (correctVal) {
+                                        trueBtnClass = 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold';
+                                        falseBtnClass = selection === 'false'
+                                          ? 'bg-rose-500/10 border-rose-500 text-rose-600 dark:text-rose-455'
+                                          : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-600';
+                                      } else {
+                                        falseBtnClass = 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold';
+                                        trueBtnClass = selection === 'true'
+                                          ? 'bg-rose-500/10 border-rose-500 text-rose-600 dark:text-rose-455'
+                                          : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-600';
+                                      }
+                                    } else {
+                                      trueBtnClass = selection === 'true'
+                                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                                        : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white';
+                                      falseBtnClass = selection === 'false'
+                                        ? 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
+                                        : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white';
+                                    }
+
                                     return (
-                                      <div key={oIdx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl border border-gray-150 dark:border-gray-800 bg-gray-50/20 dark:bg-gray-950/20 shadow-sm">
+                                      <div key={oIdx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/20 dark:bg-gray-950/20 shadow-sm">
                                         <div className="flex items-start gap-2">
                                           <span className="font-extrabold text-sm text-gray-900 dark:text-white">{opt.label})</span>
                                           <div 
@@ -764,34 +897,30 @@ export default function PublicExamViewer() {
                                         </div>
                                         <div className="flex items-center gap-1.5 shrink-0 ml-auto sm:ml-0">
                                           <button
+                                            disabled={isPracticeMode && isSubmitted}
                                             onClick={() => {
+                                              if (isPracticeMode && isSubmitted) return;
                                               const current = trueFalseAnswers[q.id] || {};
                                               setTrueFalseAnswers({
                                                 ...trueFalseAnswers,
                                                 [q.id]: { ...current, [oIdx]: selection === 'true' ? undefined : 'true' }
                                               });
                                             }}
-                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
-                                              selection === 'true'
-                                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-                                                : 'bg-white dark:bg-gray-900 border-gray-250 dark:border-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white'
-                                            }`}
+                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${trueBtnClass}`}
                                           >
                                             Đúng
                                           </button>
                                           <button
+                                            disabled={isPracticeMode && isSubmitted}
                                             onClick={() => {
+                                              if (isPracticeMode && isSubmitted) return;
                                               const current = trueFalseAnswers[q.id] || {};
                                               setTrueFalseAnswers({
                                                 ...trueFalseAnswers,
                                                 [q.id]: { ...current, [oIdx]: selection === 'false' ? undefined : 'false' }
                                               });
                                             }}
-                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
-                                              selection === 'false'
-                                                ? 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
-                                                : 'bg-white dark:bg-gray-900 border-gray-250 dark:border-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white'
-                                            }`}
+                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${falseBtnClass}`}
                                           >
                                             Sai
                                           </button>
@@ -804,29 +933,78 @@ export default function PublicExamViewer() {
                             }
 
                             if (firstVar?.options && firstVar.options.length > 0) {
+                              const isMultiple = q.type === 'multiple_choice';
+                              const currentSelected = selectedChoices[q.id] || [];
+
+                              const correctIndices = q.type === 'single_choice'
+                                ? (firstVar.correctAnswer?.index !== undefined ? [firstVar.correctAnswer.index] : [])
+                                : (firstVar.correctAnswer?.indices || []);
+
                               return (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pl-2">
-                                  {firstVar.options.map((opt, oIdx) => (
-                                    <div 
-                                      key={oIdx} 
-                                      className="flex items-start gap-2 text-sm p-3 rounded-2xl border transition-all bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 text-gray-700 dark:text-gray-300"
-                                    >
-                                      <span className="font-bold shrink-0 text-gray-900 dark:text-white">
-                                        {opt.label}.
-                                      </span>
-                                      <div 
-                                        className="render-math font-medium flex-1 text-left"
-                                        dangerouslySetInnerHTML={{ __html: renderLaTeX(opt.text) }}
-                                      />
-                                    </div>
-                                  ))}
+                                  {firstVar.options.map((opt, oIdx) => {
+                                    const isChosen = currentSelected.includes(oIdx);
+                                    const isCorrect = correctIndices.includes(oIdx);
+
+                                    let btnClass = '';
+                                    if (isPracticeMode && isSubmitted) {
+                                      if (isCorrect) {
+                                        btnClass = 'bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-semibold';
+                                      } else if (isChosen) {
+                                        btnClass = 'bg-rose-500/5 dark:bg-rose-500/10 border-rose-500 text-rose-600 dark:text-rose-455';
+                                      } else {
+                                        btnClass = 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-655';
+                                      }
+                                    } else {
+                                      btnClass = isChosen
+                                        ? 'bg-primary/5 border-primary text-primary dark:bg-primary/10'
+                                        : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-750';
+                                    }
+
+                                    return (
+                                      <button
+                                        key={oIdx}
+                                        disabled={isPracticeMode && isSubmitted}
+                                        onClick={() => {
+                                          if (isPracticeMode && isSubmitted) return;
+                                          if (isMultiple) {
+                                            if (isChosen) {
+                                              setSelectedChoices({
+                                                ...selectedChoices,
+                                                [q.id]: currentSelected.filter(idx => idx !== oIdx)
+                                              });
+                                            } else {
+                                              setSelectedChoices({
+                                                ...selectedChoices,
+                                                [q.id]: [...currentSelected, oIdx]
+                                              });
+                                            }
+                                          } else {
+                                            setSelectedChoices({
+                                              ...selectedChoices,
+                                              [q.id]: [oIdx]
+                                            });
+                                          }
+                                        }}
+                                        className={`flex items-start gap-2 text-sm p-3.5 rounded-2xl border transition-all text-left w-full cursor-pointer outline-none ${btnClass}`}
+                                      >
+                                        <span className={`font-bold shrink-0 ${isChosen ? 'text-primary' : (isPracticeMode && isSubmitted && !isCorrect) ? 'text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+                                          {opt.label}.
+                                        </span>
+                                        <div 
+                                          className="render-math font-medium flex-1 text-left"
+                                          dangerouslySetInnerHTML={{ __html: renderLaTeX(opt.text) }}
+                                        />
+                                      </button>
+                                    );
+                                  })}
                                 </div>
                               );
                             }
 
                             return null;
                           })()}
-
+                          
                           {/* Bottom row (actions and metadata) */}
                           <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
                             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider bg-gray-50 dark:bg-gray-800/40 px-2.5 py-1 rounded-xl">
@@ -834,7 +1012,7 @@ export default function PublicExamViewer() {
                             </span>
 
                             {/* Explanation button to open Modal */}
-                            {(firstVar?.explanation || firstVar?.correctAnswer || isAdmin) && (
+                            {(firstVar?.explanation || firstVar?.correctAnswer || isAdmin) && (!isPracticeMode || isSubmitted) && (
                               <button
                                 onClick={() => {
                                   setActiveSolutionQuestion(q);
@@ -854,6 +1032,17 @@ export default function PublicExamViewer() {
                 </div>
               );
             })}
+
+            {isPracticeMode && !isSubmitted && (
+              <div className="flex justify-center pt-4">
+                <button
+                  onClick={handleSubmitPractice}
+                  className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-sm font-bold transition-all shadow-xl shadow-emerald-600/20 cursor-pointer flex items-center gap-2"
+                >
+                  <Play size={14} /> Nộp bài luyện tập (Không giới hạn thời gian)
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Right - Sticky Question Palette Sidebar */}
@@ -896,6 +1085,26 @@ export default function PublicExamViewer() {
                   );
                 })}
               </div>
+
+              {isPracticeMode && (
+                <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-3">
+                  {!isSubmitted ? (
+                    <button
+                      onClick={handleSubmitPractice}
+                      className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/15 cursor-pointer"
+                    >
+                      <Play size={12} /> Nộp bài luyện tập
+                    </button>
+                  ) : (
+                    <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl p-4 text-center">
+                      <p className="text-[11px] text-gray-500 dark:text-gray-455 font-bold uppercase tracking-wider">Kết quả</p>
+                      <p className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
+                        {practiceScore?.correct}/{practiceScore?.total} Đúng
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1113,6 +1322,7 @@ export default function PublicExamViewer() {
                             const correctIndices: number[] = activeSolutionQuestion.type === 'single_choice'
                               ? (var0.correctAnswer?.index !== undefined ? [var0.correctAnswer.index] : [])
                               : (var0.correctAnswer?.indices || []);
+                            const currentSelected = selectedChoices[activeSolutionQuestion.id] || [];
                             return (
                               <div className="space-y-2.5">
                                 <span className="text-sm font-bold text-gray-800 dark:text-gray-200 block">
@@ -1127,13 +1337,17 @@ export default function PublicExamViewer() {
                                         className={`flex items-start gap-2.5 text-sm p-3 rounded-2xl border transition-all ${
                                           isCorrect
                                             ? 'bg-emerald-500/8 border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
-                                            : 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400'
+                                            : currentSelected.includes(oIdx)
+                                              ? 'bg-rose-500/5 border-rose-500/20 text-rose-800 dark:text-rose-455'
+                                              : 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400'
                                         }`}
                                       >
                                         <span className={`font-extrabold shrink-0 text-xs mt-0.5 w-5 h-5 rounded-full flex items-center justify-center ${
                                           isCorrect
                                             ? 'bg-emerald-500 text-white'
-                                            : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                                            : currentSelected.includes(oIdx)
+                                              ? 'bg-rose-500 text-white'
+                                              : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                                         }`}>
                                           {opt.label}
                                         </span>
@@ -1146,6 +1360,16 @@ export default function PublicExamViewer() {
                                             <Check size={16} strokeWidth={2.5} />
                                           </span>
                                         )}
+                                         {currentSelected.includes(oIdx) && !isCorrect && (
+                                           <span className="shrink-0 text-rose-500 text-xs font-bold font-mono">
+                                             Lựa chọn của bạn
+                                           </span>
+                                         )}
+                                         {currentSelected.includes(oIdx) && isCorrect && (
+                                           <span className="shrink-0 text-emerald-600 text-xs font-bold font-mono">
+                                             Chính xác!
+                                           </span>
+                                         )}
                                       </div>
                                     );
                                   })}

@@ -5,14 +5,15 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { getSignedMediaUrl } from "@/lib/supabase";
 import LessonList, { type Lesson } from "@/components/courses/LessonList";
-import EnrollButton from "@/components/courses/EnrollButton";
+import EnrollFreeButton from "@/components/courses/EnrollFreeButton";
+import CourseSessionsManager from "@/components/courses/CourseSessionsManager";
 import ChatWidget from "@/components/rag/ChatWidget";
 import CourseActionMenu from "@/components/admin/CourseActionMenu";
 import ChapterManager from "@/components/courses/ChapterManager";
 import type { Course } from "@/components/courses/CourseCard";
 import type { Metadata } from "next";
 import PaymentButton from '@/components/courses/PaymentButton';
-import EnrollFreeButton from "@/components/courses/EnrollFreeButton";
+// Duplicate import removed
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -33,10 +34,12 @@ async function getCourse(id: string): Promise<Course | null> {
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
     const res = await fetch(`${backendUrl}/courses/${id}`, {
-      headers,
-      cache: "no-store",
-    });
+  headers,
+  cache: "no-store",
+});
     if (res.status === 404) return null;
+  // Course details fetched
+
     if (!res.ok) return null;
     return res.json();
   } catch {
@@ -88,6 +91,34 @@ async function getChapters(courseId: string): Promise<any[]> {
   }
 }
 
+// Fetch exams linked to the course
+async function getCourseExams(courseId: string): Promise<any[]> {
+  const backendUrl = process.env.BACKEND_URL;
+  if (!backendUrl) return [];
+  try {
+    const token = await getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${backendUrl}/courses/${courseId}/exams`, { headers, cache: "no-store" });
+    if (!res.ok) return [];
+    return res.json();
+  } catch { return []; }
+}
+
+// Fetch all exams
+async function getExams(): Promise<any[]> {
+  const backendUrl = process.env.BACKEND_URL;
+  if (!backendUrl) return [];
+  try {
+    const token = await getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${backendUrl}/exams`, { headers, cache: "no-store" });
+    if (!res.ok) return [];
+    return res.json();
+  } catch { return []; }
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const course = await getCourse(id);
@@ -102,11 +133,15 @@ export default async function CourseDetailPage({ params }: PageProps) {
   const { id } = await params;
 
   // Fetch course + lessons + chapters in parallel
-  const [course, lessons, chapters] = await Promise.all([
+  const [course, lessons, chapters, exams, allExamsList] = await Promise.all([
     getCourse(id),
     getLessons(id),
     getChapters(id),
+    getCourseExams(id),
+    getExams(),
   ]);
+
+  const examMap = new Map<string, string>(allExamsList.map((e: any) => [e.id, e.title]));
 
   if (!course) {
     notFound();
@@ -309,6 +344,14 @@ if (isLoggedIn) {
                 courseId={id} 
                 token={token} 
               />
+            {/* Exams Section */}
+            <section className="mt-8 border-t border-gray-200 dark:border-gray-800 pt-6">
+              <CourseSessionsManager 
+                courseId={course.id} 
+                isInstructor={isInstructor} 
+                token={token} 
+              />
+            </section>
             </section>
           </div>
 

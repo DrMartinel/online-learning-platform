@@ -2,6 +2,7 @@ import { Controller, Get, Post, Put, Delete, Param, Body, Query, HttpCode, HttpS
 import { CourseService } from '../services/course.service';
 import { CreateCourseDTO, UpdateCourseDTO, CourseResponseDTO, ListCoursesFilterDTO } from '../dto/course.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { OrganizeExamDTO, CourseExamResponseDTO } from '../dto/course-exam.dto';
 import { Auth } from '../../iam/decorators/auth.decorator';
 import { CurrentUser } from '../../iam/decorators/current-user.decorator';
 
@@ -77,5 +78,23 @@ export class CourseController {
   async checkEnrollment(@Param('id') id: string, @CurrentUser() user: any): Promise<{ isEnrolled: boolean }> {
     const isEnrolled = await this.courseService.checkEnrollment(id, user.id);
     return { isEnrolled };
+  }
+
+  @Post(':id/organize-exam')
+  @Auth('action:course:update')
+  @ApiOperation({ summary: 'Organize exams for a course' })
+  @ApiResponse({ status: 200, description: 'Exams organized successfully' })
+  async organizeExam(@Param('id') courseId: string, @CurrentUser() user: any, @Body() dto: OrganizeExamDTO): Promise<{ message: string }> {
+    await this.courseService.organizeExam(courseId, dto.examIds, user.id);
+    return { message: 'Exams organized successfully' };
+  }
+
+  @Get(':id/exams')
+  @Auth('action:course:read')
+  @ApiOperation({ summary: 'Get exams for a course' })
+  @ApiResponse({ status: 200, description: 'List of exams', type: [CourseExamResponseDTO] })
+  async getCourseExams(@Param('id') courseId: string): Promise<CourseExamResponseDTO[]> {
+    const exams = await this.courseService.getCourseExams(courseId);
+    return exams as any; // Assuming repository returns matching shape
   }
 }

@@ -202,7 +202,7 @@ export default function EditExamSettings() {
         <div className="flex items-center gap-3">
           <Link
             href="/exams"
-            className="p-2.5 rounded-xl border border-gray-150 dark:border-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-900 transition-all shadow-sm"
+            className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-900 transition-all shadow-sm"
           >
             <ArrowLeft size={18} />
           </Link>
@@ -222,8 +222,8 @@ export default function EditExamSettings() {
       </div>
 
       {/* General Information Card */}
-      <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-150 dark:border-gray-800 p-6 md:p-8 space-y-6 shadow-sm">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white pb-3 border-b border-gray-150 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 md:p-8 space-y-6 shadow-sm">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white pb-3 border-b border-gray-200 dark:border-gray-800">
           Thông tin chung
         </h3>
 
@@ -237,7 +237,7 @@ export default function EditExamSettings() {
             placeholder="[THDC] Trắc nghiệm lưu đồ thuật toán..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 py-3 bg-gray-50/50 dark:bg-gray-800/50 border border-gray-150 dark:border-gray-800 rounded-2xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder-gray-400"
+            className="w-full px-4 py-3 bg-gray-50/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder-gray-400"
           />
         </div>
 
@@ -250,19 +250,19 @@ export default function EditExamSettings() {
             placeholder="Câu"
             value={questionLabel}
             onChange={(e) => setQuestionLabel(e.target.value)}
-            className="w-full px-4 py-3 bg-gray-50/50 dark:bg-gray-800/50 border border-gray-150 dark:border-gray-800 rounded-2xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder-gray-400"
+            className="w-full px-4 py-3 bg-gray-50/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder-gray-400"
           />
         </div>
       </div>
 
       {/* Display Config Card */}
-      <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-150 dark:border-gray-800 p-6 md:p-8 space-y-6 shadow-sm">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white pb-3 border-b border-gray-150 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 md:p-8 space-y-6 shadow-sm">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white pb-3 border-b border-gray-200 dark:border-gray-800">
           Cấu hình hiển thị (Bản in)
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <label className="flex items-center justify-between p-4 rounded-2xl border border-gray-150 dark:border-gray-800 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+          <label className="flex items-center justify-between p-4 rounded-2xl border border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
                 <Hash size={18} />
@@ -283,7 +283,7 @@ export default function EditExamSettings() {
             </div>
           </label>
 
-          <label className="flex items-center justify-between p-4 rounded-2xl border border-gray-150 dark:border-gray-800 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+          <label className="flex items-center justify-between p-4 rounded-2xl border border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
                 <Award size={18} />
@@ -307,8 +307,8 @@ export default function EditExamSettings() {
       </div>
 
       {/* Tags Classification Card */}
-      <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-150 dark:border-gray-800 p-6 md:p-8 space-y-6 shadow-sm">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white pb-3 border-b border-gray-150 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 md:p-8 space-y-6 shadow-sm">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white pb-3 border-b border-gray-200 dark:border-gray-800">
           Phân loại
         </h3>
 
@@ -325,7 +325,7 @@ export default function EditExamSettings() {
               placeholder="Tìm kiếm chủ đề/topic..."
               value={tagSearchQuery}
               onChange={(e) => setTagSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border border-gray-150 dark:border-gray-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary text-gray-900 dark:text-white"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary text-gray-900 dark:text-white"
             />
           </div>
 
@@ -351,7 +351,7 @@ export default function EditExamSettings() {
           {/* Search results & available topics */}
           <div className="space-y-1.5">
             <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Danh sách chủ đề khả dụng:</span>
-            <div className="flex flex-wrap gap-2.5 items-center max-h-48 overflow-y-auto p-3 border border-gray-150 dark:border-gray-800 rounded-2xl">
+            <div className="flex flex-wrap gap-2.5 items-center max-h-48 overflow-y-auto p-3 border border-gray-200 dark:border-gray-800 rounded-2xl">
               {availableTags
                 .filter(tag => !examTags.includes(tag) && tag.toLowerCase().includes(tagSearchQuery.toLowerCase()))
                 .map((tag) => (
@@ -359,7 +359,7 @@ export default function EditExamSettings() {
                     type="button"
                     key={tag}
                     onClick={() => handleToggleTag(tag)}
-                    className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-150 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all cursor-pointer"
+                    className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all cursor-pointer"
                   >
                     + {tag}
                   </button>
@@ -380,8 +380,8 @@ export default function EditExamSettings() {
       </div>
 
       {/* Access Control Card */}
-      <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-150 dark:border-gray-800 p-6 md:p-8 space-y-6 shadow-sm">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white pb-3 border-b border-gray-150 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 md:p-8 space-y-6 shadow-sm">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white pb-3 border-b border-gray-200 dark:border-gray-800">
           Quyền truy cập
         </h3>
 
@@ -392,7 +392,7 @@ export default function EditExamSettings() {
             className={`p-5 rounded-2xl border-2 flex flex-col justify-between gap-4 cursor-pointer transition-all duration-300 ${
               accessRights === 'private'
                 ? 'bg-amber-500/5 border-amber-500 shadow-md shadow-amber-500/5'
-                : 'bg-white dark:bg-gray-900 border-gray-150 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700'
+                : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -421,7 +421,7 @@ export default function EditExamSettings() {
             className={`p-5 rounded-2xl border-2 flex flex-col justify-between gap-4 cursor-pointer transition-all duration-300 ${
               accessRights === 'link'
                 ? 'bg-blue-500/5 border-blue-500 shadow-md shadow-blue-500/5'
-                : 'bg-white dark:bg-gray-900 border-gray-150 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700'
+                : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -450,7 +450,7 @@ export default function EditExamSettings() {
             className={`p-5 rounded-2xl border-2 flex flex-col justify-between gap-4 cursor-pointer transition-all duration-300 ${
               accessRights === 'public'
                 ? 'bg-emerald-500/5 border-emerald-500 shadow-md shadow-emerald-500/5'
-                : 'bg-white dark:bg-gray-900 border-gray-150 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700'
+                : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -495,7 +495,7 @@ export default function EditExamSettings() {
       {/* Custom Tag Input Prompt Modal */}
       {showTagModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-6 mx-4 animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-6 mx-4 animate-in zoom-in-95 duration-200">
             <div className="space-y-2">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Thêm chủ đề mới</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Nhập tên chủ đề mới để phân loại học liệu của bạn.</p>
@@ -522,7 +522,7 @@ export default function EditExamSettings() {
                   }
                 }
               }}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-150 dark:border-gray-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary text-gray-900 dark:text-white"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary text-gray-900 dark:text-white"
             />
             
             <div className="flex items-center justify-end gap-3 pt-2">
@@ -532,7 +532,7 @@ export default function EditExamSettings() {
                   setCustomTagName('');
                   setShowTagModal(false);
                 }}
-                className="px-4.5 py-2.5 rounded-xl border border-gray-205 dark:border-gray-800 text-xs font-bold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="px-4.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 Huỷ bỏ
               </button>

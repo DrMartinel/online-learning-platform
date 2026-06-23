@@ -338,7 +338,7 @@ export default function LessonComments({
   };
 
   return (
-    <div className="space-y-6 pt-6 border-t border-gray-200 dark:border-gray-850">
+    <div className="space-y-6 pt-6 border-t border-gray-200 dark:border-gray-800">
       <div className="flex items-center gap-2">
         <MessageSquare size={18} className="text-primary" />
         <h3 className="text-base font-bold text-gray-900 dark:text-white">

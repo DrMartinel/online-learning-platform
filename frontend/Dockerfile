@@ -24,7 +24,7 @@ RUN pnpm run build
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=3002
 
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/next.config.ts ./next.config.ts
@@ -32,7 +32,7 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/node_modules ./node_modules
 
-EXPOSE 3000
+EXPOSE 3002
 RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 CMD ["pnpm", "run", "start"]
 

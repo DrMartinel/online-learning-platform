@@ -4,6 +4,7 @@ import { CourseController } from './controllers/course.controller';
 import { CourseAdminController } from './controllers/admin/course.admin.controller';
 import { SupabaseCourseRepository } from './repositories/supabase-course.repository';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseCourseExamRepository } from './repositories/supabase-course-exam.repository';
 
 @Module({
   imports: [],
@@ -17,10 +18,14 @@ import { SupabaseClient } from '@supabase/supabase-js';
       },
       inject: [SupabaseClient],
     },
+    {
+      provide: 'ICourseExamRepository',
+      useFactory: (supabaseClient: SupabaseClient) => {
+        return new SupabaseCourseExamRepository(supabaseClient);
+      },
+      inject: [SupabaseClient],
+    },
   ],
-  exports: [
-    CourseService, 
-    'ICourseRepository' // Export thêm cái này nếu cần
-  ],
+  exports: [CourseService],
 })
 export class CourseModule {}

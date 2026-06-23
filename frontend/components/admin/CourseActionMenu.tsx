@@ -160,7 +160,7 @@ export default function CourseActionMenu({
             {/* Toggle Status Option */}
             <button 
               onClick={toggleStatus}
-              className="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2 border-t border-gray-100 dark:border-gray-850 cursor-pointer"
+              className="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2 border-t border-gray-100 dark:border-gray-800 cursor-pointer"
             >
               {isPublished ? (
                 <><EyeOff size={14} className="text-amber-500 shrink-0" /> Hủy xuất bản</>
@@ -172,7 +172,7 @@ export default function CourseActionMenu({
             {/* Sync AI Option */}
             <button 
               onClick={ingestCourse}
-              className="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2 border-t border-gray-100 dark:border-gray-850 cursor-pointer"
+              className="w-full text-left px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2 border-t border-gray-100 dark:border-gray-800 cursor-pointer"
             >
               <BrainCircuit size={14} className="text-primary shrink-0" /> Đồng bộ dữ liệu AI
             </button>
@@ -299,7 +299,7 @@ export default function CourseActionMenu({
               </div>
 
               {/* Footer Buttons */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-150 dark:border-gray-800">
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
                 <button
                   type="button"
                   onClick={() => {

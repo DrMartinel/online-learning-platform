@@ -1077,7 +1077,7 @@ export default function ExamQuestionsEditor() {
       <div className="group/divider relative py-2 print-hide flex items-center justify-center">
         <div className="absolute inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-800 to-transparent group-hover/divider:via-primary/30 transition-all" />
         
-        <div className="relative z-10 opacity-0 group-hover/divider:opacity-100 transition-all duration-200 scale-95 group-hover/divider:scale-100 flex items-center gap-1 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-850 px-3 py-1 rounded-full shadow-md">
+        <div className="relative z-10 opacity-0 group-hover/divider:opacity-100 transition-all duration-200 scale-95 group-hover/divider:scale-100 flex items-center gap-1 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 px-3 py-1 rounded-full shadow-md">
           <button
             onClick={() => handleAddNewQuestion(partId, idx)}
             className="flex items-center gap-1 text-[11px] font-bold text-gray-500 hover:text-primary transition-colors px-2 py-0.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
@@ -1371,7 +1371,7 @@ export default function ExamQuestionsEditor() {
         <div className="flex items-center gap-3">
           <Link
             href="/exams"
-            className="p-2.5 rounded-xl border border-gray-150 dark:border-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-900 transition-all shadow-sm"
+            className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-900 transition-all shadow-sm"
           >
             <ArrowLeft size={18} />
           </Link>
@@ -2546,7 +2546,7 @@ A. Đáp án A
                     <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed">
                       Sử dụng các chữ cái hoa <strong className="text-gray-800 dark:text-gray-200">A. B. C. D.</strong>. Thêm dấu hoa thị <strong className="text-primary font-bold">*</strong> ở đầu dòng của đáp án đúng.
                     </p>
-                    <pre className="text-[9px] font-mono bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 p-2.5 rounded-xl text-gray-600 dark:text-gray-400 overflow-x-auto">
+                    <pre className="text-[9px] font-mono bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-gray-600 dark:text-gray-400 overflow-x-auto">
 {`Câu hỏi trắc nghiệm?
 A. Phương án sai 1
 *B. Đáp án ĐÚNG (Có dấu *)
@@ -2560,7 +2560,7 @@ C. Phương án sai 2`}
                     <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed">
                       Sử dụng chữ cái thường <strong className="text-gray-800 dark:text-gray-200">a) b) c) d)</strong>. Đánh dấu <strong className="text-primary font-bold">*</strong> ở đầu dòng của mệnh đề Đúng.
                     </p>
-                    <pre className="text-[9px] font-mono bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 p-2.5 rounded-xl text-gray-600 dark:text-gray-400 overflow-x-auto">
+                    <pre className="text-[9px] font-mono bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-gray-600 dark:text-gray-400 overflow-x-auto">
 {`Mệnh đề câu hỏi đúng sai?
 a) Lựa chọn mệnh đề Sai
 *b) Mệnh đề ĐÚNG (Có dấu *)
@@ -2575,7 +2575,7 @@ d) Lựa chọn mệnh đề Sai`}
                     <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed">
                       Nhập văn bản câu hỏi bình thường. Khai báo đáp số ở dòng cuối cùng của câu hỏi theo cú pháp <strong className="text-gray-800 dark:text-gray-200">ĐS: đáp số</strong>.
                     </p>
-                    <pre className="text-[9px] font-mono bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 p-2.5 rounded-xl text-gray-600 dark:text-gray-400 overflow-x-auto">
+                    <pre className="text-[9px] font-mono bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-2.5 rounded-xl text-gray-600 dark:text-gray-400 overflow-x-auto">
 {`Tính diện tích hình tròn r = 3?
 ĐS: 9\\pi`}
                     </pre>

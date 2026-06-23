@@ -261,12 +261,13 @@ services:
       dockerfile: Dockerfile.dev
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     ports:
-      - "3002:3000"
+      - "3002:3002"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     environment:
       - NODE_ENV=development
+      - PORT=3002
       - BACKEND_URL=http://backend:3001
       - NEXT_PUBLIC_SUPABASE_URL=http://localhost:8000
       - SUPABASE_INTERNAL_URL=http://kong:8000

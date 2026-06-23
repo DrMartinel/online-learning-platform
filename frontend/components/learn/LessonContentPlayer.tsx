@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PlayCircle, FileText, Download, Play, BookOpen, ExternalLink, Video } from "lucide-react";
+import { PlayCircle, FileText, Download, Play, BookOpen, ExternalLink, Video, Eye } from "lucide-react";
 import VideoPlayer from "./VideoPlayer";
 import Link from "next/link";
 
@@ -101,7 +101,7 @@ export default function LessonContentPlayer({
                 })()
               ) : (
                 /* Exam View */
-                <div className="aspect-video rounded-2xl bg-gradient-to-br from-gray-55 to-gray-100 dark:from-gray-950 dark:to-gray-900 flex flex-col items-center justify-center border border-gray-205 dark:border-gray-800 p-6 text-center shadow-inner">
+                <div className="aspect-video rounded-2xl bg-gradient-to-br from-gray-55 to-gray-100 dark:from-gray-950 dark:to-gray-900 flex flex-col items-center justify-center border border-gray-200 dark:border-gray-800 p-6 text-center shadow-inner">
                   <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center mb-4 border border-amber-200 dark:border-amber-800">
                     <BookOpen size={32} className="text-amber-600 dark:text-amber-400" />
                   </div>
@@ -115,10 +115,18 @@ export default function LessonContentPlayer({
                     <Link
                       href={`/exams/${selectedContent.url}`}
                       target="_blank"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl transition-all shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer"
+                    >
+                      <Eye size={16} />
+                      Xem đề
+                    </Link>
+                    <Link
+                      href={`/exams/${selectedContent.url}?mode=practice`}
+                      target="_blank"
                       className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-amber-600/10 cursor-pointer"
                     >
                       <Play size={16} />
-                      Bắt đầu làm bài thi
+                      Luyện tập thi (Giao diện thi)
                     </Link>
                   </div>
                 </div>
@@ -128,7 +136,7 @@ export default function LessonContentPlayer({
           fallbackVideoUrl ? (
             <VideoPlayer src={fallbackVideoUrl} title={lessonTitle} />
           ) : (
-            <div className="aspect-video rounded-2xl bg-gradient-to-br from-gray-55 to-gray-100 dark:from-gray-950 dark:to-gray-900 flex items-center justify-center border border-gray-250 dark:border-gray-800">
+            <div className="aspect-video rounded-2xl bg-gradient-to-br from-gray-55 to-gray-100 dark:from-gray-950 dark:to-gray-900 flex items-center justify-center border border-gray-200 dark:border-gray-800">
               <div className="text-center">
                 <BookOpen size={48} className="mx-auto mb-3 text-gray-300 dark:text-gray-650" />
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">

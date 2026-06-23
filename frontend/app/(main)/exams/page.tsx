@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   Plus, Search, FileText, Link as LinkIcon, Eye, Edit, Trash2, Settings, BookOpen, Clock, 
-  HelpCircle, Shield, Globe, Lock, Printer, Loader2, X
+  HelpCircle, Shield, Globe, Lock, Printer, Loader2, X, Play
 } from 'lucide-react';
 
 interface Exam {
@@ -22,6 +22,7 @@ interface Exam {
 export default function ExamsDashboard() {
   const router = useRouter();
   const [exams, setExams] = useState<Exam[]>([]);
+  const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState('Tất cả');
@@ -212,14 +213,28 @@ export default function ExamsDashboard() {
 
   const [tags, setTags] = useState<string[]>(defaultTags);
 
+  const [user, setUser] = useState<any>(null);
+
   useEffect(() => {
     fetchExams();
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) {
+          setUser(data.user);
+        }
+      })
+      .catch(err => console.error(err));
   }, []);
 
   const fetchExams = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/exams');
+      const [res, sessRes] = await Promise.all([
+        fetch('/api/admin/exams'),
+        fetch('/api/admin/exam-sessions')
+      ]);
+
       if (res.ok) {
         const data = await res.json();
         setExams(data);
@@ -231,8 +246,13 @@ export default function ExamsDashboard() {
         });
         setTags(Array.from(loadedTags));
       }
+
+      if (sessRes.ok) {
+        const sessData = await sessRes.json();
+        setSessions(sessData);
+      }
     } catch (error) {
-      console.error('Failed to fetch exams:', error);
+      console.error('Failed to fetch data:', error);
     } finally {
       setLoading(false);
     }
@@ -298,6 +318,13 @@ export default function ExamsDashboard() {
     return matchesSearch && matchesTag;
   });
 
+  // Filter sessions based on search query
+  const activeSessions = sessions.filter(s => s.status === 'active');
+  const filteredSessions = activeSessions.filter(session => {
+    return session.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           session.id.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'public':
@@ -321,28 +348,38 @@ export default function ExamsDashboard() {
     }
   };
 
+  const isInstructor = user?.role === 'admin' || user?.role === 'operator';
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Tài liệu đề thi</h2>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Quản lý kho học liệu cá nhân của bạn.</p>
+          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+            {isInstructor ? "Tài liệu đề thi" : "Kỳ thi đang diễn ra"}
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
+            {isInstructor 
+              ? "Quản lý kho học liệu cá nhân của bạn." 
+              : "Danh sách các kỳ thi đang được tổ chức và diễn ra."}
+          </p>
         </div>
-        <button
-          onClick={handleCreateExam}
-          className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white font-semibold shadow-lg shadow-primary/20 hover:shadow-xl transition-all duration-300 ease-out"
-        >
-          <Plus size={20} /> Tạo mới
-        </button>
+        {isInstructor && (
+          <button
+            onClick={handleCreateExam}
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white font-semibold shadow-lg shadow-primary/20 hover:shadow-xl transition-all duration-300 ease-out"
+          >
+            <Plus size={20} /> Tạo mới
+          </button>
+        )}
       </div>
 
       {/* Search Input */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-505" size={20} />
         <input
           type="text"
-          placeholder="Nhập tên, mô tả, mã đề thi để tìm kiếm"
+          placeholder={isInstructor ? "Nhập tên, mô tả, mã đề thi để tìm kiếm" : "Nhập tên kỳ thi để tìm kiếm"}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full pl-12 pr-4 py-4 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
@@ -350,133 +387,207 @@ export default function ExamsDashboard() {
       </div>
 
       {/* Tags Filter */}
-      <div className="flex flex-wrap gap-2.5 items-center">
-        {tags.map((tag) => (
-          <button
-            key={tag}
-            onClick={() => setSelectedTag(tag)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200 ${
-              selectedTag === tag
-                ? 'bg-primary text-white shadow-md shadow-primary/20'
-                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
-            }`}
+      {isInstructor && (
+        <div className="flex flex-wrap gap-2.5 items-center">
+          {tags.map((tag) => (
+            <button
+              key={tag}
+              onClick={() => setSelectedTag(tag)}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                selectedTag === tag
+                  ? 'bg-primary text-white shadow-md shadow-primary/20'
+                  : 'bg-white dark:bg-gray-900 text-gray-650 text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
+          <button 
+            onClick={() => setShowTagModal(true)}
+            className="w-8 h-8 rounded-full border border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-400 hover:text-primary hover:border-primary transition-colors"
           >
-            {tag}
+            <Plus size={16} />
           </button>
-        ))}
-        <button 
-          onClick={() => setShowTagModal(true)}
-          className="w-8 h-8 rounded-full border border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-400 hover:text-primary hover:border-primary transition-colors"
-        >
-          <Plus size={16} />
-        </button>
-      </div>
+        </div>
+      )}
 
       {/* Table Card */}
       <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-12 flex flex-col items-center justify-center gap-3">
             <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium animate-pulse">Đang tải dữ liệu đề thi...</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium animate-pulse">Đang tải dữ liệu...</p>
           </div>
-        ) : filteredExams.length === 0 ? (
-          <div className="p-16 flex flex-col items-center justify-center text-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gray-50 dark:bg-gray-800/50 flex items-center justify-center text-gray-400 dark:text-gray-600">
-              <FileText size={32} />
+        ) : isInstructor ? (
+          // Instructor view: Exams
+          filteredExams.length === 0 ? (
+            <div className="p-16 flex flex-col items-center justify-center text-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gray-50 dark:bg-gray-800/50 flex items-center justify-center text-gray-400 dark:text-gray-600">
+                <FileText size={32} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Không tìm thấy đề thi</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 max-w-xs">Hãy tạo tài liệu đề thi mới hoặc điều chỉnh bộ lọc tìm kiếm.</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Không tìm thấy đề thi</h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 max-w-xs">Hãy tạo tài liệu đề thi mới hoặc điều chỉnh bộ lọc tìm kiếm.</p>
-            </div>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-100 dark:border-gray-800 text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50 dark:bg-gray-800/20">
-                  <th className="px-6 py-4">Tên đề thi</th>
-                  <th className="px-6 py-4">Ngày sửa đổi</th>
-                  <th className="px-6 py-4">Nội dung</th>
-                  <th className="px-6 py-4">Trạng thái</th>
-                  <th className="px-6 py-4 text-right">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {filteredExams.map((exam) => (
-                  <tr key={exam.id} className="hover:bg-gray-50/30 dark:hover:bg-gray-800/10 transition-colors">
-                    <td className="px-6 py-5">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 mt-1">
-                          <FileText size={20} />
-                        </div>
-                        <div className="space-y-1">
-                          <h4 className="font-bold text-gray-900 dark:text-white text-base hover:text-primary transition-colors">
-                            <Link href={`/exams/${exam.id}/questions`}>{exam.title}</Link>
-                          </h4>
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-gray-500 dark:text-gray-400">
-                              {exam.id.substring(0, 8).toUpperCase()}
-                            </span>
-                            {exam.tags.slice(0, 3).map((tag, idx) => (
-                              <span key={idx} className="text-xs px-2 py-0.5 rounded-md bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium">
-                                {tag}
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-100 dark:border-gray-800 text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50 dark:bg-gray-800/20">
+                    <th className="px-6 py-4">Tên đề thi</th>
+                    <th className="px-6 py-4">Ngày sửa đổi</th>
+                    <th className="px-6 py-4">Nội dung</th>
+                    <th className="px-6 py-4">Trạng thái</th>
+                    <th className="px-6 py-4 text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {filteredExams.map((exam) => (
+                    <tr key={exam.id} className="hover:bg-gray-50/30 dark:hover:bg-gray-800/10 transition-colors">
+                      <td className="px-6 py-5">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 mt-1">
+                            <FileText size={20} />
+                          </div>
+                          <div className="space-y-1">
+                            <h4 className="font-bold text-gray-900 dark:text-white text-base hover:text-primary transition-colors">
+                              <Link href={`/exams/${exam.id}/questions`}>{exam.title}</Link>
+                            </h4>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-gray-500 dark:text-gray-400">
+                                {exam.id.substring(0, 8).toUpperCase()}
                               </span>
-                            ))}
-                            {exam.tags.length > 3 && (
-                              <span className="text-xs px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-500 font-medium">
-                                +{exam.tags.length - 3}
-                              </span>
-                            )}
+                              {exam.tags.slice(0, 3).map((tag, idx) => (
+                                <span key={idx} className="text-xs px-2 py-0.5 rounded-md bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium">
+                                  {tag}
+                                </span>
+                              ))}
+                              {exam.tags.length > 3 && (
+                                <span className="text-xs px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-500 font-medium">
+                                  +{exam.tags.length - 3}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-sm text-gray-500 dark:text-gray-400 font-medium">
-                      {new Date(exam.createdAt).toLocaleDateString('vi-VN')}
-                    </td>
-                    <td className="px-6 py-5 text-sm font-bold text-gray-900 dark:text-white">
-                      {exam.questions?.length || 0} câu
-                    </td>
-                    <td className="px-6 py-5">
-                      {getStatusBadge(exam.accessRights)}
-                    </td>
-                    <td className="px-6 py-5 text-right">
-                      <div className="flex items-center justify-end gap-2.5">
-                        <Link
-                          href={`/exams/${exam.id}`}
-                          title="Truy cập link đề thi"
-                          className="p-2 rounded-xl border border-gray-100 dark:border-gray-800 text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 transition-all inline-block"
-                        >
-                          <LinkIcon size={16} />
-                        </Link>
-                        <button
-                          onClick={() => handleOpenPrintPreview(exam.id)}
-                          title="Xem PDF Preview"
-                          className="p-2 rounded-xl border border-gray-100 dark:border-gray-800 text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 transition-all inline-block cursor-pointer"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <Link
-                          href={`/exams/${exam.id}/edit`}
-                          title="Thiết lập đề thi"
-                          className="p-2 rounded-xl border border-gray-100 dark:border-gray-800 text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 transition-all inline-block"
-                        >
-                          <Settings size={16} />
-                        </Link>
-                        <button
-                          onClick={() => triggerDeleteConfirm(exam.id, exam.title)}
-                          title="Xoá tài liệu"
-                          className="p-2 rounded-xl border border-red-50 dark:border-red-500/10 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+                      </td>
+                      <td className="px-6 py-5 text-sm text-gray-500 dark:text-gray-400 font-medium">
+                        {new Date(exam.createdAt).toLocaleDateString('vi-VN')}
+                      </td>
+                      <td className="px-6 py-5 text-sm font-bold text-gray-900 dark:text-white">
+                        {exam.questions?.length || 0} câu
+                      </td>
+                      <td className="px-6 py-5">
+                        {getStatusBadge(exam.accessRights)}
+                      </td>
+                      <td className="px-6 py-5 text-right">
+                        <div className="flex items-center justify-end gap-2.5">
+                          <Link
+                            href={`/exams/${exam.id}`}
+                            title="Truy cập link đề thi"
+                            className="p-2 rounded-xl border border-gray-100 dark:border-gray-800 text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 transition-all inline-block"
+                          >
+                            <LinkIcon size={16} />
+                          </Link>
+                          <button
+                            onClick={() => handleOpenPrintPreview(exam.id)}
+                            title="Xem PDF Preview"
+                            className="p-2 rounded-xl border border-gray-100 dark:border-gray-800 text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 transition-all inline-block cursor-pointer"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <Link
+                            href={`/exams/${exam.id}/edit`}
+                            title="Thiết lập đề thi"
+                            className="p-2 rounded-xl border border-gray-100 dark:border-gray-800 text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 transition-all inline-block"
+                          >
+                            <Settings size={16} />
+                          </Link>
+                          <button
+                            onClick={() => triggerDeleteConfirm(exam.id, exam.title)}
+                            title="Xoá tài liệu"
+                            className="p-2 rounded-xl border border-red-50 dark:border-red-500/10 text-red-400 hover:text-red-655 hover:bg-red-55/10 dark:hover:bg-red-500/10 transition-all cursor-pointer"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        ) : (
+          // Student view: Exam Sessions (ongoing/active)
+          filteredSessions.length === 0 ? (
+            <div className="p-16 flex flex-col items-center justify-center text-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gray-50 dark:bg-gray-800/50 flex items-center justify-center text-gray-400 dark:text-gray-600">
+                <Clock size={32} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Không có kỳ thi nào đang diễn ra</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 max-w-xs">Hiện tại không có đợt tổ chức thi nào đang hoạt động.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-100 dark:border-gray-800 text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50 dark:bg-gray-800/20">
+                    <th className="px-6 py-4">Tên kỳ thi</th>
+                    <th className="px-6 py-4">Thời gian bắt đầu</th>
+                    <th className="px-6 py-4">Thời hạn kết thúc</th>
+                    <th className="px-6 py-4">Thời lượng</th>
+                    <th className="px-6 py-4 text-right">Thao tác</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {filteredSessions.map((session) => (
+                    <tr key={session.id} className="hover:bg-gray-50/30 dark:hover:bg-gray-800/10 transition-colors">
+                      <td className="px-6 py-5">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 mt-1">
+                            <Clock size={20} />
+                          </div>
+                          <div className="space-y-1">
+                            <h4 className="font-bold text-gray-900 dark:text-white text-base hover:text-primary transition-colors">
+                              <Link href={`/exam-sessions/enter?sessionId=${session.id}`}>{session.title}</Link>
+                            </h4>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-gray-500 dark:text-gray-400">
+                                {session.id.substring(0, 8).toUpperCase()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 text-sm text-gray-500 dark:text-gray-400 font-medium">
+                        {new Date(session.startTime).toLocaleString('vi-VN')}
+                      </td>
+                      <td className="px-6 py-5 text-sm text-gray-500 dark:text-gray-400 font-medium">
+                        {new Date(session.endTime).toLocaleString('vi-VN')}
+                      </td>
+                      <td className="px-6 py-5 text-sm font-bold text-gray-900 dark:text-white">
+                        {session.durationMinutes} phút
+                      </td>
+                      <td className="px-6 py-5 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/exam-sessions/enter?sessionId=${session.id}`}
+                            className="inline-flex items-center gap-1.5 px-4.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 transition-all shadow-md shadow-emerald-600/10 cursor-pointer"
+                          >
+                            <Play size={12} /> Vào thi ngay
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
         )}
       </div>
 

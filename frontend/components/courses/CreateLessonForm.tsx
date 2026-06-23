@@ -143,8 +143,8 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
 
           try {
             await supabaseProxyClient.uploadObjectWithFormData('course-media', urlPath, item.file, token);
-          } catch (uploadError) {
-            throw new Error(`Tải tệp "${item.file.name}" thất bại: ${uploadError.message}`);
+          } catch (uploadError: any) {
+            throw new Error(`Tải tệp "${item.file.name}" thất bại: ${uploadError.message || String(uploadError)}`);
           }
         } else if (item.type === 'exam') {
           if (!item.examId) {
@@ -272,7 +272,7 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
       </div>
 
       {/* --- DYNAMIC COMPONENTS SECTION --- */}
-      <div className="border-t border-gray-150 dark:border-gray-800 pt-6 space-y-4">
+      <div className="border-t border-gray-200 dark:border-gray-800 pt-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
@@ -309,7 +309,7 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
 
         {/* Components List */}
         {items.length === 0 ? (
-          <div className="border border-dashed border-gray-250 dark:border-gray-800 rounded-2xl py-8 text-center bg-gray-50/30 dark:bg-gray-900/10">
+          <div className="border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl py-8 text-center bg-gray-50/30 dark:bg-gray-900/10">
             <p className="text-xs text-gray-400 dark:text-gray-500 italic">Chưa có thành phần học liệu nào. Hãy bấm các nút phía trên để thêm.</p>
           </div>
         ) : (
@@ -367,7 +367,7 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
                         value={item.title}
                         onChange={(e) => handleUpdateItem(item.id, { title: e.target.value })}
                         required
-                        className="w-full text-xs rounded-lg border border-gray-200 dark:border-gray-850 bg-white dark:bg-gray-900 px-3.5 py-2 text-gray-900 dark:text-white focus:border-primary outline-none"
+                        className="w-full text-xs rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3.5 py-2 text-gray-900 dark:text-white focus:border-primary outline-none"
                         placeholder="Ví dụ: Video bài học lý thuyết"
                       />
                     </div>
@@ -383,7 +383,7 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
                         onChange={(e) => handleUpdateItem(item.id, { orderIndex: parseInt(e.target.value) || 1 })}
                         required
                         min={1}
-                        className="w-full text-xs rounded-lg border border-gray-200 dark:border-gray-850 bg-white dark:bg-gray-900 px-3.5 py-2 text-gray-900 dark:text-white focus:border-primary outline-none"
+                        className="w-full text-xs rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3.5 py-2 text-gray-900 dark:text-white focus:border-primary outline-none"
                       />
                     </div>
 
@@ -401,7 +401,7 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
                             onChange={(e) => handleUpdateItem(item.id, { durationMinutes: parseInt(e.target.value) || 0 })}
                             min={1}
                             required
-                            className="w-full text-xs rounded-lg border border-gray-200 dark:border-gray-850 bg-white dark:bg-gray-900 px-3.5 py-2 text-gray-900 dark:text-white focus:border-primary outline-none"
+                            className="w-full text-xs rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3.5 py-2 text-gray-900 dark:text-white focus:border-primary outline-none"
                           />
                         </div>
 
@@ -453,7 +453,7 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
                         <select
                           value={item.examId}
                           onChange={(e) => handleUpdateItem(item.id, { examId: e.target.value })}
-                          className="w-full text-xs rounded-lg border border-gray-200 dark:border-gray-850 bg-white dark:bg-gray-900 px-3.5 py-2 text-gray-900 dark:text-white focus:border-primary outline-none"
+                          className="w-full text-xs rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3.5 py-2 text-gray-900 dark:text-white focus:border-primary outline-none"
                           required
                         >
                           {exams.length === 0 ? (
@@ -477,7 +477,7 @@ export default function CreateLessonForm({ courseId, token, defaultChapterId }: 
       </div>
 
       {/* Form Submission Actions */}
-      <div className="pt-6 border-t border-gray-150 dark:border-gray-800 flex justify-end gap-3">
+      <div className="pt-6 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-3">
         <button
           type="button"
           onClick={() => router.push(`/courses/${courseId}`)}

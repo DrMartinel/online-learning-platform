@@ -22,9 +22,12 @@ if [ ! -f "$ENV_FILE" ]; then
     echo "ERROR: .env file not found at $ENV_FILE" >&2
     exit 1
 fi
-
+set +e
+set +o pipefail
 POSTGRES_PASSWORD="$(grep -E '^POSTGRES_PASSWORD=' "$ENV_FILE" | head -1 | cut -d'=' -f2-)"
 POSTGRES_DB="$(grep -E '^POSTGRES_DB=' "$ENV_FILE" | head -1 | cut -d'=' -f2-)"
+set -e
+set -o pipefail
 
 if [ -z "$POSTGRES_PASSWORD" ] || [ -z "$POSTGRES_DB" ]; then
     echo "ERROR: POSTGRES_PASSWORD or POSTGRES_DB not found in $ENV_FILE" >&2

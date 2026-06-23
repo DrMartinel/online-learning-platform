@@ -86,6 +86,8 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   if (canManageExams) {
     navItems.push({ href: "/exams", label: "Quản lý đề thi", icon: FileText });
     navItems.push({ href: "/exam-sessions", label: "Tổ chức thi", icon: BookOpen });
+  } else {
+    navItems.push({ href: "/exams", label: "Kỳ thi đang diễn ra", icon: FileText });
   }
 
   navItems.push({ href: "/profile", label: "Hồ sơ cá nhân", icon: User });

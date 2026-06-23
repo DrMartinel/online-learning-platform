@@ -150,7 +150,7 @@ export default function LessonList({
 
             {/* Lessons Accordion Content */}
             {isExpanded && (
-              <div className="p-4 pt-0 border-t border-gray-100 dark:border-gray-850 bg-white/50 dark:bg-gray-950/20">
+              <div className="p-4 pt-0 border-t border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-950/20">
                 {chapterLessons.length === 0 ? (
                   <p className="text-xs text-gray-400 dark:text-gray-500 italic py-3 pl-2">
                     Chưa có bài học nào trong chương này.
@@ -201,7 +201,7 @@ export default function LessonList({
           </button>
 
           {!!expanded["unassigned"] && (
-            <div className="p-4 pt-0 border-t border-gray-150 dark:border-gray-850 bg-white/50 dark:bg-gray-950/20">
+            <div className="p-4 pt-0 border-t border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-950/20">
               <ol className="space-y-2 mt-3">
                 {lessonsByChapter["unassigned"].map((lesson, idx) => renderLessonItem(lesson, idx))}
               </ol>
