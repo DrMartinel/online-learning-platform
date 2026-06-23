@@ -49,34 +49,16 @@ constructor(
   }
 
   async enrollUserAfterPayment(vnpTxnRef: string, userId: string, courseId: string, vnpTransactionNo: string) {
-    // 1. Cập nhật trạng thái thanh toán thành SUCCESS
-    const { error: paymentError } = await this.supabase
-      .from('payments')
-      .update({
-        status: 'SUCCESS',
-        vnp_transaction_no: vnpTransactionNo,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('vnp_txn_ref', vnpTxnRef);
+    // Gọi Stored Procedure (RPC) từ Database Migration để đảm bảo an toàn dữ liệu
+    const { error } = await this.supabase.rpc('enroll_user_after_payment', {
+      p_vnp_txn_ref: vnpTxnRef,
+      p_user_id: userId,
+      p_course_id: courseId,
+      p_vnp_transaction_no: vnpTransactionNo
+    });
 
-    if (paymentError) {
-      throw new InternalServerErrorException(`Lỗi khi cập nhật thanh toán: ${paymentError.message}`);
-    }
-
-    // 2. Ghi danh học viên vào bảng enrollments
-    const { error: enrollmentError } = await this.supabase
-      .from('enrollments')
-      .upsert(
-        {
-          user_id: userId,
-          course_id: courseId,
-        },
-        { onConflict: 'user_id,course_id' } // Đảm bảo không bị trùng lặp
-      );
-
-    if (enrollmentError) {
-       // Log lỗi, có thể cân nhắc cơ chế retry ở đây trong môi trường thực tế
-      throw new InternalServerErrorException(`Lỗi khi ghi danh học viên: ${enrollmentError.message}`);
+    if (error) {
+      throw new InternalServerErrorException(`Lỗi Transaction khi ghi danh: ${error.message}`);
     }
 
     return { success: true };

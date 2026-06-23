@@ -35,7 +35,7 @@ export class PaymentService {
     const expireDate = formatTime(expireTime);
     
     // Tạo mã giao dịch ngẫu nhiên không trùng lặp
-    const vnp_TxnRef = createDate + Math.floor(Math.random() * 10000).toString();
+    const vnp_TxnRef = createDate + '_' + Date.now().toString().slice(-5) + '_' + Math.floor(Math.random() * 1000).toString();
 
     // 2. Xử lý IP: VNPay Sandbox thường báo lỗi nếu truyền 127.0.0.1 hoặc IPv6
     let finalIp = ipAddr;
@@ -82,54 +82,69 @@ export class PaymentService {
     return { paymentUrl };
   }
 
-  async processIPN(query: VNPayIPNDto) {
-    let vnp_Params: Record<string, any> = { ...query };
-    const secureHash = vnp_Params['vnp_SecureHash'];
+async processIPN(query: VNPayIPNDto) {
+    try {
+      let vnp_Params: Record<string, any> = { ...query };
+      const secureHash = vnp_Params['vnp_SecureHash'];
 
-    delete vnp_Params['vnp_SecureHash'];
-    delete vnp_Params['vnp_SecureHashType'];
+      delete vnp_Params['vnp_SecureHash'];
+      delete vnp_Params['vnp_SecureHashType'];
 
-    const secretKey = this.configService.get<string>('VNP_HASH_SECRET')!;
-    vnp_Params = this.sortObject(vnp_Params);
+      const secretKey = this.configService.get<string>('VNP_HASH_SECRET')!;
+      vnp_Params = this.sortObject(vnp_Params);
 
-    const signData = qs.stringify(vnp_Params, { encode: false });
-    const hmac = crypto.createHmac('sha512', secretKey);
-    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+      const signData = qs.stringify(vnp_Params, { encode: false });
+      const hmac = crypto.createHmac('sha512', secretKey);
+      const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
-    // 1. Xác thực chữ ký
-    if (secureHash !== signed) {
-      return { RspCode: '97', Message: 'Checksum failed' };
-    }
+      // 1. Xác thực chữ ký
+      if (secureHash !== signed) {
+        return { RspCode: '97', Message: 'Checksum failed' };
+      }
 
-    const vnp_TxnRef = vnp_Params['vnp_TxnRef'];
-    const responseCode = vnp_Params['vnp_ResponseCode'];
-    const vnp_TransactionNo = vnp_Params['vnp_TransactionNo'];
+      const vnp_TxnRef = vnp_Params['vnp_TxnRef'];
+      const responseCode = vnp_Params['vnp_ResponseCode'];
+      const vnp_TransactionNo = vnp_Params['vnp_TransactionNo'];
+      const vnp_Amount = parseInt(vnp_Params['vnp_Amount'], 10); // VNPay trả về chuỗi
 
-    // 2. Kiểm tra giao dịch trong DB
-    const payment = await this.paymentRepository.getPaymentByTxnRef(vnp_TxnRef);
-    if (!payment) {
-      return { RspCode: '01', Message: 'Order not found' };
-    }
+      // 2. Kiểm tra giao dịch trong DB
+      const payment = await this.paymentRepository.getPaymentByTxnRef(vnp_TxnRef);
+      if (!payment) {
+        return { RspCode: '01', Message: 'Order not found' };
+      }
 
-    // 3. Kiểm tra trạng thái giao dịch (Tránh lặp IPN)
-    if (payment.status !== 'PENDING') {
-      return { RspCode: '02', Message: 'Order already confirmed' };
-    }
+      // 3. Kiểm tra số tiền (RẤT QUAN TRỌNG: Ngăn chặn hacker sửa giá)
+      // Lưu ý: VNPay trả về số tiền nhân với 100
+      const dbAmount = payment.amount * 100;
+      if (vnp_Amount !== dbAmount) {
+        return { RspCode: '04', Message: 'Invalid amount' };
+      }
 
-    // 4. Cập nhật theo mã phản hồi
-    if (responseCode === '00') {
-      // Thành công -> Cập nhật SUCCESS và ghi danh
-      await this.paymentRepository.enrollUserAfterPayment(
-        vnp_TxnRef,
-        payment.user_id,
-        payment.course_id,
-        vnp_TransactionNo
-      );
-      return { RspCode: '00', Message: 'Confirm Success' };
-    } else {
-      // Thất bại
-      await this.paymentRepository.updatePaymentFailed(vnp_TxnRef);
-      return { RspCode: '00', Message: 'Confirm Success' }; // VNPay yêu cầu trả 00 để xác nhận đã nhận IPN
+      // 4. Kiểm tra trạng thái giao dịch (Tránh lặp IPN)
+      if (payment.status !== 'PENDING') {
+        return { RspCode: '02', Message: 'Order already confirmed' };
+      }
+
+      // 5. Cập nhật theo mã phản hồi
+      if (responseCode === '00') {
+        // Thành công -> Gọi RPC ghi DB an toàn
+        await this.paymentRepository.enrollUserAfterPayment(
+          vnp_TxnRef,
+          payment.user_id,
+          payment.course_id,
+          vnp_TransactionNo
+        );
+        return { RspCode: '00', Message: 'Confirm Success' };
+      } else {
+        // Thất bại
+        await this.paymentRepository.updatePaymentFailed(vnp_TxnRef);
+        return { RspCode: '00', Message: 'Confirm Success' }; // Trả 00 để VNPay biết là đã nhận IPN thất bại
+      }
+    } catch (error) {
+      // 6. Xử lý lỗi ngoại lệ (Không để HTTP 500 ném ra ngoài)
+      console.error('Lỗi xử lý VNPay IPN:', error);
+      // Trả về mã 99 (Unknown error) để VNPay biết server lỗi tạm thời, có thể VNPay sẽ thử gọi lại sau
+      return { RspCode: '99', Message: 'Unknown error' };
     }
   }
 
