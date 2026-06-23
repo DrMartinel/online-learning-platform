@@ -14,6 +14,7 @@ import { ExamSessionModule } from './exam-session/exam-session.module';
 import { PaymentModule } from './payment/payment.module';
 import { ChapterModule } from './chapter/chapter.module';
 import { CommentModule } from './comment/comment.module';
+import { SupabaseProxyModule } from './supabase-proxy/supabase-proxy.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { CommentModule } from './comment/comment.module';
     PaymentModule,
     ChapterModule,
     CommentModule,
+    SupabaseProxyModule,
   ],
 })
 export class AppModule {}

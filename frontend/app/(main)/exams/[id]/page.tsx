@@ -10,7 +10,7 @@ import {
   HelpCircle, ChevronDown, ChevronUp, Loader2, Sparkles, Edit3, Trash2, Image as ImageIcon, Check,
   Printer, Search, Play, Calendar, Users, Hash, X, BookOpen
 } from 'lucide-react';
-import { getSupabaseClient, getMediaUrl } from '@/lib/supabase';
+import { supabaseProxyClient, getProxyMediaUrl } from '@/lib/supabase-proxy';
 
 interface QuestionVariant {
   id: string;
@@ -452,20 +452,13 @@ export default function PublicExamViewer() {
     if (!file || !sessionToken) return;
     try {
       setUploadingQuestionId(qId);
-      const supabase = getSupabaseClient(sessionToken);
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
       const filePath = `exams/images/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('course-media')
-        .upload(filePath, file);
+      await supabaseProxyClient.uploadObjectWithFormData('course-media', filePath, file, sessionToken);
 
-      if (uploadError) {
-        throw new Error(`Upload failed: ${uploadError.message}`);
-      }
-
-      const imageUrl = getMediaUrl(filePath);
+      const imageUrl = getProxyMediaUrl(filePath);
       const markdownImage = `![Ảnh](${imageUrl})`;
       const currentDraft = explanationDrafts[qId] || '';
       

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { 
   MoreVertical, Loader2, BrainCircuit, Edit2, Trash2, X, Plus, UploadCloud, Video, FileText, BookOpen, AlertCircle, FilePlus
 } from 'lucide-react';
-import { getSupabaseClient } from '@/lib/supabase';
+import { supabaseProxyClient } from '@/lib/supabase-proxy';
 import ProgressModal from '@/components/ui/ProgressModal';
 
 interface Props {
@@ -176,7 +176,6 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
         }
 
         // 2. Upload files and create contents
-        const supabase = getSupabaseClient(token);
         for (const item of newItems) {
           let urlPath = '';
 
@@ -189,12 +188,10 @@ export default function LessonActionMenu({ lesson, token, chapters = [] }: Props
             const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
             urlPath = `${folder}/${fileName}`;
 
-            const { error: uploadError } = await supabase.storage
-              .from('course-media')
-              .upload(urlPath, item.file);
-
-            if (uploadError) {
-              throw new Error(`Tải tệp "${item.file.name}" thất bại: ${uploadError.message}`);
+            try {
+              await supabaseProxyClient.uploadObjectWithFormData('course-media', urlPath, item.file, token);
+            } catch (uploadError) {
+              throw new Error(`Tải tệp "${item.file.name}" thất bại: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`);
             }
           } else if (item.type === 'exam') {
             if (!item.examId) {
